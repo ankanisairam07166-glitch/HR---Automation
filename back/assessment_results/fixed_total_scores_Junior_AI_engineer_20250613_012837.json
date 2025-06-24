@@ -1,0 +1,16 @@
+{
+  "assessment_name": "Junior AI engineer",
+  "scraped_at": "2025-06-13T01:28:37.819467",
+  "extraction_focus": "TOTAL_ASSESSMENT_SCORES_ONLY",
+  "total_candidates": 1,
+  "candidates_with_scores": 1,
+  "candidates": [
+    {
+      "email": "dnnithis@gmail.com",
+      "name": "Dasari Sai Attempt #2",
+      "percentage": 93.33,
+      "status": "Completed",
+      "extraction_method": "main_table_score_column"
+    }
+  ]
+}

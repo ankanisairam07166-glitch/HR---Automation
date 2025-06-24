@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en" data-locale="en_US">
+
+
+<head>
+    
+    <link rel="dns-prefetch" href="">
+        <meta name="robots" content="noindex, follow" />
+        <meta http-equiv="refresh" content="1800">
+    <title>Login &ndash; Green Ocean Property Management</title>
+
+    <link type="image/x-icon" href="https://staticfe.bamboohr.com/resources/images/favicon.ico" rel="shortcut icon" />
+
+    
+    
+
+	
+	
+
+
+
+			<link
+			id="global-encore-css"
+			type="text/css"
+			rel="stylesheet"
+			href="//staticfe.bamboohr.com/fe-main/prod/css/global-encore.c9f843e9.dist.css"
+					/>
+	
+
+
+			<link
+			id="print-encore-css"
+			type="text/css"
+			rel="stylesheet"
+			href="//staticfe.bamboohr.com/fe-main/prod/css/print-encore.css"
+					/>
+	
+
+
+			<link
+			id="login-css"
+			type="text/css"
+			rel="stylesheet"
+			href="//staticfe.bamboohr.com/fe-main/prod/css/login.8464c7d6.dist.css"
+					/>
+	
+
+
+
+    <script type="text/javascript">
+		(function() {
+			var url = window.location.href;
+			var urlWithoutSignupFlag = url.replace(/signup\=1&*/g, '').replace(/\?$/, '');
+			if (url !== urlWithoutSignupFlag) {
+				window.dataLayer = [{
+					'partnerCode': '',
+					'event': 'signupSuccess'
+				}];
+				window.history.replaceState({}, '', urlWithoutSignupFlag);
+			}
+		})();
+    </script>
+    <script type="text/javascript" src="//staticfe.bamboohr.com/fe-main/prod/js/vendor.a21f9af3.dist.js"></script>
+    <script type="text/javascript" src="//staticfe.bamboohr.com/fe-main/prod/js/fabric.6f95c195.dist.js"></script>
+    <script type="text/javascript" src="//staticfe.bamboohr.com/fe-main/prod/js/common.d58e95c8.dist.js"></script>
+        <script type="text/javascript">
+	(function() {
+		Object.defineProperties(window, {
+			ENV: {
+				value: 'prod'
+			},
+			BUILD_VERSION: {
+				value: '25.0610.144344-f024c3a'
+			},
+			BASE_DOMAIN: {
+				value: 'bamboohr.com'
+			},
+			isarray: {
+				value: Array.isArray
+			},
+			SESSION_USER: {
+				value: null
+			},
+            IMAGE_RESOURCE: {
+				value: 'resources'
+			}
+		});
+
+		window.BambooHR = window.BambooHR || {};
+
+		Object.defineProperties(window.BambooHR, {
+			env: {
+				value: Object.freeze({
+					val: window.ENV,
+					dev: window.ENV === 'dev',
+					stage: window.ENV === 'stage',
+					prod: window.ENV === 'prod',
+				})
+			}
+		});
+
+		Object.defineProperty(window, 'DOMAIN', {
+			value: 'resources.bamboohr.com'
+		});
+		Object.defineProperty(window, 'STATICFE_UI_SRC', {
+			value: 1
+		});
+		Object.defineProperty(window, 'STATIC_FE_DOMAIN', {
+			value: `staticfe.bamboohr.com/fe-main`
+		});
+		var rootUrl = window.STATICFE_UI_SRC === 1 ? (window.STATIC_FE_DOMAIN || window.location.hostname) : (window.DOMAIN || window.location.hostname);
+		Object.defineProperty(window, 'ROOT_URL', {
+			value: window.location.protocol + '//' + rootUrl
+		});
+		Object.defineProperty(window, '__staticResourceUrlFeMain', {
+			value: '//staticfe.bamboohr.com/fe-main/prod/js/'
+		});
+
+		window.__resManifest = JSON.parse("{\u0022js\\/e-signature-mobile.dist.js\u0022:\u0022prod\\/js\\/e-signature-mobile.bad285a2.dist.js\u0022,\u0022js\\/enrollment-mobile.dist.js\u0022:\u0022prod\\/js\\/enrollment-mobile.adcdeda8.dist.js\u0022,\u0022css\\/data-table.dist.css\u0022:\u0022prod\\/css\\/data-table.5b008c98.dist.css\u0022,\u0022js\\/data-table.dist.js\u0022:\u0022prod\\/js\\/data-table.5b008c98.dist.js\u0022,\u0022css\\/access_levels.dist.css\u0022:\u0022prod\\/css\\/access_levels.aedef29f.dist.css\u0022,\u0022js\\/access_levels.dist.js\u0022:\u0022prod\\/js\\/access_levels.aedef29f.dist.js\u0022,\u0022css\\/account.dist.css\u0022:\u0022prod\\/css\\/account.9b1aca34.dist.css\u0022,\u0022js\\/account.dist.js\u0022:\u0022prod\\/js\\/account.9b1aca34.dist.js\u0022,\u0022css\\/app-trax.dist.css\u0022:\u0022prod\\/css\\/app-trax.dc3ce549.dist.css\u0022,\u0022js\\/app-trax.dist.js\u0022:\u0022prod\\/js\\/app-trax.dc3ce549.dist.js\u0022,\u0022css\\/apps.dist.css\u0022:\u0022prod\\/css\\/apps.31777ccd.dist.css\u0022,\u0022js\\/apps.dist.js\u0022:\u0022prod\\/js\\/apps.31777ccd.dist.js\u0022,\u0022css\\/first-time-payment.dist.css\u0022:\u0022prod\\/css\\/first-time-payment.0f97fbb4.dist.css\u0022,\u0022js\\/first-time-payment.dist.js\u0022:\u0022prod\\/js\\/first-time-payment.0f97fbb4.dist.js\u0022,\u0022css\\/integrations-sign-up.dist.css\u0022:\u0022prod\\/css\\/integrations-sign-up.8290a1d8.dist.css\u0022,\u0022js\\/integrations-sign-up.dist.js\u0022:\u0022prod\\/js\\/integrations-sign-up.8290a1d8.dist.js\u0022,\u0022css\\/calendar.dist.css\u0022:\u0022prod\\/css\\/calendar.84705fc0.dist.css\u0022,\u0022js\\/calendar.dist.js\u0022:\u0022prod\\/js\\/calendar.84705fc0.dist.js\u0022,\u0022css\\/calendar-ical-modal.dist.css\u0022:\u0022prod\\/css\\/calendar-ical-modal.9087bb30.dist.css\u0022,\u0022js\\/calendar-ical-modal.dist.js\u0022:\u0022prod\\/js\\/calendar-ical-modal.9087bb30.dist.js\u0022,\u0022css\\/careers.dist.css\u0022:\u0022prod\\/css\\/careers.e0d7d74d.dist.css\u0022,\u0022js\\/careers.dist.js\u0022:\u0022prod\\/js\\/careers.e0d7d74d.dist.js\u0022,\u0022js\\/change_password.dist.js\u0022:\u0022prod\\/js\\/change_password.8a91f0f5.dist.js\u0022,\u0022css\\/BhrTabs.dist.css\u0022:\u0022prod\\/css\\/BhrTabs.26e4d901.dist.css\u0022,\u0022js\\/BhrTabs.dist.js\u0022:\u0022prod\\/js\\/BhrTabs.26e4d901.dist.js\u0022,\u0022css\\/EditOptions.dist.css\u0022:\u0022prod\\/css\\/EditOptions.4866b0cf.dist.css\u0022,\u0022js\\/EditOptions.dist.js\u0022:\u0022prod\\/js\\/EditOptions.4866b0cf.dist.js\u0022,\u0022css\\/EmployeeFilters.dist.css\u0022:\u0022prod\\/css\\/EmployeeFilters.27c8067f.dist.css\u0022,\u0022js\\/EmployeeFilters.dist.js\u0022:\u0022prod\\/js\\/EmployeeFilters.27c8067f.dist.js\u0022,\u0022css\\/EmployeeSelector.dist.css\u0022:\u0022prod\\/css\\/EmployeeSelector.a883d39e.dist.css\u0022,\u0022js\\/EmployeeSelector.dist.js\u0022:\u0022prod\\/js\\/EmployeeSelector.a883d39e.dist.js\u0022,\u0022css\\/ProcessBar.dist.css\u0022:\u0022prod\\/css\\/ProcessBar.f976e381.dist.css\u0022,\u0022js\\/ProcessBar.dist.js\u0022:\u0022prod\\/js\\/ProcessBar.f976e381.dist.js\u0022,\u0022css\\/dashboard.dist.css\u0022:\u0022prod\\/css\\/dashboard.d233f490.dist.css\u0022,\u0022js\\/dashboard.dist.js\u0022:\u0022prod\\/js\\/dashboard.d233f490.dist.js\u0022,\u0022css\\/dev.dist.css\u0022:\u0022prod\\/css\\/dev.437604aa.dist.css\u0022,\u0022js\\/dev.dist.js\u0022:\u0022prod\\/js\\/dev.437604aa.dist.js\u0022,\u0022css\\/developer-portal.dist.css\u0022:\u0022prod\\/css\\/developer-portal.d325b6af.dist.css\u0022,\u0022js\\/developer-portal.dist.js\u0022:\u0022prod\\/js\\/developer-portal.d325b6af.dist.js\u0022,\u0022css\\/directory-new.dist.css\u0022:\u0022prod\\/css\\/directory-new.8023840b.dist.css\u0022,\u0022js\\/directory-new.dist.js\u0022:\u0022prod\\/js\\/directory-new.8023840b.dist.js\u0022,\u0022css\\/anytime.dist.css\u0022:\u0022prod\\/css\\/anytime.b6eda587.dist.css\u0022,\u0022js\\/anytime.dist.js\u0022:\u0022prod\\/js\\/anytime.b6eda587.dist.js\u0022,\u0022css\\/gtky-questions.dist.css\u0022:\u0022prod\\/css\\/gtky-questions.b1ef2612.dist.css\u0022,\u0022js\\/gtky-questions.dist.js\u0022:\u0022prod\\/js\\/gtky-questions.b1ef2612.dist.js\u0022,\u0022css\\/benefit-history-table.dist.css\u0022:\u0022prod\\/css\\/benefit-history-table.8387289f.dist.css\u0022,\u0022js\\/benefit-history-table.dist.js\u0022:\u0022prod\\/js\\/benefit-history-table.8387289f.dist.js\u0022,\u0022css\\/benefit-plans-table.dist.css\u0022:\u0022prod\\/css\\/benefit-plans-table.13b1409c.dist.css\u0022,\u0022js\\/benefit-plans-table.dist.js\u0022:\u0022prod\\/js\\/benefit-plans-table.13b1409c.dist.js\u0022,\u0022css\\/benefits-beneficiaries.dist.css\u0022:\u0022prod\\/css\\/benefits-beneficiaries.39bd5720.dist.css\u0022,\u0022js\\/benefits-beneficiaries.dist.js\u0022:\u0022prod\\/js\\/benefits-beneficiaries.39bd5720.dist.js\u0022,\u0022css\\/benefits-dependents-table.dist.css\u0022:\u0022prod\\/css\\/benefits-dependents-table.97991251.dist.css\u0022,\u0022js\\/benefits-dependents-table.dist.js\u0022:\u0022prod\\/js\\/benefits-dependents-table.97991251.dist.js\u0022,\u0022css\\/plans-missing-active-plan-year-banner.dist.css\u0022:\u0022prod\\/css\\/plans-missing-active-plan-year-banner.28eed1a6.dist.css\u0022,\u0022js\\/plans-missing-active-plan-year-banner.dist.js\u0022:\u0022prod\\/js\\/plans-missing-active-plan-year-banner.28eed1a6.dist.js\u0022,\u0022js\\/employee-looping.dist.js\u0022:\u0022prod\\/js\\/employee-looping.f68cf485.dist.js\u0022,\u0022css\\/employees.dist.css\u0022:\u0022prod\\/css\\/employees.302cdbcb.dist.css\u0022,\u0022js\\/employees.dist.js\u0022:\u0022prod\\/js\\/employees.302cdbcb.dist.js\u0022,\u0022css\\/gtky-interstitial.dist.css\u0022:\u0022prod\\/css\\/gtky-interstitial.64c64b4f.dist.css\u0022,\u0022js\\/gtky-interstitial.dist.js\u0022:\u0022prod\\/js\\/gtky-interstitial.64c64b4f.dist.js\u0022,\u0022css\\/org-chart-export.dist.css\u0022:\u0022prod\\/css\\/org-chart-export.941237b2.dist.css\u0022,\u0022js\\/org-chart-export.dist.js\u0022:\u0022prod\\/js\\/org-chart-export.941237b2.dist.js\u0022,\u0022css\\/org-chart.dist.css\u0022:\u0022prod\\/css\\/org-chart.ff6c8ed3.dist.css\u0022,\u0022js\\/org-chart.dist.js\u0022:\u0022prod\\/js\\/org-chart.ff6c8ed3.dist.js\u0022,\u0022css\\/performance.dist.css\u0022:\u0022prod\\/css\\/performance.2077df4d.dist.css\u0022,\u0022js\\/performance.dist.js\u0022:\u0022prod\\/js\\/performance.2077df4d.dist.js\u0022,\u0022css\\/time-off.dist.css\u0022:\u0022prod\\/css\\/time-off.7e985ae0.dist.css\u0022,\u0022js\\/time-off.dist.js\u0022:\u0022prod\\/js\\/time-off.7e985ae0.dist.js\u0022,\u0022css\\/print_timesheet_view.dist.css\u0022:\u0022prod\\/css\\/print_timesheet_view.bc33f635.dist.css\u0022,\u0022js\\/print_timesheet_view.dist.js\u0022:\u0022prod\\/js\\/print_timesheet_view.bc33f635.dist.js\u0022,\u0022css\\/timesheet.dist.css\u0022:\u0022prod\\/css\\/timesheet.90dac569.dist.css\u0022,\u0022js\\/timesheet.dist.js\u0022:\u0022prod\\/js\\/timesheet.90dac569.dist.js\u0022,\u0022js\\/print_total_rewards_view.dist.js\u0022:\u0022prod\\/js\\/print_total_rewards_view.876c546b.dist.js\u0022,\u0022js\\/trend-graph.dist.js\u0022:\u0022prod\\/js\\/trend-graph.3636aea9.dist.js\u0022,\u0022css\\/error-pages.dist.css\u0022:\u0022prod\\/css\\/error-pages.4d2e99c8.dist.css\u0022,\u0022js\\/error-pages.dist.js\u0022:\u0022prod\\/js\\/error-pages.4d2e99c8.dist.js\u0022,\u0022css\\/feeds.dist.css\u0022:\u0022prod\\/css\\/feeds.c480eb75.dist.css\u0022,\u0022js\\/feeds.dist.js\u0022:\u0022prod\\/js\\/feeds.c480eb75.dist.js\u0022,\u0022css\\/file-importer.dist.css\u0022:\u0022prod\\/css\\/file-importer.b1ebc882.dist.css\u0022,\u0022js\\/file-importer.dist.js\u0022:\u0022prod\\/js\\/file-importer.b1ebc882.dist.js\u0022,\u0022css\\/file_export.dist.css\u0022:\u0022prod\\/css\\/file_export.42e9a88e.dist.css\u0022,\u0022js\\/file_export.dist.js\u0022:\u0022prod\\/js\\/file_export.42e9a88e.dist.js\u0022,\u0022css\\/files.dist.css\u0022:\u0022prod\\/css\\/files.54679619.dist.css\u0022,\u0022js\\/files.dist.js\u0022:\u0022prod\\/js\\/files.54679619.dist.js\u0022,\u0022css\\/global.dist.css\u0022:\u0022prod\\/css\\/global.a3c1730c.dist.css\u0022,\u0022js\\/global.dist.js\u0022:\u0022prod\\/js\\/global.a3c1730c.dist.js\u0022,\u0022js\\/head.dist.js\u0022:\u0022prod\\/js\\/head.cac9f951.dist.js\u0022,\u0022js\\/header.dist.js\u0022:\u0022prod\\/js\\/header.64611500.dist.js\u0022,\u0022js\\/polyfill.dist.js\u0022:\u0022prod\\/js\\/polyfill.06f37edb.dist.js\u0022,\u0022css\\/global-encore-legacy.dist.css\u0022:\u0022prod\\/css\\/global-encore-legacy.9e2a9994.dist.css\u0022,\u0022js\\/global-encore-legacy.dist.js\u0022:\u0022prod\\/js\\/global-encore-legacy.9e2a9994.dist.js\u0022,\u0022css\\/global-encore.dist.css\u0022:\u0022prod\\/css\\/global-encore.c9f843e9.dist.css\u0022,\u0022js\\/global-encore.dist.js\u0022:\u0022prod\\/js\\/global-encore.c9f843e9.dist.js\u0022,\u0022css\\/global-gh.dist.css\u0022:\u0022prod\\/css\\/global-gh.62a199f0.dist.css\u0022,\u0022js\\/global-gh.dist.js\u0022:\u0022prod\\/js\\/global-gh.62a199f0.dist.js\u0022,\u0022css\\/global-jade.dist.css\u0022:\u0022prod\\/css\\/global-jade.34e3dbcc.dist.css\u0022,\u0022js\\/global-jade.dist.js\u0022:\u0022prod\\/js\\/global-jade.34e3dbcc.dist.js\u0022,\u0022css\\/global-legacy.dist.css\u0022:\u0022prod\\/css\\/global-legacy.02b69b7c.dist.css\u0022,\u0022js\\/global-legacy.dist.js\u0022:\u0022prod\\/js\\/global-legacy.02b69b7c.dist.js\u0022,\u0022js\\/api-calls.dist.js\u0022:\u0022prod\\/js\\/api-calls.1250cda1.dist.js\u0022,\u0022css\\/billing.dist.css\u0022:\u0022prod\\/css\\/billing.d3c04649.dist.css\u0022,\u0022js\\/billing.dist.js\u0022:\u0022prod\\/js\\/billing.d3c04649.dist.js\u0022,\u0022css\\/greenhouse-company-payroll.dist.css\u0022:\u0022prod\\/css\\/greenhouse-company-payroll.3b8315ea.dist.css\u0022,\u0022js\\/greenhouse-company-payroll.dist.js\u0022:\u0022prod\\/js\\/greenhouse-company-payroll.3b8315ea.dist.js\u0022,\u0022css\\/greenhouse-micro.dist.css\u0022:\u0022prod\\/css\\/greenhouse-micro.0defd86b.dist.css\u0022,\u0022js\\/greenhouse-micro.dist.js\u0022:\u0022prod\\/js\\/greenhouse-micro.0defd86b.dist.js\u0022,\u0022css\\/greenhouse.dist.css\u0022:\u0022prod\\/css\\/greenhouse.a1e210a6.dist.css\u0022,\u0022js\\/greenhouse.dist.js\u0022:\u0022prod\\/js\\/greenhouse.a1e210a6.dist.js\u0022,\u0022css\\/payroll-tools.dist.css\u0022:\u0022prod\\/css\\/payroll-tools.a7740fc2.dist.css\u0022,\u0022js\\/payroll-tools.dist.js\u0022:\u0022prod\\/js\\/payroll-tools.a7740fc2.dist.js\u0022,\u0022js\\/report-sticky-nav.dist.js\u0022:\u0022prod\\/js\\/report-sticky-nav.e8a561ab.dist.js\u0022,\u0022css\\/hiring.dist.css\u0022:\u0022prod\\/css\\/hiring.f7b4a072.dist.css\u0022,\u0022js\\/hiring.dist.js\u0022:\u0022prod\\/js\\/hiring.f7b4a072.dist.js\u0022,\u0022css\\/offer-letter-finalize.dist.css\u0022:\u0022prod\\/css\\/offer-letter-finalize.2391c906.dist.css\u0022,\u0022js\\/offer-letter-finalize.dist.js\u0022:\u0022prod\\/js\\/offer-letter-finalize.2391c906.dist.js\u0022,\u0022css\\/home.dist.css\u0022:\u0022prod\\/css\\/home.d9a4f596.dist.css\u0022,\u0022js\\/home.dist.js\u0022:\u0022prod\\/js\\/home.d9a4f596.dist.js\u0022,\u0022css\\/inbox-calendar.dist.css\u0022:\u0022prod\\/css\\/inbox-calendar.87040ecd.dist.css\u0022,\u0022js\\/inbox-calendar.dist.js\u0022:\u0022prod\\/js\\/inbox-calendar.87040ecd.dist.js\u0022,\u0022css\\/inbox.dist.css\u0022:\u0022prod\\/css\\/inbox.eb138598.dist.css\u0022,\u0022js\\/inbox.dist.js\u0022:\u0022prod\\/js\\/inbox.eb138598.dist.js\u0022,\u0022css\\/jobs.dist.css\u0022:\u0022prod\\/css\\/jobs.5181ac61.dist.css\u0022,\u0022js\\/jobs.dist.js\u0022:\u0022prod\\/js\\/jobs.5181ac61.dist.js\u0022,\u0022js\\/Donut.dist.js\u0022:\u0022prod\\/js\\/Donut.c8c98445.dist.js\u0022,\u0022css\\/locations.dist.css\u0022:\u0022prod\\/css\\/locations.4b52f994.dist.css\u0022,\u0022js\\/locations.dist.js\u0022:\u0022prod\\/js\\/locations.4b52f994.dist.js\u0022,\u0022js\\/ProgressBar.dist.js\u0022:\u0022prod\\/js\\/ProgressBar.eee87448.dist.js\u0022,\u0022js\\/report-filter.dist.js\u0022:\u0022prod\\/js\\/report-filter.37873a10.dist.js\u0022,\u0022css\\/login-gh.dist.css\u0022:\u0022prod\\/css\\/login-gh.5e9c1e7c.dist.css\u0022,\u0022js\\/login-gh.dist.js\u0022:\u0022prod\\/js\\/login-gh.5e9c1e7c.dist.js\u0022,\u0022css\\/login.dist.css\u0022:\u0022prod\\/css\\/login.8464c7d6.dist.css\u0022,\u0022js\\/login.dist.js\u0022:\u0022prod\\/js\\/login.8464c7d6.dist.js\u0022,\u0022css\\/multi-factor-auth.dist.css\u0022:\u0022prod\\/css\\/multi-factor-auth.2dc73671.dist.css\u0022,\u0022js\\/multi-factor-auth.dist.js\u0022:\u0022prod\\/js\\/multi-factor-auth.2dc73671.dist.js\u0022,\u0022css\\/prelogin.dist.css\u0022:\u0022prod\\/css\\/prelogin.307fb6e2.dist.css\u0022,\u0022js\\/prelogin.dist.js\u0022:\u0022prod\\/js\\/prelogin.307fb6e2.dist.js\u0022,\u0022js\\/tos.dist.js\u0022:\u0022prod\\/js\\/tos.760bb27e.dist.js\u0022,\u0022js\\/trusted-browser.dist.js\u0022:\u0022prod\\/js\\/trusted-browser.e4fe516b.dist.js\u0022,\u0022css\\/logged-out.dist.css\u0022:\u0022prod\\/css\\/logged-out.d4d12b3f.dist.css\u0022,\u0022js\\/logged-out.dist.js\u0022:\u0022prod\\/js\\/logged-out.d4d12b3f.dist.js\u0022,\u0022css\\/manage.dist.css\u0022:\u0022prod\\/css\\/manage.9e7df9d8.dist.css\u0022,\u0022js\\/manage.dist.js\u0022:\u0022prod\\/js\\/manage.9e7df9d8.dist.js\u0022,\u0022css\\/payroll.dist.css\u0022:\u0022prod\\/css\\/payroll.a4735864.dist.css\u0022,\u0022js\\/payroll.dist.js\u0022:\u0022prod\\/js\\/payroll.a4735864.dist.js\u0022,\u0022css\\/po.dist.css\u0022:\u0022prod\\/css\\/po.7a698892.dist.css\u0022,\u0022js\\/po.dist.js\u0022:\u0022prod\\/js\\/po.7a698892.dist.js\u0022,\u0022css\\/power_edit.dist.css\u0022:\u0022prod\\/css\\/power_edit.74eebd94.dist.css\u0022,\u0022js\\/power_edit.dist.js\u0022:\u0022prod\\/js\\/power_edit.74eebd94.dist.js\u0022,\u0022css\\/pto.dist.css\u0022:\u0022prod\\/css\\/pto.96f25d76.dist.css\u0022,\u0022js\\/pto.dist.js\u0022:\u0022prod\\/js\\/pto.96f25d76.dist.js\u0022,\u0022css\\/audit-trail-report.dist.css\u0022:\u0022prod\\/css\\/audit-trail-report.a5782621.dist.css\u0022,\u0022js\\/audit-trail-report.dist.js\u0022:\u0022prod\\/js\\/audit-trail-report.a5782621.dist.js\u0022,\u0022css\\/report-wizard.dist.css\u0022:\u0022prod\\/css\\/report-wizard.a38edc41.dist.css\u0022,\u0022js\\/report-wizard.dist.js\u0022:\u0022prod\\/js\\/report-wizard.a38edc41.dist.js\u0022,\u0022css\\/reports.dist.css\u0022:\u0022prod\\/css\\/reports.0ac5c1b0.dist.css\u0022,\u0022js\\/reports.dist.js\u0022:\u0022prod\\/js\\/reports.0ac5c1b0.dist.js\u0022,\u0022css\\/reseller.dist.css\u0022:\u0022prod\\/css\\/reseller.97506d7e.dist.css\u0022,\u0022js\\/reseller.dist.js\u0022:\u0022prod\\/js\\/reseller.97506d7e.dist.js\u0022,\u0022css\\/rightsignature.dist.css\u0022:\u0022prod\\/css\\/rightsignature.2f9cd331.dist.css\u0022,\u0022js\\/rightsignature.dist.js\u0022:\u0022prod\\/js\\/rightsignature.2f9cd331.dist.js\u0022,\u0022css\\/secure-file-download.dist.css\u0022:\u0022prod\\/css\\/secure-file-download.fce1963e.dist.css\u0022,\u0022js\\/secure-file-download.dist.js\u0022:\u0022prod\\/js\\/secure-file-download.fce1963e.dist.js\u0022,\u0022css\\/self_onboarding_login.dist.css\u0022:\u0022prod\\/css\\/self_onboarding_login.38e6183d.dist.css\u0022,\u0022js\\/self_onboarding_login.dist.js\u0022:\u0022prod\\/js\\/self_onboarding_login.38e6183d.dist.js\u0022,\u0022css\\/self_onboarding.dist.css\u0022:\u0022prod\\/css\\/self_onboarding.f664d34f.dist.css\u0022,\u0022js\\/self_onboarding.dist.js\u0022:\u0022prod\\/js\\/self_onboarding.f664d34f.dist.js\u0022,\u0022css\\/settings-apps.dist.css\u0022:\u0022prod\\/css\\/settings-apps.9e782632.dist.css\u0022,\u0022js\\/settings-apps.dist.js\u0022:\u0022prod\\/js\\/settings-apps.9e782632.dist.js\u0022,\u0022css\\/settings-benefits-bulk-editing.dist.css\u0022:\u0022prod\\/css\\/settings-benefits-bulk-editing.cc1c7be5.dist.css\u0022,\u0022js\\/settings-benefits-bulk-editing.dist.js\u0022:\u0022prod\\/js\\/settings-benefits-bulk-editing.cc1c7be5.dist.js\u0022,\u0022css\\/settings-benefits-bulk-enroll.dist.css\u0022:\u0022prod\\/css\\/settings-benefits-bulk-enroll.982fdea1.dist.css\u0022,\u0022js\\/settings-benefits-bulk-enroll.dist.js\u0022:\u0022prod\\/js\\/settings-benefits-bulk-enroll.982fdea1.dist.js\u0022,\u0022css\\/add-edit-pay-schedule.dist.css\u0022:\u0022prod\\/css\\/add-edit-pay-schedule.008d3780.dist.css\u0022,\u0022js\\/add-edit-pay-schedule.dist.js\u0022:\u0022prod\\/js\\/add-edit-pay-schedule.008d3780.dist.js\u0022,\u0022js\\/holidays.dist.js\u0022:\u0022prod\\/js\\/holidays.d1e45dac.dist.js\u0022,\u0022css\\/project-settings.dist.css\u0022:\u0022prod\\/css\\/project-settings.239050cb.dist.css\u0022,\u0022js\\/project-settings.dist.js\u0022:\u0022prod\\/js\\/project-settings.239050cb.dist.js\u0022,\u0022js\\/settings-pto-import-select-file.dist.js\u0022:\u0022prod\\/js\\/settings-pto-import-select-file.a13ddb9e.dist.js\u0022,\u0022js\\/settings-pto-import.dist.js\u0022:\u0022prod\\/js\\/settings-pto-import.a172f56c.dist.js\u0022,\u0022css\\/settings.dist.css\u0022:\u0022prod\\/css\\/settings.77b77d47.dist.css\u0022,\u0022js\\/settings.dist.js\u0022:\u0022prod\\/js\\/settings.77b77d47.dist.js\u0022,\u0022css\\/style_guide.dist.css\u0022:\u0022prod\\/css\\/style_guide.1be170fe.dist.css\u0022,\u0022js\\/style_guide.dist.js\u0022:\u0022prod\\/js\\/style_guide.1be170fe.dist.js\u0022,\u0022css\\/employee_wellbeing.dist.css\u0022:\u0022prod\\/css\\/employee_wellbeing.9bef409e.dist.css\u0022,\u0022js\\/employee_wellbeing.dist.js\u0022:\u0022prod\\/js\\/employee_wellbeing.9bef409e.dist.js\u0022,\u0022css\\/enps.dist.css\u0022:\u0022prod\\/css\\/enps.65f19275.dist.css\u0022,\u0022js\\/enps.dist.js\u0022:\u0022prod\\/js\\/enps.65f19275.dist.js\u0022,\u0022css\\/time_tracking.dist.css\u0022:\u0022prod\\/css\\/time_tracking.f1f42f20.dist.css\u0022,\u0022js\\/time_tracking.dist.js\u0022:\u0022prod\\/js\\/time_tracking.f1f42f20.dist.js\u0022,\u0022js\\/common.dist.js\u0022:\u0022prod\\/js\\/common.d58e95c8.dist.js\u0022,\u0022css\\/payroll.routes.dist.css\u0022:\u0022prod\\/css\\/payroll.routes.3732119b.dist.css\u0022,\u0022js\\/payroll.routes.dist.js\u0022:\u0022prod\\/js\\/payroll.routes.3732119b.dist.js\u0022,\u0022js\\/pdfjs.dist.js\u0022:\u0022prod\\/js\\/pdfjs.63b20bf9.dist.js\u0022,\u0022css\\/esignatures-lazy.dist.css\u0022:\u0022prod\\/css\\/esignatures-lazy.215138f3.dist.css\u0022,\u0022js\\/esignatures-lazy.dist.js\u0022:\u0022prod\\/js\\/esignatures-lazy.215138f3.dist.js\u0022,\u0022js\\/cron-schedule.dist.js\u0022:\u0022prod\\/js\\/cron-schedule.1e4997c2.dist.js\u0022,\u0022js\\/trax-db-report-configs.dist.js\u0022:\u0022prod\\/js\\/trax-db-report-configs.1fc07c56.dist.js\u0022,\u0022js\\/trax-db-scheduled-exports.dist.js\u0022:\u0022prod\\/js\\/trax-db-scheduled-exports.003cf56a.dist.js\u0022,\u0022css\\/trax-db-scrubber.dist.css\u0022:\u0022prod\\/css\\/trax-db-scrubber.fbba6331.dist.css\u0022,\u0022js\\/trax-db-scrubber.dist.js\u0022:\u0022prod\\/js\\/trax-db-scrubber.fbba6331.dist.js\u0022,\u0022js\\/payroll-tools_potential-adjustments.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_potential-adjustments.446f67be.dist.js\u0022,\u0022js\\/payroll-tools_automation-center.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_automation-center.5b43bd4f.dist.js\u0022,\u0022js\\/payroll-tools_bank-holidays.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_bank-holidays.15efc77d.dist.js\u0022,\u0022js\\/payroll-tools_check-printing.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_check-printing.bd04538a.dist.js\u0022,\u0022js\\/payroll-tools_check-printing-history.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_check-printing-history.7cff42bc.dist.js\u0022,\u0022js\\/payroll-tools_client-file-uploader.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_client-file-uploader.d22af626.dist.js\u0022,\u0022js\\/payroll-tools_collections-and-refunds.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_collections-and-refunds.649fc604.dist.js\u0022,\u0022js\\/payroll-tools_garnishment-payments.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_garnishment-payments.712854bd.dist.js\u0022,\u0022js\\/payroll-tools_ledger-center.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_ledger-center.a438d4db.dist.js\u0022,\u0022js\\/payroll-tools_master-tax-data-sync.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_master-tax-data-sync.fbabde30.dist.js\u0022,\u0022js\\/payroll-tools_employee-paycycle-modification.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_employee-paycycle-modification.7e3dc955.dist.js\u0022,\u0022js\\/payroll-tools_nav-list.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_nav-list.178b204c.dist.js\u0022,\u0022js\\/payroll-tools_new-hire-reports.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_new-hire-reports.1b7d525e.dist.js\u0022,\u0022js\\/payroll-tools_npc-fees.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_npc-fees.e1b213ec.dist.js\u0022,\u0022js\\/payroll-tools_payment-center.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_payment-center.a053037d.dist.js\u0022,\u0022js\\/payroll-tools_tax-accounts-maintenance.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_tax-accounts-maintenance.4c22d90a.dist.js\u0022,\u0022js\\/payroll-tools_tax-payments.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_tax-payments.01366ec3.dist.js\u0022,\u0022css\\/payroll-tools_trax-only-clients.dist.css\u0022:\u0022prod\\/css\\/payroll-tools_trax-only-clients.21a2e32f.dist.css\u0022,\u0022js\\/payroll-tools_trax-only-clients.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_trax-only-clients.21a2e32f.dist.js\u0022,\u0022js\\/payroll-tools_trust-balance.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_trust-balance.995c7a20.dist.js\u0022,\u0022js\\/payroll-tools_w2-center.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_w2-center.783f09db.dist.js\u0022,\u0022js\\/payroll-tools_w2-information-sync.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_w2-information-sync.b42a7ab6.dist.js\u0022,\u0022js\\/payroll-tools_tax-variance-report.dist.js\u0022:\u0022prod\\/js\\/payroll-tools_tax-variance-report.5c7c6da3.dist.js\u0022,\u0022css\\/lazy-aca-benefit-history-report.dist.css\u0022:\u0022prod\\/css\\/lazy-aca-benefit-history-report.8ab08619.dist.css\u0022,\u0022js\\/lazy-aca-benefit-history-report.dist.js\u0022:\u0022prod\\/js\\/lazy-aca-benefit-history-report.8ab08619.dist.js\u0022,\u0022css\\/lazy-aca-monthly-totals-report.dist.css\u0022:\u0022prod\\/css\\/lazy-aca-monthly-totals-report.d1375aad.dist.css\u0022,\u0022js\\/lazy-aca-monthly-totals-report.dist.js\u0022:\u0022prod\\/js\\/lazy-aca-monthly-totals-report.d1375aad.dist.js\u0022,\u0022css\\/lazy-additions-terminations-report.dist.css\u0022:\u0022prod\\/css\\/lazy-additions-terminations-report.da2cda6c.dist.css\u0022,\u0022js\\/lazy-additions-terminations-report.dist.js\u0022:\u0022prod\\/js\\/lazy-additions-terminations-report.da2cda6c.dist.js\u0022,\u0022css\\/lazy-age-profile-report.dist.css\u0022:\u0022prod\\/css\\/lazy-age-profile-report.48a110ae.dist.css\u0022,\u0022js\\/lazy-age-profile-report.dist.js\u0022:\u0022prod\\/js\\/lazy-age-profile-report.48a110ae.dist.js\u0022,\u0022css\\/lazy-applicant-demographics-report.dist.css\u0022:\u0022prod\\/css\\/lazy-applicant-demographics-report.a4cd1735.dist.css\u0022,\u0022js\\/lazy-applicant-demographics-report.dist.js\u0022:\u0022prod\\/js\\/lazy-applicant-demographics-report.a4cd1735.dist.js\u0022,\u0022css\\/lazy-applicant-funnel-report.dist.css\u0022:\u0022prod\\/css\\/lazy-applicant-funnel-report.1c7e85d9.dist.css\u0022,\u0022js\\/lazy-applicant-funnel-report.dist.js\u0022:\u0022prod\\/js\\/lazy-applicant-funnel-report.1c7e85d9.dist.js\u0022,\u0022css\\/lazy-approved-hours-report.dist.css\u0022:\u0022prod\\/css\\/lazy-approved-hours-report.82ce4d7d.dist.css\u0022,\u0022js\\/lazy-approved-hours-report.dist.js\u0022:\u0022prod\\/js\\/lazy-approved-hours-report.82ce4d7d.dist.js\u0022,\u0022css\\/lazy-assessment-progress-report.dist.css\u0022:\u0022prod\\/css\\/lazy-assessment-progress-report.126f7e0b.dist.css\u0022,\u0022js\\/lazy-assessment-progress-report.dist.js\u0022:\u0022prod\\/js\\/lazy-assessment-progress-report.126f7e0b.dist.js\u0022,\u0022css\\/lazy-benefit-summary-report.dist.css\u0022:\u0022prod\\/css\\/lazy-benefit-summary-report.b227cceb.dist.css\u0022,\u0022js\\/lazy-benefit-summary-report.dist.js\u0022:\u0022prod\\/js\\/lazy-benefit-summary-report.b227cceb.dist.js\u0022,\u0022css\\/lazy-candidate-sources-report.dist.css\u0022:\u0022prod\\/css\\/lazy-candidate-sources-report.48cd11a8.dist.css\u0022,\u0022js\\/lazy-candidate-sources-report.dist.js\u0022:\u0022prod\\/js\\/lazy-candidate-sources-report.48cd11a8.dist.js\u0022,\u0022css\\/lazy-change-history-report.dist.css\u0022:\u0022prod\\/css\\/lazy-change-history-report.1983a0fd.dist.css\u0022,\u0022js\\/lazy-change-history-report.dist.js\u0022:\u0022prod\\/js\\/lazy-change-history-report.1983a0fd.dist.js\u0022,\u0022css\\/lazy-company-performance-report.dist.css\u0022:\u0022prod\\/css\\/lazy-company-performance-report.803bf19b.dist.css\u0022,\u0022js\\/lazy-company-performance-report.dist.js\u0022:\u0022prod\\/js\\/lazy-company-performance-report.803bf19b.dist.js\u0022,\u0022css\\/lazy-compensation-standard-report.dist.css\u0022:\u0022prod\\/css\\/lazy-compensation-standard-report.3ffdc149.dist.css\u0022,\u0022js\\/lazy-compensation-standard-report.dist.js\u0022:\u0022prod\\/js\\/lazy-compensation-standard-report.3ffdc149.dist.js\u0022,\u0022css\\/lazy-custom-report.dist.css\u0022:\u0022prod\\/css\\/lazy-custom-report.96b927bc.dist.css\u0022,\u0022js\\/lazy-custom-report.dist.js\u0022:\u0022prod\\/js\\/lazy-custom-report.96b927bc.dist.js\u0022,\u0022css\\/lazy-direct-deposit-report.dist.css\u0022:\u0022prod\\/css\\/lazy-direct-deposit-report.f8f224a9.dist.css\u0022,\u0022js\\/lazy-direct-deposit-report.dist.js\u0022:\u0022prod\\/js\\/lazy-direct-deposit-report.f8f224a9.dist.js\u0022,\u0022css\\/lazy-eeo-1-report.dist.css\u0022:\u0022prod\\/css\\/lazy-eeo-1-report.b41ca8b7.dist.css\u0022,\u0022js\\/lazy-eeo-1-report.dist.js\u0022:\u0022prod\\/js\\/lazy-eeo-1-report.b41ca8b7.dist.js\u0022,\u0022css\\/lazy-eeo1-details-report.dist.css\u0022:\u0022prod\\/css\\/lazy-eeo1-details-report.ab19d02a.dist.css\u0022,\u0022js\\/lazy-eeo1-details-report.dist.js\u0022:\u0022prod\\/js\\/lazy-eeo1-details-report.ab19d02a.dist.js\u0022,\u0022css\\/lazy-election-changes-report.dist.css\u0022:\u0022prod\\/css\\/lazy-election-changes-report.261c6e18.dist.css\u0022,\u0022js\\/lazy-election-changes-report.dist.js\u0022:\u0022prod\\/js\\/lazy-election-changes-report.261c6e18.dist.js\u0022,\u0022css\\/lazy-employee-performance-report.dist.css\u0022:\u0022prod\\/css\\/lazy-employee-performance-report.5b5d9f4e.dist.css\u0022,\u0022js\\/lazy-employee-performance-report.dist.js\u0022:\u0022prod\\/js\\/lazy-employee-performance-report.5b5d9f4e.dist.js\u0022,\u0022css\\/lazy-employee-project-hours-report.dist.css\u0022:\u0022prod\\/css\\/lazy-employee-project-hours-report.f308c533.dist.css\u0022,\u0022js\\/lazy-employee-project-hours-report.dist.js\u0022:\u0022prod\\/js\\/lazy-employee-project-hours-report.f308c533.dist.js\u0022,\u0022css\\/lazy-employee-turnover-report.dist.css\u0022:\u0022prod\\/css\\/lazy-employee-turnover-report.8af79a2c.dist.css\u0022,\u0022js\\/lazy-employee-turnover-report.dist.js\u0022:\u0022prod\\/js\\/lazy-employee-turnover-report.8af79a2c.dist.js\u0022,\u0022css\\/lazy-employee-wellbeing-report.dist.css\u0022:\u0022prod\\/css\\/lazy-employee-wellbeing-report.dfa729e5.dist.css\u0022,\u0022js\\/lazy-employee-wellbeing-report.dist.js\u0022:\u0022prod\\/js\\/lazy-employee-wellbeing-report.dfa729e5.dist.js\u0022,\u0022css\\/lazy-enps-report.dist.css\u0022:\u0022prod\\/css\\/lazy-enps-report.29733d95.dist.css\u0022,\u0022js\\/lazy-enps-report.dist.js\u0022:\u0022prod\\/js\\/lazy-enps-report.29733d95.dist.js\u0022,\u0022css\\/lazy-enrollment-window-election-summary-report.dist.css\u0022:\u0022prod\\/css\\/lazy-enrollment-window-election-summary-report.2e98e587.dist.css\u0022,\u0022js\\/lazy-enrollment-window-election-summary-report.dist.js\u0022:\u0022prod\\/js\\/lazy-enrollment-window-election-summary-report.2e98e587.dist.js\u0022,\u0022css\\/lazy-federal-withholding-report.dist.css\u0022:\u0022prod\\/css\\/lazy-federal-withholding-report.ff802f74.dist.css\u0022,\u0022js\\/lazy-federal-withholding-report.dist.js\u0022:\u0022prod\\/js\\/lazy-federal-withholding-report.ff802f74.dist.js\u0022,\u0022css\\/lazy-gender-profile-report.dist.css\u0022:\u0022prod\\/css\\/lazy-gender-profile-report.be80e4d2.dist.css\u0022,\u0022js\\/lazy-gender-profile-report.dist.js\u0022:\u0022prod\\/js\\/lazy-gender-profile-report.be80e4d2.dist.js\u0022,\u0022css\\/lazy-goals-report.dist.css\u0022:\u0022prod\\/css\\/lazy-goals-report.5ccd24c8.dist.css\u0022,\u0022js\\/lazy-goals-report.dist.js\u0022:\u0022prod\\/js\\/lazy-goals-report.5ccd24c8.dist.js\u0022,\u0022css\\/lazy-headcount-report.dist.css\u0022:\u0022prod\\/css\\/lazy-headcount-report.1a13c2da.dist.css\u0022,\u0022js\\/lazy-headcount-report.dist.js\u0022:\u0022prod\\/js\\/lazy-headcount-report.1a13c2da.dist.js\u0022,\u0022css\\/lazy-pay-info-missing-data-report.dist.css\u0022:\u0022prod\\/css\\/lazy-pay-info-missing-data-report.058c2c44.dist.css\u0022,\u0022js\\/lazy-pay-info-missing-data-report.dist.js\u0022:\u0022prod\\/js\\/lazy-pay-info-missing-data-report.058c2c44.dist.js\u0022,\u0022css\\/lazy-payroll-change-report.dist.css\u0022:\u0022prod\\/css\\/lazy-payroll-change-report.812d9383.dist.css\u0022,\u0022js\\/lazy-payroll-change-report.dist.js\u0022:\u0022prod\\/js\\/lazy-payroll-change-report.812d9383.dist.js\u0022,\u0022css\\/lazy-payroll-hours-report.dist.css\u0022:\u0022prod\\/css\\/lazy-payroll-hours-report.fccd949d.dist.css\u0022,\u0022js\\/lazy-payroll-hours-report.dist.js\u0022:\u0022prod\\/js\\/lazy-payroll-hours-report.fccd949d.dist.js\u0022,\u0022css\\/lazy-payroll-hours-detail-report.dist.css\u0022:\u0022prod\\/css\\/lazy-payroll-hours-detail-report.918a508b.dist.css\u0022,\u0022js\\/lazy-payroll-hours-detail-report.dist.js\u0022:\u0022prod\\/js\\/lazy-payroll-hours-detail-report.918a508b.dist.js\u0022,\u0022css\\/lazy-payroll-info-checkup-report.dist.css\u0022:\u0022prod\\/css\\/lazy-payroll-info-checkup-report.8338e338.dist.css\u0022,\u0022js\\/lazy-payroll-info-checkup-report.dist.js\u0022:\u0022prod\\/js\\/lazy-payroll-info-checkup-report.8338e338.dist.js\u0022,\u0022css\\/lazy-payroll-summary-report.dist.css\u0022:\u0022prod\\/css\\/lazy-payroll-summary-report.0769e5d2.dist.css\u0022,\u0022js\\/lazy-payroll-summary-report.dist.js\u0022:\u0022prod\\/js\\/lazy-payroll-summary-report.0769e5d2.dist.js\u0022,\u0022css\\/lazy-payroll-update-summary-report.dist.css\u0022:\u0022prod\\/css\\/lazy-payroll-update-summary-report.de96a66c.dist.css\u0022,\u0022js\\/lazy-payroll-update-summary-report.dist.js\u0022:\u0022prod\\/js\\/lazy-payroll-update-summary-report.de96a66c.dist.js\u0022,\u0022css\\/lazy-peer-feedback-status-report.dist.css\u0022:\u0022prod\\/css\\/lazy-peer-feedback-status-report.b1de5dc4.dist.css\u0022,\u0022js\\/lazy-peer-feedback-status-report.dist.js\u0022:\u0022prod\\/js\\/lazy-peer-feedback-status-report.b1de5dc4.dist.js\u0022,\u0022css\\/lazy-plan-year-election-summary-report.dist.css\u0022:\u0022prod\\/css\\/lazy-plan-year-election-summary-report.ab38f137.dist.css\u0022,\u0022js\\/lazy-plan-year-election-summary-report.dist.js\u0022:\u0022prod\\/js\\/lazy-plan-year-election-summary-report.ab38f137.dist.js\u0022,\u0022css\\/lazy-point-in-time-report.dist.css\u0022:\u0022prod\\/css\\/lazy-point-in-time-report.67a9e890.dist.css\u0022,\u0022js\\/lazy-point-in-time-report.dist.js\u0022:\u0022prod\\/js\\/lazy-point-in-time-report.67a9e890.dist.js\u0022,\u0022css\\/lazy-project-hours-report.dist.css\u0022:\u0022prod\\/css\\/lazy-project-hours-report.41cf2ba7.dist.css\u0022,\u0022js\\/lazy-project-hours-report.dist.js\u0022:\u0022prod\\/js\\/lazy-project-hours-report.41cf2ba7.dist.js\u0022,\u0022css\\/lazy-standard-list-report.dist.css\u0022:\u0022prod\\/css\\/lazy-standard-list-report.e632c824.dist.css\u0022,\u0022js\\/lazy-standard-list-report.dist.js\u0022:\u0022prod\\/js\\/lazy-standard-list-report.e632c824.dist.js\u0022,\u0022css\\/lazy-standard-report.dist.css\u0022:\u0022prod\\/css\\/lazy-standard-report.9ae1a482.dist.css\u0022,\u0022js\\/lazy-standard-report.dist.js\u0022:\u0022prod\\/js\\/lazy-standard-report.9ae1a482.dist.js\u0022,\u0022css\\/lazy-state-withholding-unemployment-report.dist.css\u0022:\u0022prod\\/css\\/lazy-state-withholding-unemployment-report.88993970.dist.css\u0022,\u0022js\\/lazy-state-withholding-unemployment-report.dist.js\u0022:\u0022prod\\/js\\/lazy-state-withholding-unemployment-report.88993970.dist.js\u0022,\u0022css\\/lazy-status-mismatch-report.dist.css\u0022:\u0022prod\\/css\\/lazy-status-mismatch-report.acbd656a.dist.css\u0022,\u0022js\\/lazy-status-mismatch-report.dist.js\u0022:\u0022prod\\/js\\/lazy-status-mismatch-report.acbd656a.dist.js\u0022,\u0022css\\/lazy-time-off-balances-report.dist.css\u0022:\u0022prod\\/css\\/lazy-time-off-balances-report.507fd4e8.dist.css\u0022,\u0022js\\/lazy-time-off-balances-report.dist.js\u0022:\u0022prod\\/js\\/lazy-time-off-balances-report.507fd4e8.dist.js\u0022,\u0022css\\/lazy-time-off-schedule-report.dist.css\u0022:\u0022prod\\/css\\/lazy-time-off-schedule-report.5b176e2c.dist.css\u0022,\u0022js\\/lazy-time-off-schedule-report.dist.js\u0022:\u0022prod\\/js\\/lazy-time-off-schedule-report.5b176e2c.dist.js\u0022,\u0022css\\/lazy-time-off-used-report.dist.css\u0022:\u0022prod\\/css\\/lazy-time-off-used-report.e8d32f53.dist.css\u0022,\u0022js\\/lazy-time-off-used-report.dist.js\u0022:\u0022prod\\/js\\/lazy-time-off-used-report.e8d32f53.dist.js\u0022,\u0022css\\/lazy-timesheet-entries-report.dist.css\u0022:\u0022prod\\/css\\/lazy-timesheet-entries-report.cb51537c.dist.css\u0022,\u0022js\\/lazy-timesheet-entries-report.dist.js\u0022:\u0022prod\\/js\\/lazy-timesheet-entries-report.cb51537c.dist.js\u0022,\u0022css\\/lazy-years-of-service.dist.css\u0022:\u0022prod\\/css\\/lazy-years-of-service.6ebad390.dist.css\u0022,\u0022js\\/lazy-years-of-service.dist.js\u0022:\u0022prod\\/js\\/lazy-years-of-service.6ebad390.dist.js\u0022,\u0022js\\/reports-shared.dist.js\u0022:\u0022prod\\/js\\/reports-shared.00d7f404.dist.js\u0022,\u0022js\\/vendor.dist.js\u0022:\u0022prod\\/js\\/vendor.a21f9af3.dist.js\u0022,\u0022js\\/fabric.dist.js\u0022:\u0022prod\\/js\\/fabric.6f95c195.dist.js\u0022}");
+	})();
+</script>
+    <script>
+        var GLOBAL_DATEPICKER_MASK = 'mm/dd/yy';
+		var ENCORE_ENABLED=true;
+    </script>
+    <script type="text/javascript" src="//staticfe.bamboohr.com/fe-main/prod/js/head.cac9f951.dist.js"></script>
+        
+
+<script id="sessionMessageJSON" type="application/json">
+	{
+		"text": "The email or password you entered is invalid.",
+		"type": "error"
+	}
+</script>
+
+    <script type="text/javascript">
+        $(function () {
+            if (window.location.hash === "#forgot") {
+                document.querySelectorAll('.flip-container .front,.flip-container .back').forEach((element) => {
+                    element.classList.add('forgot');
+                });
+            }
+        });
+        var CSRF_TOKEN = "54264184579e04dcf230822d9ed232f5ec04566d05a93c7f650a0255b6cd1585c65ece79e5e4755055e6f2bb702f215d04e5ef042cd5692517bc323d1ab4848c";
+    </script>
+</head>
+
+<body ba-theme="teal1"
+     data-fabric-mode="normal" data-fabric-theme="encore"    data-feature-toggles="timeOffAccrualFrequency policy_setup_v2 policy_setup_step3 time_off_category_rename time_off_importer_category_rename api_key_management time_off_accrual_rollback time_off_request_page_refactor time_off_carryover_expiration time_off_paystub_balances time_off_mutable_policies time_off_request_iso_dates ats_jobs_spa ats_offer_letter_drafts termsOfServiceInterstitial allow_customer_initiated_cancellation ats_candidates_spa ats_combined_indeed_feed display_email_status implementationGuide insights_grid_full_stack_toggle job_share_image ats_keyword_search minimum_carry_over_full_stack_toggle new_hire_gridlet_toggle one_time_extra_pay_import_full_stack_toggle owner_access_level missed_late_and_overdue_payroll_run_full_stack_toggle partial_holidays_full_stack_toggle custom-overtime dupProject time-tracking-reports-include-all-employees payroll_chat_widget_toggle payroll_warnings_full_stack_toggle po_header prevent_state_tax_errors_upstream profile_prototype reset_employee_payroll_data_full_stack_toggle saml_user_password_login time_tracking_trial exclude_employees_pbp_full_stack_toggle validate_and_start_payroll_pbp_full_stack_toggle auto_generate_file_export allow_customer_file_exports stop_cancellation limit_support_contact autosync_enabled_for_new_clients celebration_notifications change_history_report custom_reports_on_new_framework darth_huggles_updated_reports edit_applicant_source employee_documents_download employee_documents_page employee_emergency_contact_react employeePerformanceReport employeePerformanceReportTrends employee_project_hours_report employee_status_mismatch_notifications employee_tax_type_eligibility exempt_non_exempt future_scheduling geolocation greenhouse_payroll_resellers hide_birthday indirect_report_bitset multiple_entries_by_hour new_turnover_report payroll_access_level_sync payroll_benefits_deductions_refactor payroll_company_taxes payroll_events payroll_hours_override payroll_info_checkup_report payroll_other_post_tax_nbd_cld payroll_pay_type_simplification payroll_reminders payroll_settings payroll_tab_mvp payroll_update_summary_report payroll_use_employee_active_deduction_endpoint payroll_w4_2020 payroll_global_payees pay_type_changes pdf_tools_document_conversion prod_test_toggle project_tracking qf_react_conversion_employee remittance_id remittance_id_import_example state_ui_options timesheet_change_history timesheet_entries_export_update timesheet_entries time_off_bypass_limit_carryover time_off_new_emails time_off_new_engine time_off_pto_tab_refactor time_off_schedule_export_update time_off_split_spanning_requests trax_federal_and_direct_deposit_editing view_applicant_source payroll_terminated_ee_deduction_end_date_shift onboarding_gridlet_toggle reports_page_toggle payroll_gh_tools_use_sf_cases payinfo_access_level_perms prepay_quote_check_pending pay_invoice_for_payment_wallet PAYROLL_PERMISSIONS_REFACTOR UPDATER_UPDATES_TOGGLE STATICFE_UI_SRC TIME_OFF_POLICY_EDIT_HISTORY PAYROLL_TAX_SETTINGS_OVERRIDES ENPS_AI_SENTIMENT_RELEASE_TOGGLE PAYROLL_TAX_SETTINGS_OVERRIDES_VIEW CORE_TOGGLE_CUSTOM_FIELDS_SETTINGS_PAGE ATS_PO_APPLICATION_FORM ACCESS_LEVEL_HISTORY_DETAILS CORE_TOGGLE_CUSTOM_FIELD_BUILDER PAY_INFO_TAB_ACCESS_LEVELS PAYROLL_DEDUCTION_TOTALS ACCESS_LEVEL_PERMISSION_EXPORT EMPLOYEE_WELLBEING_SETTINGS_UPDATE_TOGGLE UPGRADING_TINY_MCE BENCHMARKING_OPT_OUT PAYROLL_WIRE_WARNING MOBILE_MFA_SUPPORT MOBILE_PASSWORD_RESET_SUPPORT LEGACY_ESIGNATURE_INSTANCES_SYNC CORE_TOGGLE_CUSTOM_FIELD_BUILDER_PHASE_TWO IMPLEMENTATION_DUE_DATE_NOTIFICATIONS IMPLEMENTATION_PERFORMANCE_MODULE TIME_OFF_POLICY_QUICK_ASSIGN ONE_CLICK_AUTH TURNOVER_BENCHMARKING_RELEASE_TOGGLE IMPLEMENTATION_TOTAL_REWARDS_TOGGLE BENEFITS_PLAN_WIZARD_REFACTOR_TOGGLE ENPS_PRO_REPORT_TOGGLE SERVICE_MODULE_HUB IMPLEMENTATION_CC_FILE_RESTRICTION CANCELLATION_DISCOUNT_MESSAGE PAYROLL_TAX_SETTINGS_PFML_UPDATES DATA_CLEANER_MATCH_EMPLOYEE_NUMBERS_TOGGLE DATA_EXPERIENCE_PLATFORM_TOGGLE ATS_CANDIDATE_PIPELINE HELP_DESK_FIX AUTO_SYNC_US_LOCATIONS_ONLY EARNED_USED_TABLE_IMPROVEMENTS CORE_TOGGLE_CUSTOM_FIELDS_SETTINGS_PAGE_REDESIGN DISPLAY_UPDATED_MARKETING_TEXT_PAYROLL_CENTER MONETIZATION_REDESIGN DISABLE_PAYROLL_RUSH_ACCEPTED_EMAIL ENABLE_VALUE_MAPPING_FOR_DATA_CLEANING PAYROLL_EARNINGS_ENGINE PROJECT_PAY PAYROLL_REVIEW_PAGE_PAYROLL_COST DISABLE_TRIAL_EMAILS ENPS_GATEWAY_SENTIMENT_TAGGER PAYROLL_IMPLEMENTATION_FEDERAL_WITHHOLDINGS_PAGE COMP_PLANNING IMPLEMENTATION_BENEFITS_TOGGLE CHAT_WIDGET_TRAX_INFO TIME_OFF_MODULE_UPDATE ADD_EMPLOYEES_MODULE_UPDATE AUTO_SYNC_ACTIVE_PAY_SCHEDULE FEEDBACK_API_EMPLOYEE_TOGGLE PAYROLL_REPORTS_JOURNAL_ENTRY ATS_AUTOMATED_EMAILS PAYROLL_REVIEW_PAGE_GROSS_WAGES_MODAL PAYROLL_REPORTS_JE_DATE_RANGE PROJECT_PAY_IMPLEMENTATION_STEP LOCATION_EDIT_TAX_UPDATE_TOGGLE EDIT_TIME_OFF_HISTORY BENEFITS_VOLUNTARY_LIFE_COVERAGE_SELECTOR REMOVE_QUICKSTART_CREDIT_TOGGLE IMPLEMENTATION_PACKAGE_QUESTIONNAIRE IMPLEMENTATION_PLAN_UPDATE_TOGGLE EXPANSION_PACKAGE_PRODUCTS_TOGGLE PAYROLL_PROJECT_PAY PERFORMANCE_FEEDBACK_MOBILE_TOGGLE ATS_ALWAYS_LOAD_WIZARD PAYROLL_HISTORY_PAGE PAYROLL_HISTORY_PAGE_FILTERS MAINTAIN_REQUIRED_TRAININGS_TABLE PAYROLL_EXTRA_PAY_IMPORT_DATAGRID TRAINING_TYPE_CLASS_REFACTOR SETTINGS_PAYROLL_JOURNAL_ENTRY_SUB_PAGE SELF_SERVE_PACKAGE_UPGRADES CUSTOM_FEEDBACK_QUESTIONS EMPLOYEE_ASSIGNMENT_HISTORY PAYROLL_IMP_GENERATE_TAXES_ACCESS PAYROLL_IMPLEMENTATION_IN_PRODUCT PAYROLL_EARNINGS_ENGINE_VERSION_UI ATS_DISQUALIFYING_QUESTION AUTOCORRECT_HOURS_IMPORTER_TOGGLE CORE_ANNOUNCEMENTS_UPDATE_TINY_MCE_TOGGLE CLARIFY_TIME_OFF_REQUEST_BALANCES CORE_TOGGLE_ADD_ENTRY_REDESIGN PAYROLL_USE_VERSION_TWO_HOURS_INPUT_REPORT DATA_CLEANER_ROW_DELETION REPORT_BUILDER_FILTER_TOGGLE EARLY_ACCESS_NEW_PERMISSIONS PAY_INFO_TAB_IOWA_STATE_WITHHOLDING_VIEW_ACCESS DATA_CLEANER_CHECK_REPORTING_LOOPS PPR_REPORT LEVELS_AND_BANDS_IMPORT BASIC_IMPORTER_SAVE_UPDATE HISTORY_IMPORTER_SAVE_UPDATE EMPLOYEE_COMMUNITY_HOME_WIDGET_LAYOUT PO_BILLING_PAGE PANEL_EXPORT_PROTOTYPE_TOGGLE PAYROLL_EXTRA_PAY_UPLOAD_IMPROVEMENTS PAYROLL_EXTRA_PAY_MANAGE_UPLOAD ATS_DEFAULT_DISPOSITION_DATA_TOGGLE PERFORMANCE_UPWARD_FEEDBACK SELF_SERVE_SAVE_ESTIMATE SELF_SERVE_PACKAGE_HOVER_INFO LEVELS_AND_BANDS_EDIT_MODE SHOW_ACTIVE_EMPLOYEES CORE_CUSTOM_TABS_EE_PROFILE PAYROLL_AUTO_FILL_WAGES_BTN_ACCESS ATS_CSV_IMPORTER_TOOL DYNAMIC_RELEASE_TOGGLES BENEFITS_VOLUNTARY_LIFE_RATE_CALCULATOR MOBILE_QR_LOGIN_LINK REVIEW_CYCLES_SETTINGS_TO_PO PAYROLL_IMPLEMENTATION_NPC_APPLICATION_UPDATES DEDUCTION_OFFSET_COMMUNICATION DOWNLOAD_TIMESHEET_FILE_NAME SELF_SERVE_UPGRADE_PRORATIONS SURFACE_MISSING_COMP_DATA PAYROLL_TAX_DOCUMENTS PAYROLL_NON_PROFIT_PRICING SETTINGS_PAYROLL_JOURNAL_ENTRY_PAGINATION SETTINGS_PAYROLL_CUSTOM_JOURNAL_ENTRIES_CONFIGS DEDUCTION_SYNC_PAY_SCHEDULE_CHANGE VERMONT_CHILD_CARE_TAX_VIEW_ACCESS ANSWERS_DOWNLOAD_CHAT_LOG BENEFITS_CRITICAL_ILLNESS_COVERAGE_AMOUNTS PAYROLL_COMPENSATION_BY_PAY_SCHEDULE PRE_PAYROLL_TIME_TRACKING_HOURS NEW_SALESFORCE_AUTH_FLOW CAN_RESET_MFA_TOGGLE DATA_CLEANER_ENCRYPTION_SENSITIVE_DATA REPORTING_SHARING LEARNUPON_NAME_ASSERTION UNLIMITED_PAYROLL_CATEGORIES ENCORE BENEFITS_REQD_DEPENDENT_FIELDS PAYROLL_IMPLEMENTATION_RECORD_ID_TO_CLIENT_ID AI_EMPLOYEE_DATA_TOGGLE COMPANY_SETUP_PHASE_ONE COMPANY_SETUP_PHASE_TWO PAYROLL_IMPLEMENTATION_CREATE_UNINITIALIZED_CLIENTS UPCOMING_ENDED_DEDUCTIONS DATA_CLEANER_PROJECT_PAY TERMINATE_UPDATE TABLE_PUT_HANDLER_SAVE_UPDATE ATS_EMPLOYEE_CHANGED_EVENT BENEFITS_QUALIFYING_LIFE_EVENT_TOGGLE TIME_OFF_PAYSTUB_CALCULATION_UPDATES BENEFITS_DEPENDENTS_AND_HISTORY_TABLES PAYROLL_WORKERS_COMP_MANAGEMENT EMPLOYMENT_STATUS_CRON_UPDATE ENCORE_EMAILS SETTINGS_PAYROLL_DELETE_JOURNAL_ENTRY TIME_OFF_PAUSE_ACCRUALS PAYROLL_STATE_TAX_MISMATCH_FIX MARKETO_FIELDS BENEFITS_EXPANDED_ANHW RUN_AUTO_SYNC_CLIENT_HOUR_TYPE BENEFITS_DISABILITY_AGE_BANDED_RATES EMPLOYEE_COMMUNITY_AUTH0_JWT DEDUCTION_SNAPSHOT BENEFITS_HOME_PAGE PAYROLL_PRORATE_SALARIES TOTAL_REWARDS_API_V2 AUTOSYNC_IMPROVED_PAY_SCHEDULE_LOOKUP DISABLE_DUE_DATES PAYROLL_DOWNLOAD_UNBALANCED_JOURNAL_ENTRY ANSWERS_DELETE_DATA REPORT_BUILDER_TOGGLE AUTOSYNC_EMPLOYEE_FILTERING PRE_PAYROLL_NON_TIME_TRACKING_HOURS BENEFITS_MOBILE_ENROLLMENT M1_CLEAR_DEMO_DATA ENPS_BENCHMARKING ATS_SETTINGS_PO_MIGRATION ACTIVATE_UPCOMING_AND_RECENTLY_ENDED_DEDUCTIONS SHIFT_DIFFERENTIAL ANSWERS_SHOW_CHAT_HISTORY COMPENSATION_BENCHMARKING TAX_ID_IN_FTP BENEFITS_VOLUNTARY_LIFE_ADD_RATE_CALCULATOR BENEFITS_VOLUNTARY_ADD_RATE_CALCULATOR GT_CLOCKS_INTEGRATION_BETA ANSWERS_DATACENTER_MIGRATIONS EMPLOYEE_DATA_ONBOARDING_MODULE REQUIRE_MFA_FOR_ALL_SUBSCRIBERS SETTINGS_PAYROLL_DELETE_PAY_SCHEDULE_FLOWS PAYROLL_IMPLEMENTATION_START_IMP_SOONER REQUIRE_MFA_NEW_ACCOUNT_PROVISIONER ONE_ON_ONE ACCESS_LEVEL_ASSIGNMENT_IMPROVEMENT REQUIRE_MFA_MAKE_MFA_IMMUTABLE PAYROLL_FAILED_TO_OPEN_UX_IMPROVEMENTS BENEFITS_PEOPLE_TAB_REMOVAL ATS_CANDIDATE_PROFILE_PO_MIGRATION PAYROLL_UPSELL_PAGE_BUG_FIX CORE_CUSTOM_TABLES_EE_PROFILE EMPLOYEE_COMMUNITY_RSS_FEED_REMOVAL TPAU_VIEW_ACCESS BENEFITS_ACCESS_LEVEL_REPORT_BEN_ADMIN_STANDARD_REPORT EMPLOYEE_COMMUNITY_PUSH_NOTIFICATIONS BENEFITS_CAPTURE_DISABILITY_COVERAGE_AMOUNTS ADD_EDIT_TAX_TYPE_TPAU TASK_PHASE_3_ONE_STEP_MODAL ESIGNATURE_V2_INBOX_TOGGLE PAYROLL_FED_TAX_EXEMPT_UPDATES SIGNUP_REQUEST_QUEUE_TOGGLE BENEFITS_CC_IMPROVED_ERROR_RESOLUTION PAYROLL_2_PCT_PAY_TYPE_VALIDATION ANSWERS_ANSWER_FORMATTING AGE_BENCHMARKING GENDER_BENCHMARKING BENEFITS_AB_MEDICAL_DEPENDENT_CONTRIBUTION_SPLIT EXTRA_PAY_PERMISSIONS REACTIVATE_ONE_TIME_DEDUCTION RESET_EMPLOYEE_EP_VALIDATE TAX_BUGS_CLEANUP DIRECT_DEPOSIT_INTERNAL_PERMISSIONS PAYROLL_JOURNAL_ENTRY_ACCOUNTING_INTEGRATION USER_SILO_PERMS_CHECKING BENEFIT_HISTORY_REDESIGN BENEFITS_TRACKING_ONBOARDING_MODULE PAYROLL_MODULE_PHASE_ONE PAYROLL_MODULE_PHASE_TWO QBOP_SIGNUP_QUEUE RESELLER_SIGNUP_QUEUE REIMAGINED_ONBOARDING_NOTIFICATIONS HOLIDAY_PAY ANSWERS_SUGGESTED_QUESTIONS PER_HOUR_WORKED_ACCRUAL DATASET_BENEFITS_TOGGLE ESIGNATURE_V2_OFFER_LETTERS_TOGGLE SETTINGS_PAYROLL_REORDER_CUSTOM_JE_CATEGORIES DATASET_ATS_TOGGLE PAYROLL_IMP_FOLDER_NOTIFICATIONS ADYEN_PAYMENT_GATEWAY ACCESS_LEVEL_TIME_OFF_WARNING MAINE_PFML_VIEW_ACCESS DATASET_EMPLOYEE_GOAL_TOGGLE MULTICURRENCY_BILLING QUERY_HISTORY_TABLE_WITH_END_DATES PAYROLL_APPROVE_PAYROLL_ENDPOINT ASK_BAMBOOHR_SLACK PLAID_ADOPTION_AND_SUFFICIENT_BALANCE PAYROLL_PAYSTUB_ENHANCEMENTS PAYROLL_PAY_STUB_LIST_SCIENTIST PAYROLL_PAY_STUB_SUMMARY_SCIENTIST MULTIPLE_SIGNUP_DB_HOSTS_TOGGLE FLEXIBLE_DEFAULT_HOURS_PER_DAY TIME_OFF_ONBOARDING_MODULE FEEDBACK_RATINGS_TOGGLE NEW_DEDUCTION_ANNUAL_MAX_VALIDATION ONBOARDING_EMERGENCY_CONTACT_STEP PAYROLL_MOBILE_PAY_STUB_LIST_SCIENTIST PAYROLL_MOBILE_PAY_STUB_SUMMARY_SCIENTIST ANSWERS_TRIAL_DATA SLACK_AGENTS_ASSISTANTS BENEFITS_EOI_ADMIN_VL_PLAN_CARD_UPDATE PAYROLL_FULL_ACH_LIMIT EMPLOYEE_REVIEW_V2 PRE_PAYROLL_DEDUCTIONS_PAGE UNASSIGN_TIME_OFF_POLICY_DATE PAYROLL_DIRECT_DEPOSIT_UPDATE_UX ONE_ON_ONE_NOTES_EXPORT_TOGGLE ATS_JOB_BOARD_REFRESH_BTN TIME_TRACKING_WEB_CLOCK_IN EXTRA_PAY_SETTINGS_PERMS EMPLOYEE_WELLBEING_BENCHMARKING UPDATED_ONBOARDING_WIDGET HISTORICAL_TIMESHEETS BENEFITS_OPEN_ENROLLMENT_PLAN_YEAR_WIZARD PAYROLL_PAYSTUB_ENHANCEMENTS_MODAL COMPANY_VERIFICATION_941_UPLOAD PAYROLL_DELAWARE_PFML_VIEW_ACCESS PAYROLL_ACH_LIMIT_EMAIL_FIX_REVERSE_WIRES ASK_BAMBOOHR_SLACK_FEEDBACK ESIGNATURES_V2_REPORTS_TOGGLE PAYROLL_MOBILE_PAYSTUBS_ENHANCEMENTS ONE_ON_ONE_DATA_DELETION_TOGGLE GOALS_TO_PO SELF_SERVE_TIME_TRACKING FE_MAIN_GLOBAL_LAYOUT PAYROLL_MODULE_PAYROLL_HISTORY COMPANY_SIMILARITY_BENCHMARKING PAYROLL_PBP_ADDRESS_VALIDATION_OPTIMIZATION TOTAL_REWARDS_CUSTOM_DISCLAIMER PAYROLL_PAY_INFO_TAB_DISPLAY ONE_ON_ONE_REMINDER_EMAILS AI_SUMMARIZED_FEEDBACK_TOGGLE BENEFITS_DATA_PARITY_PLAN_YEAR PAYROLL_HOURS_DETAIL_REPORT PACKAGE_MIGRATION_DISCOUNTS EQUITY_IMPORTER_IMPROVEMENTS SPLIT_COMPANY_SETUP BYOB_BRING_YOUR_OWN_BENCHMARK PAYROLL_JOURNAL_ENTRY_PAYCYCLE_FILTER PACKAGE_MIGRATION_UPGRADE PACKAGE_MIGRATION_DOWNGRADE PACKAGE_MIGRATION_MESSAGING PAYROLL_JOURNAL_ENTRY_BULK_ACCOUNT_MAPPING FILE_URL_DEEP_LINKS PAYROLL_NEWLY_APPROVED_HOURS_OPTIMIZATION PAYSTUB_UPDATES SPEED_UP_SIGNUP_TOGGLE PAYROLL_LOUISIANA_TAX_WITHHOLDING_VERSION BENEFITS_ELECTION_SUBMISSIONS_WARNING BENEFITS_EE_PROFILE_MOVE_DISPLAY_OF_COVERAGE_LEVELS BENEFITS_DISABILITY_BASED_ON_TOTAL_PAY CLOCK_IN_ID PACKAGE_MIGRATION_ONBOARDING_MODULE ASK_COMPANY_FILES_PLATFORM_INTEGRATION PAYROLL_TAX_EMPLOYEE_COUNTER_V2 ATS_CANDIDATE_PROFILE_PO_FINAL_RELEASE PAYROLL_JOURNAL_ENTRY_ACCT_INT_ASYNC_DATA_SEND ATS_CANDIDATES_TABLE_PO PAYROLL_REPORTS_SCIENTIST_TESTING BENEFITS_BASIC_LIFE_EDIT_COVERAGE PO_TRANSLATION_DELIVERABLE PCI_CODE_DEFENDER YEARS_OF_SERVICE_BENCHMARKING YEARS_OF_SERVICE_CHART PAYROLL_JOURNAL_ENTRY_XERO_INTEGRATION ALLOW_MFA_HANDLING_FOR_OAUTH_APPLICATIONS PREVENT_SCOPES_WITH_INTEGRATION DATASET_EMPLOYEE_TIME_TRACKING_TOGGLE DATASET_EMPLOYEE_HOLIDAY_TOGGLE PACKAGE_MIGRATION_ONBOARDING_WIDGET PERMS_SKIP_OWNER_CHECKS SIGNUP_SNAPSHOT_CREATION_CRON_TOGGLE TRIAL_CHECKLIST ADDITIONS_AND_TERMINATIONS_BENCHMARKING ADDITIONS_AND_TERMINATIONS_CHART PAYROLL_JOURNAL_ENTRY_BULK_GL_CODE_ASSIGNMENT OMNI_DASHBOARDS PAYROLL_AUTOSYNC_WAGE_FILTERING PAYROLL_DIRECT_DEPOSIT_UPDATE_READ_MORE ASK_V2 BENEFITS_EMPLOYEE_PLUS_CHILD_CL PAYROLL_NEWLY_APPROVED_HOURS_OPTIMIZATION_SCIENTIST ADD_JOB_OPENINGS_FOR_MIGRATION PAYROLL_REMINDERS_UPDATES ELITE_BILLING_PACKAGE PAYROLL_CORE_BILLING_CRON INVOICE_HISTORY_PO EOR_REMOTE_PRE_LAUNCH_MARKETING_PAGE HELP_MENU_SUNSET DIRECTORY_SETTINGS_TWIG_SUNSET OAUTH_PASSWORD_GRANT_FIX PAYROLL_IMPLEMENTATION_EE_REVIEW_SAVE_AND_NEXT ACCESS_LEVEL_OMNI_DASHBOARDS SALESFORCE_CONTACT_SYNC_FIX TAXATION_IS_THEFT NHP_Previewer_Update ELF_Phase_Two UpdateGTKYEmail AssignmentNotification timeOffRelabel newPaystub nonExemptWarningModals newTimesheetDetailsModal remittanceId qfReactConversionEmployee GenderSelectUpdates anybodyClock timesheetChange timeTrackingFutureScheduling zeroWage enpsSentimentTags enpsSentimentUI enpsSentimentScoreTrend enpsSentimentTop5 enpsSentimentMostMentioned enpsSentimentAllTags enpsSentimentResponsesLessThanSix reportTotalFormatterUpdates timeTrackingGeolocation employeeTimeOffRefactor mxMein suspendedCreditCardProcessFlow fileSectionSaving folderDeletingModal NHP_Previewer multipleEntriesByHour ttLocationUpdates 2021_annual_prepay_mvp manage_ACH_button selfServeJobOpenings deductionSyncWizard DownloadAllEmployeeDocuments payrollRegistration ElfDeepLinking getApprovedHours insights_add_delete benefitEnrollmentModalRefactor deductionHistoryModal fixDeductionQuestions paypalsRunPayrollHourOverrides paypalsRunPayrollPayRateOverrides paypalsBetaGiveFeedback">
+        <div id="sessionMessage">
+        <span class="messageIcon"></span>
+        <span id="message"></span>
+        <span class="messageCloseWrapper"><a href="#" id="messageClose"></a></span>
+    </div>
+    <div id="login-page" role="main" aria-label="login Page">
+        <div style="clear:both">
+            <div class="flip-container" ontouchstart="this.classList.toggle('hover');">
+                <div class="flipper">
+                    <div class="back">
+                        <div class="fab-Interstitial fab-Interstitial--overlayNothing">
+	<div class="fab-Interstitial__outer">
+		<div class="fab-Interstitial__inner">
+			<div class="fab-Interstitial__card FabLoginForm__wrapper ">
+				<div class="fab-Card fab-Card--sizeSmall">
+					<div class="fab-CardContent FabLogin__content">
+						<div class="FabLogin__form FabLogin__form--tight">
+														<div class="FabLogin__logo FabLogin__logo--noMarginBottom ">
+																	
+											<img
+			src="https://images7.bamboohr.com/582672/logos/cropped.jpg?v=29"
+			alt="Green Ocean Property Management"
+									style="max-height:60px;max-width:300px;height: auto;width:261px;"
+		/>
+			
+							</div>
+
+							<div class="ForgotPassword" role="main">
+	<p aria-label="Forgot Password Instructions" role="main" class="ForgotPassword__instruction FabLogin__logoTitle">Enter your email address and we&#039;ll send you a link to reset your password.</p>
+	<hr class="FabLogin__separator" />
+	<div class="fab-FormRow fab-marginBottom--24">
+		<div class="fab-InputWrapper" >
+			<input
+				id="femail"
+				class="fab-TextInput fab-TextInput--withNub fab-TextInput--width9 js-placeholderShimIgnore   fab-typography--medium"
+				placeholder="Email Address"
+				type="text"
+				value=""
+				data-placeholder-trigger="keydown"
+				aria-label="Email Address"
+				name="username"
+			/>
+			<span class="fab-TextInputNub">
+			<span class="fab-TextInputNub__icon">
+				<ba-icon encore-name="envelope-regular" encore-size="16" name="fab-envelope-20x16"></ba-icon>
+			</span>
+		</span>
+		</div>
+	</div>
+
+	<div class="fab-FormRow fab-FormRow--tight">
+					<button aria-label="Send Email" role="button" id="btnForgotSubmit" type="button" class="fab-Button fab-Button--medium">Send Email</button>
+		
+		<button aria-label="Never mind, I remember now" role="button"  class="fab-TextButton fab-TextButton--muted fab-TextButton--small fab-marginLeft--16 forgot fback phoneHide">Never mind, I remember now.</button>
+			</div>
+</div>
+													</div>
+					</div>
+					<div class="fab-Card__bottomGradient"></div>
+				</div>
+			</div>
+			<div class="fab-Interstitial__footer InterstitialFooter__mobile ">
+	<div class="fab-InterstitialFooter">
+		<div class="fab-InterstitialFooter__extra">
+			<div class="fab-InterstitialPrivacyAndTerms">
+				<a aria-label="Privacy Policy - link opens in a new tab" class="fab-InterstitialPrivacyAndTerms__link fab-Link fab-Link--muted" href="https://www.bamboohr.com/privacy.php" rel="noopener external nofollow noreferrer" target="_blank">Privacy Policy</a>
+				<span class="fab-InterstitialPrivacyAndTerms__dot">·</span>
+				<a aria-label="Terms of Service - link opens in a new tab" class="fab-InterstitialPrivacyAndTerms__link fab-Link fab-Link--muted" href="https://www.bamboohr.com/terms.php" rel="noopener external nofollow noreferrer" target="_blank">Terms of Service</a>
+			</div>
+		</div>
+		<a aria-label="BambooHR - link opens in a new tab" class="fab-InterstitialFooter__logo" href="https://www.bamboohr.com" rel="noopener external nofollow noreferrer" target="_blank">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3383 512" width="115px" height="17px">
+				<path fill='#777270' d="M472.4 162.2c-61.4 0-94.3 21.1-117.4 44l-6.3 6.6V0h-53.1v343.8c0 103.6 79.8 168.2 171.4 168.2c100.9 0 177.3-77.7 177.3-177.5c0-92.7-79.7-172.3-172-172.3zM467 462.8c-66.8 0-123.5-52.7-123.5-123.3s47.7-128.6 124.6-128.6 122.2 62.2 122.2 127.4c0 70.9-48 124.6-123.5 124.6zM967.1 220.4h-.7c-22.6-26.6-57.3-58-116.8-58c-97.6 0-171.4 73-171.4 174.1c0 106.5 79.3 175.5 168 175.5c55.3 0 95.6-26.6 119.5-55.3h1.4v43.7h53.9V173.3h-53.9v47.1zM850.3 462.9c-79.8 0-118.3-64.3-118.3-126.4s38.5-125.7 119.6-125.7c63.5 0 115.5 50.7 115.5 127.7c0 73-56.1 124.3-116.9 124.3zm593.8-300.5c-56.7 0-96.3 34.8-112.6 67.6c-13.7-38.2-55.3-67.6-106.5-67.6c-42.3 0-75.8 22.6-97.6 51.8h-1.4v-41h-54v327.1h54V318.7c0-68.3 34.8-107.9 89.4-107.9c48.5 0 77.8 41 77.8 94.9v194.6h54.7V318.7c0-75.1 43.1-107.9 88.8-107.9c55.3 0 78.5 44.3 78.5 94.9v194.6h53.9V309.9c0-96.3-51.2-147.5-125-147.5zm724.9 0c-98.4 0-174.8 73-174.8 174.1S2070 512 2169 512 2343.8 432.8 2343.8 336.5 2270.8 162.4 2169 162.4zm0 300.4c-62.8 0-118.8-52.6-118.8-126.3s49.2-125.6 118.8-125.6 118.8 56.7 118.8 125.6-49.8 126.3-118.8 126.3zM1788.3 162.2c-61.4 0-94.3 21.1-117.4 44l-6.3 6.6V25.6h-53.1v318.2c0 103.6 79.8 168.2 171.4 168.2c100.9 0 177.3-77.7 177.3-177.5c0-92.7-79.7-172.3-172-172.3zm-5.4 300.6c-66.8 0-123.5-52.7-123.5-123.3s47.7-128.6 124.6-128.6 122.2 62.2 122.2 127.4c0 70.9-48 124.6-123.5 124.6zM2979.4 312.9l-174 0 0-139.6-39.7 0 0 327.1 39.7 0 0-151.1 174 0 0 151.1 39.8 0 0-327.1-39.8 0 0 139.6zm304.5-43.7c0-45.1-29.3-95.9-110.8-95.9h-94.5v327.1h39.8V363.7h43.7l98.7 136.7h50.4l-103.1-140.5c41.2-8.1 75.7-44.1 75.7-90.6zm-165.5 58.1V209.8h59c42.3 0 65.3 21.1 65.3 59.5c0 31.7-21.6 58.1-64.8 58.1h-59.4zm263.8-141.9c-2-4.6-4.8-8.7-8.3-12c-3.5-3.4-7.5-6.1-12.1-8s-9.6-2.9-14.8-2.9s-10.2 .9-14.9 2.9s-8.7 4.6-12.3 8s-6.3 7.4-8.3 12s-3 9.7-3 15s1 10.6 3 15.3s4.8 8.7 8.3 12.1c3.5 3.5 7.6 6.1 12.3 8s9.6 2.9 14.9 2.9s10.2-.9 14.8-2.9c4.6-1.9 8.7-4.5 12.1-8s6.2-7.5 8.3-12.1c2-4.7 3-9.7 3-15.3s-1-10.4-3-15zm-6.3 28.1c-1.6 4-3.8 7.4-6.6 10.4c-2.8 2.9-6.1 5.2-10 6.9c-3.8 1.7-7.9 2.5-12.3 2.5s-8.7-.9-12.5-2.5s-7.2-4-10-6.9s-5-6.3-6.6-10.4c-1.6-4-2.4-8.3-2.4-13s.8-8.8 2.4-12.8s3.8-7.4 6.6-10.2s6.1-5.2 10-6.9c3.8-1.7 8-2.5 12.5-2.5s8.5 .8 12.3 2.5c3.8 1.7 7.1 4 10 6.9s5 6.3 6.6 10.2c1.6 4 2.4 8.2 2.4 12.8s-.8 9-2.4 13zm-14.4-13.6c2.2-1.9 3.4-4.8 3.4-8.8c0-4.3-1.3-7.5-3.8-9.6s-6.5-3.2-11.8-3.2h-17.2v44.6h6.9v-19.2h7.4l12.1 19.2h7.4l-12.8-19.7c3.3-.4 6.1-1.4 8.4-3.3zm-15.3-1.8h-7.2v-14.2h9.2c1.2 0 2.3 .1 3.5 .3c1.2 .1 2.2 .5 3.2 .9c.9 .5 1.7 1.2 2.2 2s.9 2.1 .9 3.5c0 1.8-.3 3.2-.9 4.1c-.6 1-1.5 1.7-2.6 2.2c-1.1 .5-2.3 .8-3.7 .9c-1.4 .1-2.9 .1-4.5 .1zm-793.7-35.6c-98.4 0-174.8 73-174.8 174.1s75.8 175.5 174.8 175.5 174.8-79.2 174.8-175.5-73.1-174.1-174.8-174.1zm0 300.4c-62.8 0-118.8-52.6-118.8-126.3s49.2-125.6 118.8-125.6 118.8 56.7 118.8 125.6-49.8 126.3-118.8 126.3zM127.2 0c-.4-.1-.6 .4-.4 .7c54.4 61.4 93.9 135.8 113.6 183.5c-25-26.8-48.7-54.6-75.4-73.1C110.9 73.3 53.9 54.7 .9 47.6c-.4 0-.6 .5-.3 .8c129.7 104 99.4 158.4 268.7 179.8c.3 0 .6-.3 .4-.6c-25-77.1-33.2-134.3-75.6-179.7C180.7 33.7 141.4 4.9 127.2 0z"/>
+			</svg>
+		</a>
+	</div>
+</div>
+		</div>
+	</div>
+	<div class="fab-Interstitial__overlay"></div>
+</div>
+                    </div>
+                    <div class="front">
+                        <div class="fab-Interstitial fab-Interstitial--overlayNothing">
+	<div class="fab-Interstitial__outer">
+		<div class="fab-Interstitial__inner">
+			<div class="fab-Interstitial__card">
+				<div class="fab-Card fab-Card--sizeSmall">
+					<div class="fab-CardContent FabLogin__content">
+						<div class="FabLogin__form">
+							<div class="FabLogin__logo ">
+																	
+											<img
+			src="https://images7.bamboohr.com/582672/logos/cropped.jpg?v=29"
+			alt="Green Ocean Property Management"
+									style="max-height:60px;max-width:300px;height: auto;width:261px;"
+		/>
+			
+							</div>
+
+							<script src="//cdnjs.cloudflare.com/ajax/libs/jstimezonedetect/1.0.4/jstz.min.js"></script>
+<script>
+	$(function () {
+		var tz = jstz.determine();
+		if (tz.name()) {
+			$('#tz').val(tz.name());
+		}
+	});
+
+	var loginErrors = {
+		noPass: 'Oops! Please enter your password in order to log in.',
+		noEmail: 'Oops! Please enter your email address in order to log in.',
+		none: 'Oops! Please enter your email address and password in order to log in.'
+	};
+</script>
+<form
+	action="/login.php"
+	method="post"
+	name="loginform"
+	class="BhrForms sso-login"
+>
+						<div id="googleSSO">
+				<button
+					type="button"
+					tabindex="1"
+					onclick="location.href='/googleLogin2.php'"
+					class="fab-Button fab-Button--biggie fab-Button--width9"
+				>
+					<span class="fab-Button__icon fab-Button__icon--left">
+						<ba-icon encore-name="google" encore-size="30" encore-color="white" name="fab-google-login-20x20"></ba-icon>
+					</span>
+					<span class="fab-Button__text">Log in with Google</span>
+				</button>
+			</div>
+		
+		
+        
+		
+		
+		
+					<div class="or-divider">
+				<span class="or-text">or</span>
+			</div>
+			<div class="normal-login-link-container">
+				<button tabindex="2" type="button" class="fab-TextButton fab-link js-normalLoginLink">
+					Log in with Email and Password
+				</button>
+			</div>
+			
+	<input type="hidden" name="tz" id="tz" value=""/>
+
+		<div id="passwordFields">
+		<div class="fab-FormRow">
+			<div class="fab-InputWrapper">
+				<input
+					aria-label="Email"
+					autocomplete="off"
+					class="fab-TextInput fab-TextInput--withNub fab-TextInput--width9  fab-typography--medium"
+					data-placeholder-trigger="keydown"
+					id="lemail"
+					name="username"
+					placeholder="Email Address"
+					tabindex="3"
+					size="medium"
+					type="text"
+					value=""
+				/>
+				<span class="fab-TextInputNub">
+					<span class="fab-TextInputNub__icon">
+						<ba-icon encore-name="envelope-regular" encore-size="16" name="fab-envelope-20x16"></ba-icon>
+					</span>
+				</span>
+			</div>
+		</div>
+
+		<div id="js-password_input_container_login"></div>
+
+		<input type="hidden" name="login" value="Log in"/>
+		<input type="hidden" name="CSRFToken" value="54264184579e04dcf230822d9ed232f5ec04566d05a93c7f650a0255b6cd1585c65ece79e5e4755055e6f2bb702f215d04e5ef042cd5692517bc323d1ab4848c"/>
+
+		<div class="login-actions" >
+			<button
+				tabindex="5"
+				type="submit"
+				class="fab-Button  fab-Button--width100  fab-Button--medium"
+			>
+				<span>Log In</span>
+			</button>
+		</div>
+	</div>
+</form>
+
+													</div>
+					</div>
+					<div class="fab-Card__bottomGradient"></div>
+				</div>
+			</div>
+
+			
+			<footer class="fab-Interstitial__footer">
+				<div class="fab-InterstitialFooter" role="main" aria-label="Privacy Policy and Terms of Service">
+					<div class="fab-InterstitialFooter__extra">
+						<div class="fab-InterstitialPrivacyAndTerms">
+							<a aria-label="Privacy Policy - link opens in a new tab" class="fab-InterstitialPrivacyAndTerms__link fab-Link fab-Link--muted" href="https://www.bamboohr.com/privacy.php" rel="noopener external nofollow noreferrer" target="_blank">Privacy Policy</a>
+							<span class="fab-InterstitialPrivacyAndTerms__dot">·</span>
+							<a aria-label="Terms of Service - link opens in a new tab" class="fab-InterstitialPrivacyAndTerms__link fab-Link fab-Link--muted" href="https://www.bamboohr.com/terms.php" rel="noopener external nofollow noreferrer" target="_blank">Terms of Service</a>
+						</div>
+					</div>
+					<a aria-label="BambooHR - link opens in a new tab" class="fab-InterstitialFooter__logo" href="https://www.bamboohr.com" rel="noopener external nofollow noreferrer" target="_blank">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3383 512" width="115px" height="17px">
+							<path fill='#777270' d="M472.4 162.2c-61.4 0-94.3 21.1-117.4 44l-6.3 6.6V0h-53.1v343.8c0 103.6 79.8 168.2 171.4 168.2c100.9 0 177.3-77.7 177.3-177.5c0-92.7-79.7-172.3-172-172.3zM467 462.8c-66.8 0-123.5-52.7-123.5-123.3s47.7-128.6 124.6-128.6 122.2 62.2 122.2 127.4c0 70.9-48 124.6-123.5 124.6zM967.1 220.4h-.7c-22.6-26.6-57.3-58-116.8-58c-97.6 0-171.4 73-171.4 174.1c0 106.5 79.3 175.5 168 175.5c55.3 0 95.6-26.6 119.5-55.3h1.4v43.7h53.9V173.3h-53.9v47.1zM850.3 462.9c-79.8 0-118.3-64.3-118.3-126.4s38.5-125.7 119.6-125.7c63.5 0 115.5 50.7 115.5 127.7c0 73-56.1 124.3-116.9 124.3zm593.8-300.5c-56.7 0-96.3 34.8-112.6 67.6c-13.7-38.2-55.3-67.6-106.5-67.6c-42.3 0-75.8 22.6-97.6 51.8h-1.4v-41h-54v327.1h54V318.7c0-68.3 34.8-107.9 89.4-107.9c48.5 0 77.8 41 77.8 94.9v194.6h54.7V318.7c0-75.1 43.1-107.9 88.8-107.9c55.3 0 78.5 44.3 78.5 94.9v194.6h53.9V309.9c0-96.3-51.2-147.5-125-147.5zm724.9 0c-98.4 0-174.8 73-174.8 174.1S2070 512 2169 512 2343.8 432.8 2343.8 336.5 2270.8 162.4 2169 162.4zm0 300.4c-62.8 0-118.8-52.6-118.8-126.3s49.2-125.6 118.8-125.6 118.8 56.7 118.8 125.6-49.8 126.3-118.8 126.3zM1788.3 162.2c-61.4 0-94.3 21.1-117.4 44l-6.3 6.6V25.6h-53.1v318.2c0 103.6 79.8 168.2 171.4 168.2c100.9 0 177.3-77.7 177.3-177.5c0-92.7-79.7-172.3-172-172.3zm-5.4 300.6c-66.8 0-123.5-52.7-123.5-123.3s47.7-128.6 124.6-128.6 122.2 62.2 122.2 127.4c0 70.9-48 124.6-123.5 124.6zM2979.4 312.9l-174 0 0-139.6-39.7 0 0 327.1 39.7 0 0-151.1 174 0 0 151.1 39.8 0 0-327.1-39.8 0 0 139.6zm304.5-43.7c0-45.1-29.3-95.9-110.8-95.9h-94.5v327.1h39.8V363.7h43.7l98.7 136.7h50.4l-103.1-140.5c41.2-8.1 75.7-44.1 75.7-90.6zm-165.5 58.1V209.8h59c42.3 0 65.3 21.1 65.3 59.5c0 31.7-21.6 58.1-64.8 58.1h-59.4zm263.8-141.9c-2-4.6-4.8-8.7-8.3-12c-3.5-3.4-7.5-6.1-12.1-8s-9.6-2.9-14.8-2.9s-10.2 .9-14.9 2.9s-8.7 4.6-12.3 8s-6.3 7.4-8.3 12s-3 9.7-3 15s1 10.6 3 15.3s4.8 8.7 8.3 12.1c3.5 3.5 7.6 6.1 12.3 8s9.6 2.9 14.9 2.9s10.2-.9 14.8-2.9c4.6-1.9 8.7-4.5 12.1-8s6.2-7.5 8.3-12.1c2-4.7 3-9.7 3-15.3s-1-10.4-3-15zm-6.3 28.1c-1.6 4-3.8 7.4-6.6 10.4c-2.8 2.9-6.1 5.2-10 6.9c-3.8 1.7-7.9 2.5-12.3 2.5s-8.7-.9-12.5-2.5s-7.2-4-10-6.9s-5-6.3-6.6-10.4c-1.6-4-2.4-8.3-2.4-13s.8-8.8 2.4-12.8s3.8-7.4 6.6-10.2s6.1-5.2 10-6.9c3.8-1.7 8-2.5 12.5-2.5s8.5 .8 12.3 2.5c3.8 1.7 7.1 4 10 6.9s5 6.3 6.6 10.2c1.6 4 2.4 8.2 2.4 12.8s-.8 9-2.4 13zm-14.4-13.6c2.2-1.9 3.4-4.8 3.4-8.8c0-4.3-1.3-7.5-3.8-9.6s-6.5-3.2-11.8-3.2h-17.2v44.6h6.9v-19.2h7.4l12.1 19.2h7.4l-12.8-19.7c3.3-.4 6.1-1.4 8.4-3.3zm-15.3-1.8h-7.2v-14.2h9.2c1.2 0 2.3 .1 3.5 .3c1.2 .1 2.2 .5 3.2 .9c.9 .5 1.7 1.2 2.2 2s.9 2.1 .9 3.5c0 1.8-.3 3.2-.9 4.1c-.6 1-1.5 1.7-2.6 2.2c-1.1 .5-2.3 .8-3.7 .9c-1.4 .1-2.9 .1-4.5 .1zm-793.7-35.6c-98.4 0-174.8 73-174.8 174.1s75.8 175.5 174.8 175.5 174.8-79.2 174.8-175.5-73.1-174.1-174.8-174.1zm0 300.4c-62.8 0-118.8-52.6-118.8-126.3s49.2-125.6 118.8-125.6 118.8 56.7 118.8 125.6-49.8 126.3-118.8 126.3zM127.2 0c-.4-.1-.6 .4-.4 .7c54.4 61.4 93.9 135.8 113.6 183.5c-25-26.8-48.7-54.6-75.4-73.1C110.9 73.3 53.9 54.7 .9 47.6c-.4 0-.6 .5-.3 .8c129.7 104 99.4 158.4 268.7 179.8c.3 0 .6-.3 .4-.6c-25-77.1-33.2-134.3-75.6-179.7C180.7 33.7 141.4 4.9 127.2 0z"/>
+						</svg>
+					</a>
+				</div>
+			</footer>
+		</div>
+	</div>
+	<div class="fab-Interstitial__overlay"></div>
+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="//staticfe.bamboohr.com/fe-main/prod/js/login.8464c7d6.dist.js"></script>
+
+        
+</body>
+
+</html>

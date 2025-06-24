@@ -1,0 +1,19 @@
+{
+  "job_title": "junior ai engineer",
+  "selected_role": "Junior Ai Engineer",
+  "tests_added": 4,
+  "total_tests_attempted": 5,
+  "gpt_suggested_tests": [
+    "Python",
+    "Machine Learning",
+    "AI",
+    "Data Science",
+    "Algorithms",
+    "TensorFlow",
+    "Neural Networks"
+  ],
+  "candidate_invite_link": null,
+  "assessment_url": "https://app.testlify.com/assessment/compose/683ee3aadef90d3f71007ec5/tests?search=Data+Science",
+  "created_at": "2025-06-03T17:32:15.021009",
+  "success": true
+}

@@ -1,0 +1,48 @@
+{
+  "job_id": "67",
+  "scraped_at": "2025-06-13T17:07:47.992610",
+  "total_candidates": 8,
+  "candidates": [
+    {
+      "id": "1674",
+      "name": "Monish Suresh",
+      "url": "/hiring/candidates/1674?list_type=job-openings"
+    },
+    {
+      "id": "1673",
+      "name": "Spandana Potti",
+      "url": "/hiring/candidates/1673?list_type=job-openings"
+    },
+    {
+      "id": "1672",
+      "name": "Nabina Singh",
+      "url": "/hiring/candidates/1672?list_type=job-openings"
+    },
+    {
+      "id": "1671",
+      "name": "Mohammed Zubair",
+      "url": "/hiring/candidates/1671?list_type=job-openings"
+    },
+    {
+      "id": "1669",
+      "name": "Jackson Hyde",
+      "url": "/hiring/candidates/1669?list_type=job-openings"
+    },
+    {
+      "id": "1666",
+      "name": "Elamparithi Elango",
+      "url": "/hiring/candidates/1666?list_type=job-openings"
+    },
+    {
+      "id": "1659",
+      "name": "nitish sai",
+      "url": "/hiring/candidates/1659?list_type=job-openings"
+    },
+    {
+      "id": "1657",
+      "name": "NTR sai",
+      "url": "/hiring/candidates/1657?list_type=job-openings"
+    }
+  ],
+  "scraper_version": "2.0.0_with_session_persistence"
+}

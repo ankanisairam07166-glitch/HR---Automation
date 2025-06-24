@@ -1,0 +1,22 @@
+{
+  "job_id": "67",
+  "scraped_at": "2025-06-07T22:27:13.930761",
+  "total_candidates": 3,
+  "candidates": [
+    {
+      "id": "1660",
+      "name": "Loris Salsi",
+      "url": "/hiring/candidates/1660?list_type=job-openings"
+    },
+    {
+      "id": "1659",
+      "name": "nitish sai",
+      "url": "/hiring/candidates/1659?list_type=job-openings"
+    },
+    {
+      "id": "1657",
+      "name": "NTR sai",
+      "url": "/hiring/candidates/1657?list_type=job-openings"
+    }
+  ]
+}

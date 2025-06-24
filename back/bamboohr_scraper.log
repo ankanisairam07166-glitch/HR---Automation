@@ -1,0 +1,2060 @@
+2025-06-10 18:06:05,353 - ERROR - Critical module import failed: cannot import name 'CONFIG_KEYS' from 'langchain_core.runnables.config' (C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\langchain_core\runnables\config.py)
+2025-06-10 18:11:19,795 - ERROR - Critical module import failed: No module named 'langchain_core'
+2025-06-10 18:12:56,400 - ERROR - Critical module import failed: No module named 'langchain_core'
+2025-06-10 18:13:23,767 - ERROR - Critical module import failed: cannot import name 'CONFIG_KEYS' from 'langchain_core.runnables.config' (C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\langchain_core\runnables\config.py)
+2025-06-10 21:09:03,904 - INFO - Environment validation passed
+2025-06-10 21:09:03,906 - INFO - TalentFlow AI Backend started successfully
+2025-06-10 21:09:03,956 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-06-10 21:09:03,958 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-10 21:13:50,336 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:13:50,345 - INFO - 127.0.0.1 - - [10/Jun/2025 21:13:50] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:13:50,360 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:13:50,365 - INFO - 127.0.0.1 - - [10/Jun/2025 21:13:50] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:13:50,572 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:13:50,622 - INFO - 127.0.0.1 - - [10/Jun/2025 21:13:50] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:13:50,742 - INFO - 127.0.0.1 - - [10/Jun/2025 21:13:50] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 21:13:50,818 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:13:50,822 - INFO - 127.0.0.1 - - [10/Jun/2025 21:13:50] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:13:51,014 - INFO - 127.0.0.1 - - [10/Jun/2025 21:13:51] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 21:13:54,139 - INFO - 127.0.0.1 - - [10/Jun/2025 21:13:54] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:13:54,304 - INFO - 127.0.0.1 - - [10/Jun/2025 21:13:54] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:13:57,713 - INFO - 127.0.0.1 - - [10/Jun/2025 21:13:57] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:13:57,972 - INFO - 127.0.0.1 - - [10/Jun/2025 21:13:57] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:14:20,587 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:14:20,597 - INFO - 127.0.0.1 - - [10/Jun/2025 21:14:20] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:14:20,641 - INFO - 127.0.0.1 - - [10/Jun/2025 21:14:20] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 21:14:23,535 - INFO - 127.0.0.1 - - [10/Jun/2025 21:14:23] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:17:53,770 - INFO - 127.0.0.1 - - [10/Jun/2025 21:17:53] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-10 21:30:45,743 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:30:45,747 - INFO - 127.0.0.1 - - [10/Jun/2025 21:30:45] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:30:45,761 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:30:45,767 - INFO - 127.0.0.1 - - [10/Jun/2025 21:30:45] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:30:46,039 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:30:46,049 - INFO - 127.0.0.1 - - [10/Jun/2025 21:30:46] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:30:46,102 - INFO - 127.0.0.1 - - [10/Jun/2025 21:30:46] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 21:30:46,295 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:30:46,299 - INFO - 127.0.0.1 - - [10/Jun/2025 21:30:46] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:30:46,417 - INFO - 127.0.0.1 - - [10/Jun/2025 21:30:46] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 21:30:49,809 - INFO - 127.0.0.1 - - [10/Jun/2025 21:30:49] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:30:50,045 - INFO - 127.0.0.1 - - [10/Jun/2025 21:30:50] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:30:53,159 - INFO - 127.0.0.1 - - [10/Jun/2025 21:30:53] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:30:53,790 - INFO - 127.0.0.1 - - [10/Jun/2025 21:30:53] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:33:11,058 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:33:11,062 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:11] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:33:11,070 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:33:11,072 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:11] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:33:11,376 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:33:11,386 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:11] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:33:11,422 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:11] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 21:33:11,630 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:33:11,633 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:11] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:33:11,774 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:11] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 21:33:14,029 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:14] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:33:14,223 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:14] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:33:17,517 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:17] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:33:17,754 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:17] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:33:41,367 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:33:41,381 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:41] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:33:41,423 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:41] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 21:33:44,269 - INFO - 127.0.0.1 - - [10/Jun/2025 21:33:44] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:34:11,367 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:34:11,368 - INFO - 127.0.0.1 - - [10/Jun/2025 21:34:11] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:34:11,419 - INFO - 127.0.0.1 - - [10/Jun/2025 21:34:11] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 21:34:13,786 - INFO - 127.0.0.1 - - [10/Jun/2025 21:34:13] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:39:19,101 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:39:19,105 - INFO - 127.0.0.1 - - [10/Jun/2025 21:39:19] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:39:19,124 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:39:19,126 - INFO - 127.0.0.1 - - [10/Jun/2025 21:39:19] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:39:19,403 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:39:19,410 - INFO - 127.0.0.1 - - [10/Jun/2025 21:39:19] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:39:19,469 - INFO - 127.0.0.1 - - [10/Jun/2025 21:39:19] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 21:39:19,646 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 21:39:19,648 - INFO - 127.0.0.1 - - [10/Jun/2025 21:39:19] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 21:39:19,789 - INFO - 127.0.0.1 - - [10/Jun/2025 21:39:19] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 21:39:22,571 - INFO - 127.0.0.1 - - [10/Jun/2025 21:39:22] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:39:22,745 - INFO - 127.0.0.1 - - [10/Jun/2025 21:39:22] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:39:25,825 - INFO - 127.0.0.1 - - [10/Jun/2025 21:39:25] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 21:39:26,038 - INFO - 127.0.0.1 - - [10/Jun/2025 21:39:26] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:03:35,284 - INFO - Environment validation passed
+2025-06-10 22:03:35,287 - INFO - TalentFlow AI Backend started successfully
+2025-06-10 22:03:35,334 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-06-10 22:03:35,335 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-10 22:06:41,531 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:06:41,533 - INFO - 127.0.0.1 - - [10/Jun/2025 22:06:41] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:06:41,547 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:06:41,550 - INFO - 127.0.0.1 - - [10/Jun/2025 22:06:41] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:06:41,751 - INFO - 127.0.0.1 - - [10/Jun/2025 22:06:41] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-10 22:06:41,789 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:06:41,805 - INFO - 127.0.0.1 - - [10/Jun/2025 22:06:41] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:06:41,845 - INFO - 127.0.0.1 - - [10/Jun/2025 22:06:41] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:06:42,034 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:06:42,036 - INFO - 127.0.0.1 - - [10/Jun/2025 22:06:42] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:06:42,143 - INFO - 127.0.0.1 - - [10/Jun/2025 22:06:42] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:06:43,897 - INFO - 127.0.0.1 - - [10/Jun/2025 22:06:43] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:06:43,991 - INFO - 127.0.0.1 - - [10/Jun/2025 22:06:43] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:06:46,297 - INFO - 127.0.0.1 - - [10/Jun/2025 22:06:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:06:46,614 - INFO - 127.0.0.1 - - [10/Jun/2025 22:06:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:08:28,602 - INFO - 127.0.0.1 - - [10/Jun/2025 22:08:28] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-10 22:15:36,767 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:15:36,771 - INFO - 127.0.0.1 - - [10/Jun/2025 22:15:36] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:15:36,778 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:15:36,781 - INFO - 127.0.0.1 - - [10/Jun/2025 22:15:36] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:15:36,787 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:15:36,788 - INFO - 127.0.0.1 - - [10/Jun/2025 22:15:36] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:15:36,794 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:15:36,797 - INFO - 127.0.0.1 - - [10/Jun/2025 22:15:36] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:15:39,151 - INFO - 127.0.0.1 - - [10/Jun/2025 22:15:39] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:15:41,686 - INFO - 127.0.0.1 - - [10/Jun/2025 22:15:41] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:15:43,975 - INFO - 127.0.0.1 - - [10/Jun/2025 22:15:43] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:15:46,474 - INFO - 127.0.0.1 - - [10/Jun/2025 22:15:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:15:48,594 - INFO - 127.0.0.1 - - [10/Jun/2025 22:15:48] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:15:51,480 - INFO - 127.0.0.1 - - [10/Jun/2025 22:15:51] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:18:09,925 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:18:09,929 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:09] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:18:09,944 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:09] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:18:10,169 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:18:10,170 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:10] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:18:10,260 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:10] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:18:12,237 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:12] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:18:14,415 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:14] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:18:15,310 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:18:15,312 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:15] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:18:15,317 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:18:15,320 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:15] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:18:17,349 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:17] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:18:19,413 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:19] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:18:21,542 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:21] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:18:23,547 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:23] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:18:34,253 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:34] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-10 22:18:34,259 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-10 22:18:34,260 - INFO - Starting monitored pipeline for job_id=67
+2025-06-10 22:18:34,261 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:34] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-10 22:18:34,262 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-10 22:18:34,263 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-10 22:18:34,271 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-10 22:18:34,492 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-10 22:18:37,297 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:18:37,300 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:37] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:18:39,491 - INFO - 127.0.0.1 - - [10/Jun/2025 22:18:39] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:18:42,773 - INFO - Launching browser with profile: ./pw_user_data_20250610_221834_9884
+2025-06-10 22:18:45,211 - INFO - Starting automated login process...
+2025-06-10 22:18:49,495 - INFO - On login page, entering credentials...
+2025-06-10 22:18:49,576 - INFO - Entered email: support@smoothoperations.ai
+2025-06-10 22:18:49,611 - INFO - Entered password
+2025-06-10 22:18:50,365 - INFO - Clicked login button
+2025-06-10 22:18:58,328 - INFO - No 2FA input found, checking if already logged in...
+2025-06-10 22:18:58,329 - ERROR - Login failed - still on login page
+2025-06-10 22:18:58,330 - ERROR - Automated login failed!
+2025-06-10 22:18:58,331 - ERROR - Error during scraping: Login failed
+2025-06-10 22:18:59,026 - INFO - Browser closed
+2025-06-10 22:18:59,027 - INFO - Cleaned up browser profile: ./pw_user_data_20250610_221834_9884
+2025-06-10 22:18:59,047 - ERROR - Fatal error: Login failed
+2025-06-10 22:18:59,048 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 307, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 416, in scrape_job
+    raise Exception("Login failed")
+Exception: Login failed
+2025-06-10 22:18:59,049 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-10 22:18:59,050 - INFO - Getting test suggestions from GPT...
+2025-06-10 22:19:05,277 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-10 22:19:05,284 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'NLP', 'Data Analysis', 'Neural Networks']
+2025-06-10 22:19:05,285 - INFO - Starting automation for: junior ai engineer
+2025-06-10 22:19:05,286 - INFO - Suggested role: Junior Ai Engineer
+2025-06-10 22:19:05,286 - INFO - Tests to add: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'NLP', 'Data Analysis', 'Neural Networks']
+2025-06-10 22:19:15,642 - INFO - Clicked Create Assessment
+2025-06-10 22:19:18,649 - INFO - Job role selection - Attempt 1/3
+2025-06-10 22:19:20,671 - INFO - Trying to click the span element that's intercepting...
+2025-06-10 22:19:20,752 - INFO - Clicked the intercepting span element
+2025-06-10 22:19:24,835 - INFO - Used JavaScript to click through layers
+2025-06-10 22:19:25,840 - INFO - Typing job role: Junior Ai Engineer
+2025-06-10 22:19:39,922 - WARNING - Dropdown did not appear, trying Enter key...
+2025-06-10 22:19:40,964 - WARNING - Attempt 1 failed, retrying...
+2025-06-10 22:19:42,978 - INFO - Job role selection - Attempt 2/3
+2025-06-10 22:19:45,023 - INFO - Trying to click the span element that's intercepting...
+2025-06-10 22:19:48,034 - INFO - Span element not found, trying parent div...
+2025-06-10 22:19:51,063 - INFO - Used JavaScript to click through layers
+2025-06-10 22:19:52,066 - INFO - Typing job role: Junior Ai Engineer
+2025-06-10 22:20:06,105 - WARNING - Dropdown did not appear, trying Enter key...
+2025-06-10 22:20:07,170 - WARNING - Attempt 2 failed, retrying...
+2025-06-10 22:20:09,185 - INFO - Job role selection - Attempt 3/3
+2025-06-10 22:20:11,238 - INFO - Trying to click the span element that's intercepting...
+2025-06-10 22:20:14,256 - INFO - Span element not found, trying parent div...
+2025-06-10 22:20:17,362 - INFO - Used JavaScript to click through layers
+2025-06-10 22:20:18,371 - INFO - Typing job role: Junior Ai Engineer
+2025-06-10 22:20:32,415 - WARNING - Dropdown did not appear, trying Enter key...
+2025-06-10 22:20:33,470 - WARNING - Attempt 3 failed, retrying...
+2025-06-10 22:20:35,476 - ERROR - Failed after 3 attempts
+2025-06-10 22:20:39,525 - ERROR - Critical error: 
+2025-06-10 22:23:25,319 - INFO - Environment validation passed
+2025-06-10 22:23:25,321 - INFO - TalentFlow AI Backend started successfully
+2025-06-10 22:23:25,351 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-06-10 22:23:25,353 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-10 22:23:41,981 - INFO - 127.0.0.1 - - [10/Jun/2025 22:23:41] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-10 22:23:41,985 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-10 22:23:41,986 - INFO - Starting monitored pipeline for job_id=67
+2025-06-10 22:23:41,986 - INFO - 127.0.0.1 - - [10/Jun/2025 22:23:41] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-10 22:23:41,987 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-10 22:23:41,988 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-10 22:23:41,992 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-10 22:23:42,000 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-10 22:23:42,514 - INFO - Launching browser with profile: ./pw_user_data_20250610_222342_18652
+2025-06-10 22:23:43,404 - INFO - Starting automated login process...
+2025-06-10 22:23:45,057 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:23:45,061 - INFO - 127.0.0.1 - - [10/Jun/2025 22:23:45] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:23:46,901 - INFO - On login page, entering credentials...
+2025-06-10 22:23:46,987 - INFO - Entered email: support@smoothoperations.ai
+2025-06-10 22:23:47,020 - INFO - Entered password
+2025-06-10 22:23:47,255 - INFO - 127.0.0.1 - - [10/Jun/2025 22:23:47] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:23:47,790 - INFO - Clicked login button
+2025-06-10 22:23:55,685 - INFO - No 2FA input found, checking if already logged in...
+2025-06-10 22:23:55,686 - ERROR - Login failed - still on login page
+2025-06-10 22:23:55,687 - ERROR - Automated login failed!
+2025-06-10 22:23:55,687 - ERROR - Error during scraping: Login failed
+2025-06-10 22:23:56,050 - INFO - Browser closed
+2025-06-10 22:23:56,051 - INFO - Cleaned up browser profile: ./pw_user_data_20250610_222342_18652
+2025-06-10 22:23:56,076 - ERROR - Fatal error: Login failed
+2025-06-10 22:23:56,078 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 307, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 416, in scrape_job
+    raise Exception("Login failed")
+Exception: Login failed
+2025-06-10 22:23:56,080 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-10 22:23:56,082 - INFO - Getting test suggestions from GPT...
+2025-06-10 22:23:59,007 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-10 22:23:59,016 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'NLP', 'Data Analysis', 'Neural Networks']
+2025-06-10 22:23:59,017 - INFO - Starting automation for: junior ai engineer
+2025-06-10 22:23:59,017 - INFO - Suggested role: Junior Ai Engineer
+2025-06-10 22:23:59,017 - INFO - Tests to add: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'NLP', 'Data Analysis', 'Neural Networks']
+2025-06-10 22:24:37,778 - ERROR - Critical error: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for locator("button:has-text('Create assessment')") to be visible
+============================================================
+2025-06-10 22:24:40,319 - INFO - ✅ Assessment created successfully
+2025-06-10 22:24:40,321 - INFO - STEP 3: Extracting invite link for 'junior ai engineer' from Testlify
+2025-06-10 22:24:41,398 - INFO - Navigating to assessments page...
+2025-06-10 22:25:06,120 - INFO - Looking for assessment: junior ai engineer
+2025-06-10 22:25:11,175 - ERROR - Could not find assessment: junior ai engineer
+2025-06-10 22:25:11,760 - WARNING - Using fallback invite link: https://candidate.testlify.com/assessment/67
+2025-06-10 22:25:11,761 - INFO - STEP 4: Running AI-powered screening...
+2025-06-10 22:25:11,797 - INFO - ClintRecruitmentSystem initialized with 0 existing candidates
+2025-06-10 22:25:11,798 - INFO - ATS threshold set to 70.0
+2025-06-10 22:25:11,799 - INFO - ✅ AI screening completed successfully
+2025-06-10 22:25:11,801 - INFO - Pipeline completed. Steps: ['assessment_creation', 'ai_screening'], Errors: 1
+2025-06-10 22:25:11,801 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-10 22:25:11,801 - INFO - 🚀 Recruitment pipeline finished
+2025-06-10 22:25:11,803 - INFO - Pipeline completed successfully in 89.82 seconds
+2025-06-10 22:25:11,803 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-10 22:26:16,871 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:26:16,885 - INFO - 127.0.0.1 - - [10/Jun/2025 22:26:16] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:26:16,915 - INFO - 127.0.0.1 - - [10/Jun/2025 22:26:16] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:26:17,131 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:26:17,134 - INFO - 127.0.0.1 - - [10/Jun/2025 22:26:17] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:26:17,233 - INFO - 127.0.0.1 - - [10/Jun/2025 22:26:17] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:26:19,317 - INFO - 127.0.0.1 - - [10/Jun/2025 22:26:19] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:26:21,642 - INFO - 127.0.0.1 - - [10/Jun/2025 22:26:21] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:26:47,045 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:26:47,047 - INFO - 127.0.0.1 - - [10/Jun/2025 22:26:47] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:26:47,067 - INFO - 127.0.0.1 - - [10/Jun/2025 22:26:47] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:26:49,166 - INFO - 127.0.0.1 - - [10/Jun/2025 22:26:49] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:27:17,032 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:27:17,035 - INFO - 127.0.0.1 - - [10/Jun/2025 22:27:17] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:27:17,051 - INFO - 127.0.0.1 - - [10/Jun/2025 22:27:17] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:27:18,926 - INFO - 127.0.0.1 - - [10/Jun/2025 22:27:18] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:27:47,046 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:27:47,049 - INFO - 127.0.0.1 - - [10/Jun/2025 22:27:47] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:27:47,065 - INFO - 127.0.0.1 - - [10/Jun/2025 22:27:47] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:27:49,275 - INFO - 127.0.0.1 - - [10/Jun/2025 22:27:49] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:28:17,035 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:28:17,042 - INFO - 127.0.0.1 - - [10/Jun/2025 22:28:17] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:28:17,061 - INFO - 127.0.0.1 - - [10/Jun/2025 22:28:17] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:28:19,020 - INFO - 127.0.0.1 - - [10/Jun/2025 22:28:19] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:28:47,046 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:28:47,054 - INFO - 127.0.0.1 - - [10/Jun/2025 22:28:47] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:28:47,079 - INFO - 127.0.0.1 - - [10/Jun/2025 22:28:47] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:28:49,407 - INFO - 127.0.0.1 - - [10/Jun/2025 22:28:49] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:29:17,037 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:29:17,043 - INFO - 127.0.0.1 - - [10/Jun/2025 22:29:17] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:29:17,061 - INFO - 127.0.0.1 - - [10/Jun/2025 22:29:17] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:29:19,019 - INFO - 127.0.0.1 - - [10/Jun/2025 22:29:19] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:29:47,044 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:29:47,054 - INFO - 127.0.0.1 - - [10/Jun/2025 22:29:47] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:29:47,074 - INFO - 127.0.0.1 - - [10/Jun/2025 22:29:47] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:29:49,527 - INFO - 127.0.0.1 - - [10/Jun/2025 22:29:49] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:30:44,039 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:30:44,043 - INFO - 127.0.0.1 - - [10/Jun/2025 22:30:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:30:44,058 - INFO - 127.0.0.1 - - [10/Jun/2025 22:30:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:30:45,943 - INFO - 127.0.0.1 - - [10/Jun/2025 22:30:45] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:31:44,033 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:31:44,039 - INFO - 127.0.0.1 - - [10/Jun/2025 22:31:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:31:44,058 - INFO - 127.0.0.1 - - [10/Jun/2025 22:31:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:31:46,366 - INFO - 127.0.0.1 - - [10/Jun/2025 22:31:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:32:44,039 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:32:44,044 - INFO - 127.0.0.1 - - [10/Jun/2025 22:32:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:32:44,059 - INFO - 127.0.0.1 - - [10/Jun/2025 22:32:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:32:46,035 - INFO - 127.0.0.1 - - [10/Jun/2025 22:32:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:33:44,047 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:33:44,052 - INFO - 127.0.0.1 - - [10/Jun/2025 22:33:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:33:44,069 - INFO - 127.0.0.1 - - [10/Jun/2025 22:33:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:33:47,067 - INFO - 127.0.0.1 - - [10/Jun/2025 22:33:47] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:34:44,041 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:34:44,045 - INFO - 127.0.0.1 - - [10/Jun/2025 22:34:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:34:44,061 - INFO - 127.0.0.1 - - [10/Jun/2025 22:34:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:34:46,053 - INFO - 127.0.0.1 - - [10/Jun/2025 22:34:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:35:44,037 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:35:44,042 - INFO - 127.0.0.1 - - [10/Jun/2025 22:35:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:35:44,058 - INFO - 127.0.0.1 - - [10/Jun/2025 22:35:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:35:46,792 - INFO - 127.0.0.1 - - [10/Jun/2025 22:35:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:36:44,042 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:36:44,047 - INFO - 127.0.0.1 - - [10/Jun/2025 22:36:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:36:44,071 - INFO - 127.0.0.1 - - [10/Jun/2025 22:36:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:36:46,081 - INFO - 127.0.0.1 - - [10/Jun/2025 22:36:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:37:44,037 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:37:44,040 - INFO - 127.0.0.1 - - [10/Jun/2025 22:37:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:37:44,061 - INFO - 127.0.0.1 - - [10/Jun/2025 22:37:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:37:46,167 - INFO - 127.0.0.1 - - [10/Jun/2025 22:37:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:38:44,038 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:38:44,044 - INFO - 127.0.0.1 - - [10/Jun/2025 22:38:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:38:44,062 - INFO - 127.0.0.1 - - [10/Jun/2025 22:38:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:38:45,947 - INFO - 127.0.0.1 - - [10/Jun/2025 22:38:45] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:39:44,040 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:39:44,044 - INFO - 127.0.0.1 - - [10/Jun/2025 22:39:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:39:44,062 - INFO - 127.0.0.1 - - [10/Jun/2025 22:39:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:39:46,181 - INFO - 127.0.0.1 - - [10/Jun/2025 22:39:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:40:44,033 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:40:44,037 - INFO - 127.0.0.1 - - [10/Jun/2025 22:40:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:40:44,051 - INFO - 127.0.0.1 - - [10/Jun/2025 22:40:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:40:45,886 - INFO - 127.0.0.1 - - [10/Jun/2025 22:40:45] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:41:44,041 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:41:44,047 - INFO - 127.0.0.1 - - [10/Jun/2025 22:41:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:41:44,070 - INFO - 127.0.0.1 - - [10/Jun/2025 22:41:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:41:46,310 - INFO - 127.0.0.1 - - [10/Jun/2025 22:41:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:42:44,043 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:42:44,050 - INFO - 127.0.0.1 - - [10/Jun/2025 22:42:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:42:44,067 - INFO - 127.0.0.1 - - [10/Jun/2025 22:42:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:42:45,906 - INFO - 127.0.0.1 - - [10/Jun/2025 22:42:45] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:43:44,047 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:43:44,051 - INFO - 127.0.0.1 - - [10/Jun/2025 22:43:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:43:44,071 - INFO - 127.0.0.1 - - [10/Jun/2025 22:43:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:43:46,413 - INFO - 127.0.0.1 - - [10/Jun/2025 22:43:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:44:44,033 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:44:44,041 - INFO - 127.0.0.1 - - [10/Jun/2025 22:44:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:44:44,060 - INFO - 127.0.0.1 - - [10/Jun/2025 22:44:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:44:46,099 - INFO - 127.0.0.1 - - [10/Jun/2025 22:44:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:45:44,035 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:45:44,040 - INFO - 127.0.0.1 - - [10/Jun/2025 22:45:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:45:44,057 - INFO - 127.0.0.1 - - [10/Jun/2025 22:45:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:45:46,471 - INFO - 127.0.0.1 - - [10/Jun/2025 22:45:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:46:44,043 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:46:44,047 - INFO - 127.0.0.1 - - [10/Jun/2025 22:46:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:46:44,069 - INFO - 127.0.0.1 - - [10/Jun/2025 22:46:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:46:46,075 - INFO - 127.0.0.1 - - [10/Jun/2025 22:46:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:47:44,049 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:47:44,053 - INFO - 127.0.0.1 - - [10/Jun/2025 22:47:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:47:44,079 - INFO - 127.0.0.1 - - [10/Jun/2025 22:47:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:47:46,572 - INFO - 127.0.0.1 - - [10/Jun/2025 22:47:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:48:44,034 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:48:44,042 - INFO - 127.0.0.1 - - [10/Jun/2025 22:48:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:48:44,064 - INFO - 127.0.0.1 - - [10/Jun/2025 22:48:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:48:46,113 - INFO - 127.0.0.1 - - [10/Jun/2025 22:48:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:49:44,037 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:49:44,043 - INFO - 127.0.0.1 - - [10/Jun/2025 22:49:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:49:44,071 - INFO - 127.0.0.1 - - [10/Jun/2025 22:49:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:49:46,264 - INFO - 127.0.0.1 - - [10/Jun/2025 22:49:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:50:44,042 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:50:44,051 - INFO - 127.0.0.1 - - [10/Jun/2025 22:50:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:50:44,075 - INFO - 127.0.0.1 - - [10/Jun/2025 22:50:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:50:46,242 - INFO - 127.0.0.1 - - [10/Jun/2025 22:50:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:51:44,039 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:51:44,047 - INFO - 127.0.0.1 - - [10/Jun/2025 22:51:44] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:51:44,075 - INFO - 127.0.0.1 - - [10/Jun/2025 22:51:44] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:51:46,156 - INFO - 127.0.0.1 - - [10/Jun/2025 22:51:46] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:52:46,708 - INFO - Environment validation passed
+2025-06-10 22:52:46,709 - INFO - TalentFlow AI Backend started successfully
+2025-06-10 22:52:46,744 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-06-10 22:52:46,746 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-10 22:52:52,680 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:52:52,695 - INFO - 127.0.0.1 - - [10/Jun/2025 22:52:52] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:52:52,722 - INFO - 127.0.0.1 - - [10/Jun/2025 22:52:52] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-10 22:52:55,155 - INFO - 127.0.0.1 - - [10/Jun/2025 22:52:55] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:52:59,055 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:52:59,059 - INFO - 127.0.0.1 - - [10/Jun/2025 22:52:59] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:52:59,068 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:52:59,072 - INFO - 127.0.0.1 - - [10/Jun/2025 22:52:59] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:53:01,312 - INFO - 127.0.0.1 - - [10/Jun/2025 22:53:01] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:53:03,393 - INFO - 127.0.0.1 - - [10/Jun/2025 22:53:03] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:53:05,473 - INFO - 127.0.0.1 - - [10/Jun/2025 22:53:05] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:53:07,745 - INFO - 127.0.0.1 - - [10/Jun/2025 22:53:07] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:53:20,506 - INFO - 127.0.0.1 - - [10/Jun/2025 22:53:20] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-10 22:53:20,512 - INFO - Pipeline request received: job_id=67, job_title=Junior AI engineer
+2025-06-10 22:53:20,513 - INFO - Starting monitored pipeline for job_id=67
+2025-06-10 22:53:20,514 - INFO - 127.0.0.1 - - [10/Jun/2025 22:53:20] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-10 22:53:20,514 - INFO - Starting full recruitment pipeline for job_id=67, job_title=Junior AI engineer
+2025-06-10 22:53:20,517 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-10 22:53:20,523 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-10 22:53:20,523 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-10 22:53:21,027 - INFO - Launching browser with profile: ./pw_user_data_20250610_225320_4116
+2025-06-10 22:53:22,005 - INFO - Starting automated login process...
+2025-06-10 22:53:23,555 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-10 22:53:23,558 - INFO - 127.0.0.1 - - [10/Jun/2025 22:53:23] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-10 22:53:25,798 - INFO - 127.0.0.1 - - [10/Jun/2025 22:53:25] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-10 22:53:26,881 - INFO - On login page, entering credentials...
+2025-06-10 22:53:26,992 - INFO - Entered email: support@smoothoperations.ai
+2025-06-10 22:53:27,048 - INFO - Entered password
+2025-06-10 22:53:27,889 - INFO - Clicked login button
+2025-06-10 22:53:35,824 - INFO - No 2FA input found, checking if already logged in...
+2025-06-10 22:53:35,825 - ERROR - Login failed - still on login page
+2025-06-10 22:53:35,825 - ERROR - Automated login failed!
+2025-06-10 22:53:35,826 - ERROR - Error during scraping: Login failed
+2025-06-10 22:53:36,230 - INFO - Browser closed
+2025-06-10 22:53:36,232 - INFO - Cleaned up browser profile: ./pw_user_data_20250610_225320_4116
+2025-06-10 22:53:36,265 - ERROR - Fatal error: Login failed
+2025-06-10 22:53:36,267 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 312, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 416, in scrape_job
+    raise Exception("Login failed")
+Exception: Login failed
+2025-06-10 22:53:36,270 - INFO - STEP 2: Creating assessment for 'Junior AI engineer' in Testlify
+2025-06-10 22:53:36,271 - INFO - Getting test suggestions from GPT...
+2025-06-10 22:53:39,224 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-10 22:53:39,231 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'NLP', 'Data Analysis', 'Neural Networks']
+2025-06-10 22:53:39,231 - INFO - Starting automation for: Junior AI engineer
+2025-06-10 22:53:39,232 - INFO - Suggested role: Junior Ai Engineer
+2025-06-10 22:53:39,232 - INFO - Tests to add: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'NLP', 'Data Analysis', 'Neural Networks']
+2025-06-10 22:53:48,090 - INFO - Clicked Create Assessment
+2025-06-10 22:53:51,097 - INFO - Job role selection - Attempt 1/3
+2025-06-10 22:53:53,122 - INFO - Trying to click the span element that's intercepting...
+2025-06-10 22:53:53,255 - INFO - Clicked the intercepting span element
+2025-06-10 22:53:54,446 - INFO - Used JavaScript to click through layers
+2025-06-10 22:53:55,463 - INFO - Typing job role: Junior Ai Engineer
+2025-06-10 22:54:09,729 - WARNING - Dropdown did not appear, trying Enter key...
+2025-06-10 22:54:10,804 - WARNING - Attempt 1 failed, retrying...
+2025-06-10 22:54:12,818 - INFO - Job role selection - Attempt 2/3
+2025-06-10 22:54:14,855 - INFO - Trying to click the span element that's intercepting...
+2025-06-10 22:54:18,374 - INFO - Span element not found, trying parent div...
+2025-06-10 22:54:18,386 - INFO - Typing job role: Junior Ai Engineer
+2025-06-10 22:54:18,395 - ERROR - Error in attempt 2: Target page, context or browser has been closed
+2025-06-10 22:54:18,396 - WARNING - Attempt 2 failed, retrying...
+2025-06-10 22:54:20,420 - INFO - Job role selection - Attempt 3/3
+2025-06-10 22:54:22,458 - INFO - Trying to click the span element that's intercepting...
+2025-06-10 22:54:22,470 - INFO - Span element not found, trying parent div...
+2025-06-10 22:54:22,478 - INFO - Typing job role: Junior Ai Engineer
+2025-06-10 22:54:22,486 - ERROR - Error in attempt 3: Target page, context or browser has been closed
+2025-06-10 22:54:22,487 - WARNING - Attempt 3 failed, retrying...
+2025-06-10 22:54:24,493 - ERROR - Failed after 3 attempts
+2025-06-11 00:11:57,103 - ERROR - Critical error: 
+2025-06-11 00:15:14,880 - INFO - Environment validation passed
+2025-06-11 00:15:14,881 - INFO - TalentFlow AI Backend started successfully
+2025-06-11 00:15:14,914 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-06-11 00:15:14,915 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-11 00:15:32,205 - INFO - 127.0.0.1 - - [11/Jun/2025 00:15:32] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 00:15:32,216 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-11 00:15:32,221 - INFO - Starting monitored pipeline for job_id=67
+2025-06-11 00:15:32,222 - INFO - 127.0.0.1 - - [11/Jun/2025 00:15:32] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 00:15:32,222 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-11 00:15:32,224 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-11 00:15:32,253 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-11 00:15:32,255 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-11 00:15:32,859 - INFO - Launching browser with persistent  profile: ./pw_user_data
+2025-06-11 00:15:34,519 - INFO - Starting automated login process...
+2025-06-11 00:15:35,283 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 00:15:35,285 - INFO - 127.0.0.1 - - [11/Jun/2025 00:15:35] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 00:15:38,274 - INFO - 127.0.0.1 - - [11/Jun/2025 00:15:38] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:15:40,192 - INFO - → Navigating to https://greenoceanpm.bamboohr.com/login.php
+2025-06-11 00:15:41,640 - INFO -    ← HTTP 200
+2025-06-11 00:15:41,711 - INFO - On login page, entering credentials...
+2025-06-11 00:15:41,750 - INFO -    • filled username
+2025-06-11 00:15:41,785 - INFO -    • filled password
+2025-06-11 00:16:11,804 - ERROR - Error during automated login: Timeout 30000ms exceeded.
+=========================== logs ===========================
+waiting for locator("button[type='submit']")
+  locator resolved to <button tabindex="5" type="submit" class="fab-Button  fa…>…</button>
+attempting click action
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #1
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #2
+  waiting 20ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #3
+  waiting 100ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #4
+  waiting 100ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #5
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #6
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #7
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #8
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #9
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #10
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #11
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #12
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #13
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #14
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #15
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #16
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #17
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #18
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #19
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #20
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #21
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #22
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #23
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #24
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #25
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #26
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #27
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #28
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #29
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #30
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #31
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #32
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #33
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #34
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #35
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #36
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #37
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #38
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #39
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #40
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #41
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #42
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #43
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #44
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #45
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #46
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #47
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #48
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #49
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #50
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #51
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #52
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #53
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #54
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #55
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #56
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #57
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #58
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <button tabindex="2" type="button" class="fab-TextButton…>↵⇆⇆⇆⇆⇆Log in with Email and Password↵⇆⇆⇆⇆</button> from <div class="normal-login-link-container">…</div> subtree intercepts pointer events
+retrying click action, attempt #59
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <div class="fab-CardContent FabLogin__content">…</div> intercepts pointer events
+retrying click action, attempt #60
+  waiting 500ms
+============================================================
+2025-06-11 00:16:11,812 - ERROR - Automated login failed!
+2025-06-11 00:16:11,813 - ERROR - Error during scraping: Login failed
+2025-06-11 00:16:12,983 - INFO - Browser closed
+2025-06-11 00:16:12,985 - INFO - Cleaned up browser profile: ./pw_user_data
+2025-06-11 00:16:13,037 - ERROR - Fatal error: Login failed
+2025-06-11 00:16:13,039 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 312, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 442, in scrape_job
+    raise Exception("Login failed")
+Exception: Login failed
+2025-06-11 00:16:13,042 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-11 00:16:13,046 - INFO - Getting test suggestions from GPT...
+2025-06-11 00:16:16,246 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-11 00:16:16,260 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'AI', 'Data Analysis', 'TensorFlow', 'Neural Networks', 'Programming']
+2025-06-11 00:16:16,260 - INFO - Starting automation for: junior ai engineer
+2025-06-11 00:16:16,262 - INFO - Suggested role: Junior Ai Engineer
+2025-06-11 00:16:16,263 - INFO - Tests to add: ['Python', 'Machine Learning', 'AI', 'Data Analysis', 'TensorFlow', 'Neural Networks', 'Programming']
+2025-06-11 00:16:27,145 - INFO - Clicked Create Assessment
+2025-06-11 00:16:30,151 - INFO - Job role selection - Attempt 1/3
+2025-06-11 00:16:32,170 - INFO - Trying to click the span element that's intercepting...
+2025-06-11 00:16:32,252 - INFO - Clicked the intercepting span element
+2025-06-11 00:16:33,322 - INFO - Used JavaScript to click through layers
+2025-06-11 00:16:34,346 - INFO - Typing job role: Junior Ai Engineer
+2025-06-11 00:16:38,062 - ERROR - Error in attempt 1: Browser closed.
+==================== Browser output: ====================
+<launching> C:\Users\NISHITHA SAI\AppData\Local\ms-playwright\chromium-1084\chrome-win\chrome.exe --disable-field-trial-config --disable-background-networking --enable-features=NetworkService,NetworkServiceInProcess --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --no-sandbox --disable-blink-features=AutomationControlled --disable-dev-shm-usage --no-sandbox --user-data-dir=D:\interview link\testlify_browser_profile --remote-debugging-pipe about:blank
+<launched> pid=17376
+[pid=17376][err] [17376:21600:0611/001618.056:ERROR:policy_logger.cc(157)] :components\enterprise\browser\controller\chrome_browser_cloud_management_controller.cc(163) Cloud management controller initialization aborted as CBCM is not enabled.
+2025-06-11 00:16:38,066 - WARNING - Attempt 1 failed, retrying...
+2025-06-11 00:16:40,082 - INFO - Job role selection - Attempt 2/3
+2025-06-11 00:16:42,143 - INFO - Trying to click the span element that's intercepting...
+2025-06-11 00:16:42,157 - INFO - Span element not found, trying parent div...
+2025-06-11 00:16:42,169 - INFO - Typing job role: Junior Ai Engineer
+2025-06-11 00:16:42,186 - ERROR - Error in attempt 2: Target page, context or browser has been closed
+2025-06-11 00:16:42,187 - WARNING - Attempt 2 failed, retrying...
+2025-06-11 00:16:44,189 - INFO - Job role selection - Attempt 3/3
+2025-06-11 00:16:46,251 - INFO - Trying to click the span element that's intercepting...
+2025-06-11 00:16:46,263 - INFO - Span element not found, trying parent div...
+2025-06-11 00:16:46,277 - INFO - Typing job role: Junior Ai Engineer
+2025-06-11 00:16:46,291 - ERROR - Error in attempt 3: Target page, context or browser has been closed
+2025-06-11 00:16:46,292 - WARNING - Attempt 3 failed, retrying...
+2025-06-11 00:16:48,294 - ERROR - Failed after 3 attempts
+2025-06-11 00:32:05,091 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 00:32:05,093 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:05] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 00:32:07,504 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:07] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:32:21,796 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:21] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:32:22,992 - INFO - Found 0 candidates for job_id=67, status=None
+2025-06-11 00:32:22,993 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:22] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-11 00:32:24,013 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:24] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:32:27,947 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 00:32:27,949 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:27] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 00:32:27,957 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 00:32:27,958 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:27] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 00:32:30,156 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:30] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:32:30,458 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 00:32:30,463 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:30] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 00:32:30,523 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:30] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-11 00:32:30,722 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 00:32:30,724 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:30] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 00:32:30,818 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:30] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-11 00:32:32,408 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:32] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:32:32,883 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:32] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:32:34,651 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:34] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:32:35,199 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:35] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:32:36,915 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:36] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:32:42,539 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 00:32:42,542 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:42] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 00:32:42,553 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 00:32:42,554 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:42] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 00:32:44,931 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:44] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:32:47,217 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:47] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:32:49,630 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:49] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:32:51,890 - INFO - 127.0.0.1 - - [11/Jun/2025 00:32:51] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:47:19,929 - INFO - Environment validation passed
+2025-06-11 00:47:19,930 - INFO - TalentFlow AI Backend started successfully
+2025-06-11 00:47:19,958 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-06-11 00:47:19,959 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-11 00:47:38,855 - INFO - 127.0.0.1 - - [11/Jun/2025 00:47:38] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 00:47:38,859 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-11 00:47:38,861 - INFO - Starting monitored pipeline for job_id=67
+2025-06-11 00:47:38,861 - INFO - 127.0.0.1 - - [11/Jun/2025 00:47:38] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 00:47:38,862 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-11 00:47:38,863 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-11 00:47:38,867 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-11 00:47:38,867 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-11 00:47:39,383 - INFO - Launching browser with profile: ./pw_user_data
+2025-06-11 00:47:40,668 - INFO - Starting automated login process...
+2025-06-11 00:47:41,916 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 00:47:41,917 - INFO - 127.0.0.1 - - [11/Jun/2025 00:47:41] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 00:47:44,127 - INFO - 127.0.0.1 - - [11/Jun/2025 00:47:44] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 00:47:44,663 - INFO - On login page, entering credentials...
+2025-06-11 00:47:44,738 - INFO - Entered email: support@smoothoperations.ai
+2025-06-11 00:47:44,773 - INFO - Entered password
+2025-06-11 00:47:45,464 - INFO - Clicked login button
+2025-06-11 00:47:53,428 - INFO - No 2FA input found, checking if already logged in...
+2025-06-11 00:47:53,429 - ERROR - Login failed - still on login page
+2025-06-11 00:47:53,429 - ERROR - Automated login failed!
+2025-06-11 00:47:53,430 - ERROR - Error during scraping: Login failed
+2025-06-11 00:47:53,715 - INFO - Browser closed
+2025-06-11 00:47:53,716 - INFO - Cleaned up browser profile: ./pw_user_data
+2025-06-11 00:47:53,744 - ERROR - Fatal error: Login failed
+2025-06-11 00:47:53,745 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 312, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 417, in scrape_job
+    raise Exception("Login failed")
+Exception: Login failed
+2025-06-11 00:47:53,747 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-11 00:47:53,748 - INFO - Getting test suggestions from GPT...
+2025-06-11 00:47:56,628 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-11 00:47:56,632 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'AI', 'Data Analysis', 'TensorFlow', 'Neural Networks', 'Programming']
+2025-06-11 00:47:56,633 - INFO - Starting automation for: junior ai engineer
+2025-06-11 00:47:56,634 - INFO - Suggested role: Junior Ai Engineer
+2025-06-11 00:47:56,634 - INFO - Tests to add: ['Python', 'Machine Learning', 'AI', 'Data Analysis', 'TensorFlow', 'Neural Networks', 'Programming']
+2025-06-11 00:48:05,703 - INFO - Clicked Create Assessment
+2025-06-11 00:48:08,714 - INFO - Job role selection - Attempt 1/3
+2025-06-11 00:48:10,750 - INFO - Trying to click the span element that's intercepting...
+2025-06-11 00:48:10,861 - INFO - Clicked the intercepting span element
+2025-06-11 00:48:11,936 - INFO - Used JavaScript to click through layers
+2025-06-11 00:48:12,955 - INFO - Typing job role: Junior Ai Engineer
+2025-06-11 00:48:27,056 - WARNING - Dropdown did not appear, trying Enter key...
+2025-06-11 00:48:28,101 - WARNING - Attempt 1 failed, retrying...
+2025-06-11 00:48:30,107 - INFO - Job role selection - Attempt 2/3
+2025-06-11 00:48:32,149 - INFO - Trying to click the span element that's intercepting...
+2025-06-11 00:49:02,171 - INFO - Span element not found, trying parent div...
+2025-06-11 00:49:02,183 - INFO - Used JavaScript to click through layers
+2025-06-11 00:49:03,187 - INFO - Typing job role: Junior Ai Engineer
+2025-06-11 00:49:17,146 - WARNING - Dropdown did not appear, trying Enter key...
+2025-06-11 00:49:18,177 - WARNING - Attempt 2 failed, retrying...
+2025-06-11 00:49:20,179 - INFO - Job role selection - Attempt 3/3
+2025-06-11 00:49:22,218 - INFO - Trying to click the span element that's intercepting...
+2025-06-11 00:49:52,234 - INFO - Span element not found, trying parent div...
+2025-06-11 00:49:52,243 - INFO - Used JavaScript to click through layers
+2025-06-11 00:49:53,254 - INFO - Typing job role: Junior Ai Engineer
+2025-06-11 00:50:07,128 - WARNING - Dropdown did not appear, trying Enter key...
+2025-06-11 00:50:08,158 - WARNING - Attempt 3 failed, retrying...
+2025-06-11 00:50:10,160 - ERROR - Failed after 3 attempts
+2025-06-11 01:26:31,097 - ERROR - Critical error: 
+2025-06-11 01:50:44,351 - INFO - Environment validation passed
+2025-06-11 01:50:44,352 - INFO - TalentFlow AI Backend started successfully
+2025-06-11 01:50:44,410 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-06-11 01:50:44,412 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-11 01:51:03,205 - INFO - 127.0.0.1 - - [11/Jun/2025 01:51:03] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 01:51:03,210 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-11 01:51:03,214 - INFO - Starting monitored pipeline for job_id=67
+2025-06-11 01:51:03,215 - INFO - 127.0.0.1 - - [11/Jun/2025 01:51:03] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 01:51:03,216 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-11 01:51:03,217 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-11 01:51:03,224 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-11 01:51:03,225 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-11 01:51:06,283 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 01:51:06,284 - INFO - 127.0.0.1 - - [11/Jun/2025 01:51:06] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 01:51:08,522 - INFO - 127.0.0.1 - - [11/Jun/2025 01:51:08] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 01:51:10,011 - INFO - Launching browser with profile: ./pw_user_data
+2025-06-11 01:51:11,715 - INFO - Starting automated login process...
+2025-06-11 01:51:16,013 - INFO - Clicked 'Log in with Email and Password'
+2025-06-11 01:51:23,042 - ERROR - Error during automated login: Timeout 5000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[name='email'], input[type='email']") to be visible
+============================================================
+2025-06-11 01:51:23,042 - ERROR - Automated login failed!
+2025-06-11 01:51:23,043 - ERROR - Error during scraping: Login failed
+2025-06-11 01:51:23,348 - INFO - Browser closed
+2025-06-11 01:51:23,350 - INFO - Cleaned up browser profile: ./pw_user_data
+2025-06-11 01:51:23,383 - ERROR - Fatal error: Login failed
+2025-06-11 01:51:23,384 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 312, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 404, in scrape_job
+    raise Exception("Login failed")
+Exception: Login failed
+2025-06-11 01:51:23,385 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-11 01:51:23,387 - INFO - Getting test suggestions from GPT...
+2025-06-11 01:51:25,730 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-11 01:51:25,767 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 01:51:25,768 - INFO - Starting automation for: junior ai engineer
+2025-06-11 01:51:25,768 - INFO - Suggested role: Junior Ai Engineer
+2025-06-11 01:51:25,769 - INFO - Tests to add: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 01:51:49,550 - ERROR - Testlify login error: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[type='email']") to be visible
+============================================================
+2025-06-11 01:51:49,551 - ERROR - Testlify login failed
+2025-06-11 01:51:51,924 - INFO - ✅ Assessment created successfully
+2025-06-11 01:51:51,925 - INFO - STEP 3: Extracting invite link for 'junior ai engineer' from Testlify
+2025-06-11 01:51:52,997 - INFO - Navigating to assessments page...
+2025-06-11 01:52:01,330 - INFO - Looking for assessment: junior ai engineer
+2025-06-11 01:52:11,384 - ERROR - Could not find assessment: junior ai engineer
+2025-06-11 01:52:11,871 - WARNING - Using fallback invite link: https://candidate.testlify.com/assessment/67
+2025-06-11 01:52:11,871 - INFO - STEP 4: Running AI-powered screening...
+2025-06-11 01:52:11,901 - INFO - ClintRecruitmentSystem initialized with 0 existing candidates
+2025-06-11 01:52:11,902 - INFO - ATS threshold set to 70.0
+2025-06-11 01:52:11,903 - INFO - ✅ AI screening completed successfully
+2025-06-11 01:52:11,904 - INFO - Pipeline completed. Steps: ['assessment_creation', 'ai_screening'], Errors: 1
+2025-06-11 01:52:11,904 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 01:52:11,905 - INFO - 🚀 Recruitment pipeline finished
+2025-06-11 01:52:11,905 - INFO - Pipeline completed successfully in 68.69 seconds
+2025-06-11 01:52:11,906 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 01:55:06,858 - INFO - 127.0.0.1 - - [11/Jun/2025 01:55:06] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 01:55:06,863 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-11 01:55:06,867 - INFO - Starting monitored pipeline for job_id=67
+2025-06-11 01:55:06,868 - INFO - 127.0.0.1 - - [11/Jun/2025 01:55:06] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 01:55:06,869 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-11 01:55:06,870 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-11 01:55:06,872 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-11 01:55:06,875 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-11 01:55:07,330 - INFO - Launching browser with profile: ./pw_user_data
+2025-06-11 01:55:08,321 - INFO - Starting automated login process...
+2025-06-11 01:55:09,903 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 01:55:09,905 - INFO - 127.0.0.1 - - [11/Jun/2025 01:55:09] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 01:55:11,385 - INFO - Clicked 'Log in with Email and Password'
+2025-06-11 01:55:12,125 - INFO - 127.0.0.1 - - [11/Jun/2025 01:55:12] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 01:55:18,416 - ERROR - Error during automated login: Timeout 5000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[name='email'], input[type='email']") to be visible
+============================================================
+2025-06-11 01:55:18,416 - ERROR - Automated login failed!
+2025-06-11 01:55:18,417 - ERROR - Error during scraping: Login failed
+2025-06-11 01:55:18,767 - INFO - Browser closed
+2025-06-11 01:55:18,768 - INFO - Cleaned up browser profile: ./pw_user_data
+2025-06-11 01:55:18,804 - ERROR - Fatal error: Login failed
+2025-06-11 01:55:18,805 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 312, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 404, in scrape_job
+    raise Exception("Login failed")
+Exception: Login failed
+2025-06-11 01:55:18,807 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-11 01:55:18,811 - INFO - Getting test suggestions from GPT...
+2025-06-11 01:55:21,440 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-11 01:55:21,442 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'NLP', 'Algorithms']
+2025-06-11 01:55:21,444 - INFO - Starting automation for: junior ai engineer
+2025-06-11 01:55:21,445 - INFO - Suggested role: Junior Ai Engineer
+2025-06-11 01:55:21,445 - INFO - Tests to add: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'NLP', 'Algorithms']
+2025-06-11 01:55:45,479 - ERROR - Testlify login error: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[type='email']") to be visible
+============================================================
+2025-06-11 01:55:45,480 - ERROR - Testlify login failed
+2025-06-11 01:55:47,800 - INFO - ✅ Assessment created successfully
+2025-06-11 01:55:47,800 - INFO - STEP 3: Extracting invite link for 'junior ai engineer' from Testlify
+2025-06-11 01:55:49,355 - INFO - Navigating to assessments page...
+2025-06-11 01:55:58,047 - INFO - Looking for assessment: junior ai engineer
+2025-06-11 01:56:08,131 - ERROR - Could not find assessment: junior ai engineer
+2025-06-11 01:56:08,739 - WARNING - Using fallback invite link: https://candidate.testlify.com/assessment/67
+2025-06-11 01:56:08,739 - INFO - STEP 4: Running AI-powered screening...
+2025-06-11 01:56:08,751 - INFO - ClintRecruitmentSystem initialized with 0 existing candidates
+2025-06-11 01:56:08,752 - INFO - ATS threshold set to 70.0
+2025-06-11 01:56:08,753 - INFO - ✅ AI screening completed successfully
+2025-06-11 01:56:08,753 - INFO - Pipeline completed. Steps: ['assessment_creation', 'ai_screening'], Errors: 1
+2025-06-11 01:56:08,753 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 01:56:08,754 - INFO - 🚀 Recruitment pipeline finished
+2025-06-11 01:56:08,754 - INFO - Pipeline completed successfully in 61.89 seconds
+2025-06-11 01:56:08,754 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:01:24,989 - INFO - 127.0.0.1 - - [11/Jun/2025 02:01:24] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:01:24,996 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-11 02:01:25,003 - INFO - Starting monitored pipeline for job_id=67
+2025-06-11 02:01:25,005 - INFO - 127.0.0.1 - - [11/Jun/2025 02:01:25] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:01:25,005 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-11 02:01:25,007 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-11 02:01:25,028 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-11 02:01:25,029 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-11 02:01:25,846 - INFO - Launching browser with profile: ./pw_user_data
+2025-06-11 02:01:27,461 - INFO - Starting automated login process...
+2025-06-11 02:01:28,049 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:01:28,051 - INFO - 127.0.0.1 - - [11/Jun/2025 02:01:28] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:01:31,318 - INFO - 127.0.0.1 - - [11/Jun/2025 02:01:31] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:01:31,760 - INFO - Clicked 'Log in with Email and Password'
+2025-06-11 02:01:38,790 - ERROR - Error during automated login: Timeout 5000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[name='email'], input[type='email']") to be visible
+============================================================
+2025-06-11 02:01:38,791 - ERROR - Automated login failed!
+2025-06-11 02:01:38,792 - ERROR - Error during scraping: Login failed
+2025-06-11 02:01:39,164 - INFO - Browser closed
+2025-06-11 02:01:39,165 - INFO - Cleaned up browser profile: ./pw_user_data
+2025-06-11 02:01:39,200 - ERROR - Fatal error: Login failed
+2025-06-11 02:01:39,201 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 312, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 404, in scrape_job
+Exception: Login failed
+2025-06-11 02:01:39,203 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-11 02:01:39,205 - INFO - Getting test suggestions from GPT...
+2025-06-11 02:01:41,891 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-11 02:01:41,893 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:01:41,895 - INFO - Starting automation for: junior ai engineer
+2025-06-11 02:01:41,896 - INFO - Suggested role: Junior Ai Engineer
+2025-06-11 02:01:41,898 - INFO - Tests to add: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:02:06,630 - ERROR - Testlify login error: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[type='email']") to be visible
+============================================================
+2025-06-11 02:02:06,631 - ERROR - Testlify login failed
+2025-06-11 02:02:09,141 - INFO - ✅ Assessment created successfully
+2025-06-11 02:02:09,142 - INFO - STEP 3: Extracting invite link for 'junior ai engineer' from Testlify
+2025-06-11 02:02:11,592 - INFO - Navigating to assessments page...
+2025-06-11 02:02:41,636 - ERROR - Error: Timeout 30000ms exceeded.
+=========================== logs ===========================
+navigating to "https://app.testlify.com/login", waiting until "networkidle"
+============================================================
+2025-06-11 02:02:42,605 - WARNING - Using fallback invite link: https://candidate.testlify.com/assessment/67
+2025-06-11 02:02:42,606 - INFO - STEP 4: Running AI-powered screening...
+2025-06-11 02:02:42,625 - INFO - ClintRecruitmentSystem initialized with 0 existing candidates
+2025-06-11 02:02:42,626 - INFO - ATS threshold set to 70.0
+2025-06-11 02:02:42,629 - INFO - ✅ AI screening completed successfully
+2025-06-11 02:02:42,629 - INFO - Pipeline completed. Steps: ['assessment_creation', 'ai_screening'], Errors: 1
+2025-06-11 02:02:42,631 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:02:42,631 - INFO - 🚀 Recruitment pipeline finished
+2025-06-11 02:02:42,632 - INFO - Pipeline completed successfully in 77.63 seconds
+2025-06-11 02:02:42,635 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:07:30,351 - INFO - 127.0.0.1 - - [11/Jun/2025 02:07:30] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:07:30,356 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-11 02:07:30,358 - INFO - Starting monitored pipeline for job_id=67
+2025-06-11 02:07:30,359 - INFO - 127.0.0.1 - - [11/Jun/2025 02:07:30] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:07:30,360 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-11 02:07:30,361 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-11 02:07:30,368 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-11 02:07:30,369 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-11 02:07:31,288 - INFO - Launching browser with profile: ./pw_user_data
+2025-06-11 02:07:32,905 - INFO - Starting automated login process...
+2025-06-11 02:07:33,394 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:07:33,407 - INFO - 127.0.0.1 - - [11/Jun/2025 02:07:33] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:07:36,245 - INFO - 127.0.0.1 - - [11/Jun/2025 02:07:36] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:07:37,036 - INFO - Clicked 'Log in with Email and Password'
+2025-06-11 02:07:44,065 - ERROR - Error during automated login: Timeout 5000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[name='email'], input[type='email']") to be visible
+============================================================
+2025-06-11 02:07:44,066 - ERROR - Automated login failed!
+2025-06-11 02:07:44,066 - ERROR - Error during scraping: Login failed
+2025-06-11 02:07:44,450 - INFO - Browser closed
+2025-06-11 02:07:44,451 - INFO - Cleaned up browser profile: ./pw_user_data
+2025-06-11 02:07:44,478 - ERROR - Fatal error: Login failed
+2025-06-11 02:07:44,479 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 312, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 404, in scrape_job
+    user_agent=CONFIG['USER_AGENT'],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Exception: Login failed
+2025-06-11 02:07:44,482 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-11 02:07:44,484 - INFO - Getting test suggestions from GPT...
+2025-06-11 02:07:46,680 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-11 02:07:46,682 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:07:46,684 - INFO - Starting automation for: junior ai engineer
+2025-06-11 02:07:46,684 - INFO - Suggested role: Junior Ai Engineer
+2025-06-11 02:07:46,685 - INFO - Tests to add: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:08:11,333 - ERROR - Testlify login error: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[type='email']") to be visible
+============================================================
+2025-06-11 02:08:11,334 - ERROR - Testlify login failed
+2025-06-11 02:08:13,911 - INFO - ✅ Assessment created successfully
+2025-06-11 02:08:13,913 - INFO - STEP 3: Extracting invite link for 'junior ai engineer' from Testlify
+2025-06-11 02:08:15,674 - INFO - Navigating to assessments page...
+2025-06-11 02:08:45,709 - ERROR - Error: Timeout 30000ms exceeded.
+=========================== logs ===========================
+navigating to "https://app.testlify.com/login", waiting until "networkidle"
+============================================================
+2025-06-11 02:08:48,128 - WARNING - Using fallback invite link: https://candidate.testlify.com/assessment/67
+2025-06-11 02:08:48,130 - INFO - STEP 4: Running AI-powered screening...
+2025-06-11 02:08:48,151 - INFO - ClintRecruitmentSystem initialized with 0 existing candidates
+2025-06-11 02:08:48,154 - INFO - ATS threshold set to 70.0
+2025-06-11 02:08:48,163 - INFO - ✅ AI screening completed successfully
+2025-06-11 02:08:48,165 - INFO - Pipeline completed. Steps: ['assessment_creation', 'ai_screening'], Errors: 1
+2025-06-11 02:08:48,165 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:08:48,167 - INFO - 🚀 Recruitment pipeline finished
+2025-06-11 02:08:48,169 - INFO - Pipeline completed successfully in 77.81 seconds
+2025-06-11 02:08:48,170 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:12:38,684 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:12:38,688 - INFO - 127.0.0.1 - - [11/Jun/2025 02:12:38] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:12:38,708 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:12:38,710 - INFO - 127.0.0.1 - - [11/Jun/2025 02:12:38] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:12:38,723 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:12:38,728 - INFO - 127.0.0.1 - - [11/Jun/2025 02:12:38] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:12:38,758 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:12:38,763 - INFO - 127.0.0.1 - - [11/Jun/2025 02:12:38] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:12:41,012 - INFO - 127.0.0.1 - - [11/Jun/2025 02:12:41] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:12:43,219 - INFO - 127.0.0.1 - - [11/Jun/2025 02:12:43] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:12:45,357 - INFO - 127.0.0.1 - - [11/Jun/2025 02:12:45] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:12:47,437 - INFO - 127.0.0.1 - - [11/Jun/2025 02:12:47] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:12:49,577 - INFO - 127.0.0.1 - - [11/Jun/2025 02:12:49] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:12:51,804 - INFO - 127.0.0.1 - - [11/Jun/2025 02:12:51] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:12:59,893 - INFO - 127.0.0.1 - - [11/Jun/2025 02:12:59] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:12:59,911 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-11 02:12:59,926 - INFO - Starting monitored pipeline for job_id=67
+2025-06-11 02:12:59,927 - INFO - 127.0.0.1 - - [11/Jun/2025 02:12:59] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:12:59,940 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-11 02:12:59,944 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-11 02:12:59,951 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-11 02:12:59,959 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-11 02:13:00,786 - INFO - Launching browser with profile: ./pw_user_data
+2025-06-11 02:13:02,145 - INFO - Starting automated login process...
+2025-06-11 02:13:02,972 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:13:02,978 - INFO - 127.0.0.1 - - [11/Jun/2025 02:13:02] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:13:05,764 - INFO - 127.0.0.1 - - [11/Jun/2025 02:13:05] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:13:06,720 - INFO - Clicked 'Log in with Email and Password'
+2025-06-11 02:13:13,743 - ERROR - Error during automated login: Timeout 5000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[name='email'], input[type='email']") to be visible
+============================================================
+2025-06-11 02:13:13,744 - ERROR - Automated login failed!
+2025-06-11 02:13:13,745 - ERROR - Error during scraping: Login failed
+2025-06-11 02:13:14,053 - INFO - Browser closed
+2025-06-11 02:13:14,054 - INFO - Cleaned up browser profile: ./pw_user_data
+2025-06-11 02:13:14,078 - ERROR - Fatal error: Login failed
+2025-06-11 02:13:14,079 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 312, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 404, in scrape_job
+Exception: Login failed
+2025-06-11 02:13:14,080 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-11 02:13:14,081 - INFO - Getting test suggestions from GPT...
+2025-06-11 02:13:16,279 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-11 02:13:16,284 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:13:16,285 - INFO - Starting automation for: junior ai engineer
+2025-06-11 02:13:16,285 - INFO - Suggested role: Junior Ai Engineer
+2025-06-11 02:13:16,286 - INFO - Tests to add: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:13:40,841 - ERROR - Testlify login error: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[type='email']") to be visible
+============================================================
+2025-06-11 02:13:40,842 - ERROR - Testlify login failed
+2025-06-11 02:13:43,198 - INFO - ✅ Assessment created successfully
+2025-06-11 02:13:43,199 - INFO - STEP 3: Extracting invite link for 'junior ai engineer' from Testlify
+2025-06-11 02:13:44,755 - INFO - Navigating to assessments page...
+2025-06-11 02:13:48,491 - ERROR - Error: Page closed
+=========================== logs ===========================
+navigating to "https://app.testlify.com/login", waiting until "networkidle"
+============================================================
+2025-06-11 02:13:48,938 - ERROR - Invite link extraction failed: Target page, context or browser has been closed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 33, in extract_invite_link_from_assessment
+    await page.goto("https://app.testlify.com/login", wait_until="networkidle")
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\async_api\_generated.py", line 9251, in goto
+    await self._impl_obj.goto(
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_page.py", line 473, in goto
+    return await self._main_frame.goto(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_frame.py", line 138, in goto
+    await self._channel.send("goto", locals_to_params(locals()))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 490, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 99, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._api_types.Error: Page closed
+=========================== logs ===========================
+navigating to "https://app.testlify.com/login", waiting until "networkidle"
+============================================================
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 336, in full_recruitment_pipeline
+    invite_link = get_invite_link(job_title)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 478, in get_invite_link
+    return asyncio.run(extract_invite_link_from_assessment(assessment_name))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 450, in extract_invite_link_from_assessment
+    await page.screenshot(path="error_screenshot.png")
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\async_api\_generated.py", line 9974, in screenshot
+    await self._impl_obj.screenshot(
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_page.py", line 655, in screenshot
+    encoded_binary = await self._channel.send("screenshot", params)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 490, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 99, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._api_types.Error: Target page, context or browser has been closed
+2025-06-11 02:13:48,943 - WARNING - Using fallback invite link: https://candidate.testlify.com/assessment/67
+2025-06-11 02:13:48,944 - INFO - STEP 4: Running AI-powered screening...
+2025-06-11 02:13:48,959 - INFO - ClintRecruitmentSystem initialized with 0 existing candidates
+2025-06-11 02:13:48,960 - INFO - ATS threshold set to 70.0
+2025-06-11 02:13:48,961 - INFO - ✅ AI screening completed successfully
+2025-06-11 02:13:48,961 - INFO - Pipeline completed. Steps: ['assessment_creation', 'ai_screening'], Errors: 2
+2025-06-11 02:13:48,961 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:13:48,963 - INFO - 🚀 Recruitment pipeline finished
+2025-06-11 02:13:48,964 - INFO - Pipeline completed successfully in 49.04 seconds
+2025-06-11 02:13:48,964 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:14:24,215 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:14:24,231 - INFO - 127.0.0.1 - - [11/Jun/2025 02:14:24] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:14:24,277 - INFO - 127.0.0.1 - - [11/Jun/2025 02:14:24] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-11 02:14:24,461 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:14:24,466 - INFO - 127.0.0.1 - - [11/Jun/2025 02:14:24] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:14:24,560 - INFO - 127.0.0.1 - - [11/Jun/2025 02:14:24] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-11 02:14:26,378 - INFO - 127.0.0.1 - - [11/Jun/2025 02:14:26] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:14:28,520 - INFO - 127.0.0.1 - - [11/Jun/2025 02:14:28] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:14:54,221 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:14:54,229 - INFO - 127.0.0.1 - - [11/Jun/2025 02:14:54] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:14:54,252 - INFO - 127.0.0.1 - - [11/Jun/2025 02:14:54] "GET /api/recruitment-stats HTTP/1.1" 200 -
+2025-06-11 02:14:56,431 - INFO - 127.0.0.1 - - [11/Jun/2025 02:14:56] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:15:15,577 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:15:15,579 - INFO - 127.0.0.1 - - [11/Jun/2025 02:15:15] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:15:15,586 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:15:15,588 - INFO - 127.0.0.1 - - [11/Jun/2025 02:15:15] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:15:17,709 - INFO - 127.0.0.1 - - [11/Jun/2025 02:15:17] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:15:19,838 - INFO - 127.0.0.1 - - [11/Jun/2025 02:15:19] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:15:22,201 - INFO - 127.0.0.1 - - [11/Jun/2025 02:15:22] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:15:24,258 - INFO - 127.0.0.1 - - [11/Jun/2025 02:15:24] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:15:35,007 - INFO - 127.0.0.1 - - [11/Jun/2025 02:15:35] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:15:35,012 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-11 02:15:35,013 - INFO - Starting monitored pipeline for job_id=67
+2025-06-11 02:15:35,013 - INFO - 127.0.0.1 - - [11/Jun/2025 02:15:35] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:15:35,014 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-11 02:15:35,015 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-11 02:15:35,017 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-11 02:15:35,018 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-11 02:15:35,416 - INFO - Launching browser with profile: ./pw_user_data
+2025-06-11 02:15:36,253 - INFO - Starting automated login process...
+2025-06-11 02:15:38,074 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:15:38,081 - INFO - 127.0.0.1 - - [11/Jun/2025 02:15:38] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:15:39,266 - INFO - Clicked 'Log in with Email and Password'
+2025-06-11 02:15:40,855 - INFO - 127.0.0.1 - - [11/Jun/2025 02:15:40] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:15:46,282 - ERROR - Error during automated login: Timeout 5000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[name='email'], input[type='email']") to be visible
+============================================================
+2025-06-11 02:15:46,282 - ERROR - Automated login failed!
+2025-06-11 02:15:46,283 - ERROR - Error during scraping: Login failed
+2025-06-11 02:15:46,579 - INFO - Browser closed
+2025-06-11 02:15:46,580 - INFO - Cleaned up browser profile: ./pw_user_data
+2025-06-11 02:15:46,602 - ERROR - Fatal error: Login failed
+2025-06-11 02:15:46,602 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 312, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 404, in scrape_job
+Exception: Login failed
+2025-06-11 02:15:46,603 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-11 02:15:46,605 - INFO - Getting test suggestions from GPT...
+2025-06-11 02:15:49,031 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-11 02:15:49,033 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:15:49,034 - INFO - Starting automation for: junior ai engineer
+2025-06-11 02:15:49,035 - INFO - Suggested role: Junior Ai Engineer
+2025-06-11 02:15:49,036 - INFO - Tests to add: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:16:12,816 - ERROR - Testlify login error: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[type='email']") to be visible
+============================================================
+2025-06-11 02:16:12,817 - ERROR - Testlify login failed
+2025-06-11 02:16:15,150 - INFO - ✅ Assessment created successfully
+2025-06-11 02:16:15,151 - INFO - STEP 3: Extracting invite link for 'junior ai engineer' from Testlify
+2025-06-11 02:16:16,336 - INFO - Navigating to assessments page...
+2025-06-11 02:16:25,021 - INFO - Looking for assessment: junior ai engineer
+2025-06-11 02:16:35,095 - ERROR - Could not find assessment: junior ai engineer
+2025-06-11 02:16:35,652 - WARNING - Using fallback invite link: https://candidate.testlify.com/assessment/67
+2025-06-11 02:16:35,652 - INFO - STEP 4: Running AI-powered screening...
+2025-06-11 02:16:35,663 - INFO - ClintRecruitmentSystem initialized with 0 existing candidates
+2025-06-11 02:16:35,663 - INFO - ATS threshold set to 70.0
+2025-06-11 02:16:35,664 - INFO - ✅ AI screening completed successfully
+2025-06-11 02:16:35,664 - INFO - Pipeline completed. Steps: ['assessment_creation', 'ai_screening'], Errors: 1
+2025-06-11 02:16:35,665 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:16:35,665 - INFO - 🚀 Recruitment pipeline finished
+2025-06-11 02:16:35,666 - INFO - Pipeline completed successfully in 60.65 seconds
+2025-06-11 02:16:35,666 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:21:16,481 - INFO - 127.0.0.1 - - [11/Jun/2025 02:21:16] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:21:16,486 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-11 02:21:16,487 - INFO - Starting monitored pipeline for job_id=67
+2025-06-11 02:21:16,488 - INFO - 127.0.0.1 - - [11/Jun/2025 02:21:16] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:21:16,490 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-11 02:21:16,490 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-11 02:21:16,495 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-11 02:21:16,496 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-11 02:21:16,937 - INFO - Launching browser with profile: ./pw_user_data
+2025-06-11 02:21:17,915 - INFO - Starting automated login process...
+2025-06-11 02:21:19,519 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:21:19,521 - INFO - 127.0.0.1 - - [11/Jun/2025 02:21:19] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:21:21,819 - INFO - Clicked 'Log in with Email and Password'
+2025-06-11 02:21:22,706 - INFO - 127.0.0.1 - - [11/Jun/2025 02:21:22] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:21:28,857 - ERROR - Error during automated login: Timeout 5000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[name='email'], input[type='email']") to be visible
+============================================================
+2025-06-11 02:21:28,858 - ERROR - Automated login failed!
+2025-06-11 02:21:28,859 - ERROR - Error during scraping: Login failed
+2025-06-11 02:21:29,176 - INFO - Browser closed
+2025-06-11 02:21:29,177 - INFO - Cleaned up browser profile: ./pw_user_data
+2025-06-11 02:21:29,200 - ERROR - Fatal error: Login failed
+2025-06-11 02:21:29,201 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 312, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 404, in scrape_job
+    args=['--no-sandbox', '--disable-setuid-sandbox']
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Exception: Login failed
+2025-06-11 02:21:29,202 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-11 02:21:29,204 - INFO - Getting test suggestions from GPT...
+2025-06-11 02:21:31,244 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-11 02:21:31,246 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:21:31,247 - INFO - Starting automation for: junior ai engineer
+2025-06-11 02:21:31,247 - INFO - Suggested role: Junior Ai Engineer
+2025-06-11 02:21:31,247 - INFO - Tests to add: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:21:56,474 - ERROR - Testlify login error: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[type='email']") to be visible
+============================================================
+2025-06-11 02:21:56,474 - ERROR - Testlify login failed
+2025-06-11 02:21:58,917 - INFO - ✅ Assessment created successfully
+2025-06-11 02:21:58,917 - INFO - STEP 3: Extracting invite link for 'junior ai engineer' from Testlify
+2025-06-11 02:22:00,176 - INFO - Navigating to assessments page...
+2025-06-11 02:22:03,724 - ERROR - Error: Page closed
+=========================== logs ===========================
+navigating to "https://app.testlify.com/login", waiting until "networkidle"
+============================================================
+2025-06-11 02:22:04,028 - ERROR - Invite link extraction failed: Target page, context or browser has been closed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 33, in extract_invite_link_from_assessment
+    await page.goto("https://app.testlify.com/login", wait_until="networkidle")
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\async_api\_generated.py", line 9251, in goto
+    await self._impl_obj.goto(
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_page.py", line 473, in goto
+    return await self._main_frame.goto(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_frame.py", line 138, in goto
+    await self._channel.send("goto", locals_to_params(locals()))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 490, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 99, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._api_types.Error: Page closed
+=========================== logs ===========================
+navigating to "https://app.testlify.com/login", waiting until "networkidle"
+============================================================
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 336, in full_recruitment_pipeline
+    invite_link = get_invite_link(job_title)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 478, in get_invite_link
+    return asyncio.run(extract_invite_link_from_assessment(assessment_name))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 450, in extract_invite_link_from_assessment
+    await page.screenshot(path="error_screenshot.png")
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\async_api\_generated.py", line 9974, in screenshot
+    await self._impl_obj.screenshot(
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_page.py", line 655, in screenshot
+    encoded_binary = await self._channel.send("screenshot", params)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 490, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 99, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._api_types.Error: Target page, context or browser has been closed
+2025-06-11 02:22:04,031 - WARNING - Using fallback invite link: https://candidate.testlify.com/assessment/67
+2025-06-11 02:22:04,031 - INFO - STEP 4: Running AI-powered screening...
+2025-06-11 02:22:04,048 - INFO - ClintRecruitmentSystem initialized with 0 existing candidates
+2025-06-11 02:22:04,049 - INFO - ATS threshold set to 70.0
+2025-06-11 02:22:04,049 - INFO - ✅ AI screening completed successfully
+2025-06-11 02:22:04,050 - INFO - Pipeline completed. Steps: ['assessment_creation', 'ai_screening'], Errors: 2
+2025-06-11 02:22:04,050 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:22:04,051 - INFO - 🚀 Recruitment pipeline finished
+2025-06-11 02:22:04,051 - INFO - Pipeline completed successfully in 47.56 seconds
+2025-06-11 02:22:04,051 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:40:56,693 - INFO - 127.0.0.1 - - [11/Jun/2025 02:40:56] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:40:56,714 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-11 02:40:56,722 - INFO - Starting monitored pipeline for job_id=67
+2025-06-11 02:40:56,723 - INFO - 127.0.0.1 - - [11/Jun/2025 02:40:56] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:40:56,725 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-11 02:40:56,731 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-11 02:40:56,749 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-11 02:40:56,754 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-11 02:40:57,526 - INFO - Launching browser with profile: ./pw_user_data
+2025-06-11 02:40:58,891 - INFO - Starting automated login process...
+2025-06-11 02:40:59,771 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:40:59,772 - INFO - 127.0.0.1 - - [11/Jun/2025 02:40:59] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:41:02,286 - INFO - 127.0.0.1 - - [11/Jun/2025 02:41:02] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:41:03,084 - INFO - Clicked 'Log in with Email and Password'
+2025-06-11 02:41:10,110 - ERROR - Error during automated login: Timeout 5000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[name='email'], input[type='email']") to be visible
+============================================================
+2025-06-11 02:41:10,111 - ERROR - Automated login failed!
+2025-06-11 02:41:10,112 - ERROR - Error during scraping: Login failed
+2025-06-11 02:41:11,497 - INFO - Browser closed
+2025-06-11 02:41:11,499 - INFO - Cleaned up browser profile: ./pw_user_data
+2025-06-11 02:41:11,534 - ERROR - Fatal error: Login failed
+2025-06-11 02:41:11,537 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 312, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 404, in scrape_job
+Exception: Login failed
+2025-06-11 02:41:11,539 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-11 02:41:11,541 - INFO - Getting test suggestions from GPT...
+2025-06-11 02:41:14,085 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-11 02:41:14,087 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:41:14,089 - INFO - Starting automation for: junior ai engineer
+2025-06-11 02:41:14,089 - INFO - Suggested role: Junior Ai Engineer
+2025-06-11 02:41:14,090 - INFO - Tests to add: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:41:47,355 - ERROR - Testlify login error: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[type='email']") to be visible
+============================================================
+2025-06-11 02:41:47,356 - ERROR - Testlify login failed
+2025-06-11 02:41:49,881 - INFO - ✅ Assessment created successfully
+2025-06-11 02:41:49,882 - INFO - STEP 3: Extracting invite link for 'junior ai engineer' from Testlify
+2025-06-11 02:41:51,855 - INFO - Navigating to assessments page...
+2025-06-11 02:41:54,078 - ERROR - Error: Page closed
+=========================== logs ===========================
+navigating to "https://app.testlify.com/login", waiting until "networkidle"
+============================================================
+2025-06-11 02:41:55,179 - ERROR - Invite link extraction failed: Target page, context or browser has been closed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 33, in extract_invite_link_from_assessment
+    await page.goto("https://app.testlify.com/login", wait_until="networkidle")
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\async_api\_generated.py", line 9251, in goto
+    await self._impl_obj.goto(
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_page.py", line 473, in goto
+    return await self._main_frame.goto(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_frame.py", line 138, in goto
+    await self._channel.send("goto", locals_to_params(locals()))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 490, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 99, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._api_types.Error: Page closed
+=========================== logs ===========================
+navigating to "https://app.testlify.com/login", waiting until "networkidle"
+============================================================
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 450, in extract_invite_link_from_assessment
+    await page.screenshot(path="error_screenshot.png")
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\async_api\_generated.py", line 9974, in screenshot
+    await self._impl_obj.screenshot(
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_page.py", line 655, in screenshot
+    encoded_binary = await self._channel.send("screenshot", params)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 490, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 99, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._api_types.Error: Target page, context or browser has been closed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 336, in full_recruitment_pipeline
+    invite_link = get_invite_link(job_title)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 478, in get_invite_link
+    return asyncio.run(extract_invite_link_from_assessment(assessment_name))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 453, in extract_invite_link_from_assessment
+    await context.close()
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\async_api\_generated.py", line 13737, in close
+    return mapping.from_maybe_impl(await self._impl_obj.close())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_browser_context.py", line 479, in close
+    await self._channel.send("close")
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 490, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 99, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._api_types.Error: Target page, context or browser has been closed
+2025-06-11 02:41:55,187 - WARNING - Using fallback invite link: https://candidate.testlify.com/assessment/67
+2025-06-11 02:41:55,188 - INFO - STEP 4: Running AI-powered screening...
+2025-06-11 02:41:55,213 - INFO - ClintRecruitmentSystem initialized with 0 existing candidates
+2025-06-11 02:41:55,215 - INFO - ATS threshold set to 70.0
+2025-06-11 02:41:55,218 - INFO - ✅ AI screening completed successfully
+2025-06-11 02:41:55,219 - INFO - Pipeline completed. Steps: ['assessment_creation', 'ai_screening'], Errors: 2
+2025-06-11 02:41:55,221 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:41:55,222 - INFO - 🚀 Recruitment pipeline finished
+2025-06-11 02:41:55,222 - INFO - Pipeline completed successfully in 58.50 seconds
+2025-06-11 02:41:55,223 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:47:07,985 - INFO - 127.0.0.1 - - [11/Jun/2025 02:47:07] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:47:08,021 - INFO - Pipeline request received: job_id=67, job_title=junior ai engineer
+2025-06-11 02:47:08,033 - INFO - Starting monitored pipeline for job_id=67
+2025-06-11 02:47:08,035 - INFO - 127.0.0.1 - - [11/Jun/2025 02:47:08] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-11 02:47:08,037 - INFO - Starting full recruitment pipeline for job_id=67, job_title=junior ai engineer
+2025-06-11 02:47:08,048 - INFO - STEP 1: Scraping resumes for job_id=67
+2025-06-11 02:47:08,058 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-11 02:47:08,067 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\resumes
+2025-06-11 02:47:09,169 - INFO - Launching browser with profile: ./pw_user_data
+2025-06-11 02:47:10,821 - INFO - Starting automated login process...
+2025-06-11 02:47:11,082 - INFO - Found 0 candidates for job_id=None, status=None
+2025-06-11 02:47:11,086 - INFO - 127.0.0.1 - - [11/Jun/2025 02:47:11] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-11 02:47:13,865 - INFO - 127.0.0.1 - - [11/Jun/2025 02:47:13] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 02:47:14,958 - INFO - Clicked 'Log in with Email and Password'
+2025-06-11 02:47:21,991 - ERROR - Error during automated login: Timeout 5000ms exceeded.
+=========================== logs ===========================
+waiting for locator("input[name='email'], input[type='email']") to be visible
+============================================================
+2025-06-11 02:47:21,992 - ERROR - Automated login failed!
+2025-06-11 02:47:21,993 - ERROR - Error during scraping: Login failed
+2025-06-11 02:47:22,354 - INFO - Browser closed
+2025-06-11 02:47:22,355 - INFO - Cleaned up browser profile: ./pw_user_data
+2025-06-11 02:47:22,392 - ERROR - Fatal error: Login failed
+2025-06-11 02:47:22,393 - ERROR - Scraping failed: Login failed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 312, in full_recruitment_pipeline
+    asyncio.run(scrape_job(job_id))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\scraper.py", line 404, in scrape_job
+Exception: Login failed
+2025-06-11 02:47:22,396 - INFO - STEP 2: Creating assessment for 'junior ai engineer' in Testlify
+2025-06-11 02:47:22,399 - INFO - Getting test suggestions from GPT...
+2025-06-11 02:47:25,522 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-11 02:47:25,538 - INFO - GPT suggested tests: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:47:25,539 - INFO - Starting automation for: junior ai engineer
+2025-06-11 02:47:25,539 - INFO - Suggested role: Junior Ai Engineer
+2025-06-11 02:47:25,540 - INFO - Tests to add: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Analysis', 'Algorithms', 'SQL']
+2025-06-11 02:47:30,559 - ERROR - Testlify login error: Target page, context or browser has been closed
+2025-06-11 02:47:30,560 - ERROR - Testlify login failed
+2025-06-11 02:47:32,706 - ERROR - Assessment creation failed: Target page, context or browser has been closed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 324, in full_recruitment_pipeline
+    create_assessment(job_title, job_desc)
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\latest.py", line 733, in create_assessment
+    return asyncio.run(automate_testlify_robust(job_title, job_desc))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\latest.py", line 720, in automate_testlify_robust
+    await context.close()
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\async_api\_generated.py", line 13737, in close
+    return mapping.from_maybe_impl(await self._impl_obj.close())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_browser_context.py", line 479, in close
+    await self._channel.send("close")
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 490, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 99, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._api_types.Error: Target page, context or browser has been closed
+2025-06-11 02:47:32,708 - INFO - STEP 3: Extracting invite link for 'junior ai engineer' from Testlify
+2025-06-11 02:47:35,302 - INFO - Navigating to assessments page...
+2025-06-11 02:47:37,512 - ERROR - Error: Page closed
+=========================== logs ===========================
+navigating to "https://app.testlify.com/login", waiting until "networkidle"
+============================================================
+2025-06-11 02:47:38,716 - ERROR - Invite link extraction failed: Target page, context or browser has been closed
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 33, in extract_invite_link_from_assessment
+    await page.goto("https://app.testlify.com/login", wait_until="networkidle")
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\async_api\_generated.py", line 9251, in goto
+    await self._impl_obj.goto(
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_page.py", line 473, in goto
+    return await self._main_frame.goto(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_frame.py", line 138, in goto
+    await self._channel.send("goto", locals_to_params(locals()))
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 490, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 99, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._api_types.Error: Page closed
+=========================== logs ===========================
+navigating to "https://app.testlify.com/login", waiting until "networkidle"
+============================================================
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 450, in extract_invite_link_from_assessment
+    await page.screenshot(path="error_screenshot.png")
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\async_api\_generated.py", line 9974, in screenshot
+    await self._impl_obj.screenshot(
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_page.py", line 655, in screenshot
+    encoded_binary = await self._channel.send("screenshot", params)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 490, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 99, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._api_types.Error: Target page, context or browser has been closed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\backend.py", line 336, in full_recruitment_pipeline
+    invite_link = get_invite_link(job_title)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 478, in get_invite_link
+    return asyncio.run(extract_invite_link_from_assessment(assessment_name))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\test_link.py", line 453, in extract_invite_link_from_assessment
+    await context.close()
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\async_api\_generated.py", line 13737, in close
+    return mapping.from_maybe_impl(await self._impl_obj.close())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_browser_context.py", line 479, in close
+    await self._channel.send("close")
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 490, in wrap_api_call
+    return await cb()
+           ^^^^^^^^^^
+  File "C:\Users\NISHITHA SAI\AppData\Local\Programs\Python\Python311\Lib\site-packages\playwright\_impl\_connection.py", line 99, in inner_send
+    result = next(iter(done)).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+playwright._impl._api_types.Error: Target page, context or browser has been closed
+2025-06-11 02:47:38,724 - WARNING - Using fallback invite link: https://candidate.testlify.com/assessment/67
+2025-06-11 02:47:38,724 - INFO - STEP 4: Running AI-powered screening...
+2025-06-11 02:47:38,747 - INFO - ClintRecruitmentSystem initialized with 0 existing candidates
+2025-06-11 02:47:38,750 - INFO - ATS threshold set to 70.0
+2025-06-11 02:47:38,752 - INFO - ✅ AI screening completed successfully
+2025-06-11 02:47:38,753 - INFO - Pipeline completed. Steps: ['ai_screening'], Errors: 3
+2025-06-11 02:47:38,753 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-11 02:47:38,754 - INFO - 🚀 Recruitment pipeline finished
+2025-06-11 02:47:38,757 - INFO - Pipeline completed successfully in 30.72 seconds
+2025-06-11 02:47:38,758 - WARNING - ADMIN_EMAIL not set, skipping notification
+2025-06-12 02:29:02,827 - WARNING - Testlify scraper not available: cannot import name 'scrape_all_pending_assessments' from partially initialized module 'testlify_results_scraper' (most likely due to a circular import) (C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\testlify_results_scraper.py)
+2025-06-12 02:33:03,847 - WARNING - Testlify scraper not available: cannot import name 'scrape_all_pending_assessments' from partially initialized module 'testlify_results_scraper' (most likely due to a circular import) (C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\testlify_results_scraper.py)
+2025-06-12 02:37:20,989 - WARNING - Testlify scraper not available: cannot import name 'scrape_all_pending_assessments' from partially initialized module 'testlify_results_scraper' (most likely due to a circular import) (C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\testlify_results_scraper.py)
+2025-06-12 17:24:36,229 - ERROR - Critical module import failed: cannot import name 'create_assessment' from 'latest' (C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\back\latest.py)

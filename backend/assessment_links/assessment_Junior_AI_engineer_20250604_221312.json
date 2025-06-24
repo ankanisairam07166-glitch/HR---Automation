@@ -1,0 +1,19 @@
+{
+  "job_title": "Junior AI engineer",
+  "selected_role": "Junior Ai Engineer",
+  "tests_added": 5,
+  "total_tests_attempted": 5,
+  "gpt_suggested_tests": [
+    "Python",
+    "Machine Learning",
+    "Deep Learning",
+    "TensorFlow",
+    "NLP",
+    "Data Analysis",
+    "Neural Networks"
+  ],
+  "candidate_invite_link": null,
+  "assessment_url": "https://app.testlify.com/assessment/compose/6840772ff7e87f09ffd68c2c/questions/custom",
+  "created_at": "2025-06-04T22:13:12.251681",
+  "success": true
+}

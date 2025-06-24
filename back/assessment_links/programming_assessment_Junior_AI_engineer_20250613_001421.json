@@ -1,0 +1,22 @@
+{
+  "job_title": "Junior AI engineer",
+  "selected_role": "Junior Ai Engineer",
+  "programming_tests_added": 3,
+  "total_tests_attempted": 3,
+  "gpt_suggested_tests": [
+    "Python",
+    "Data Structures",
+    "Machine Learning"
+  ],
+  "actual_added_tests": [
+    "15\u00a0mins",
+    "10\u00a0mins",
+    "20\u00a0mins"
+  ],
+  "candidate_invite_link": null,
+  "assessment_url": "https://app.testlify.com/assessment/684b1cffce4d92912ee88709?from=assessmentcreation",
+  "created_at": "2025-06-13T00:14:21.407174",
+  "success": true,
+  "diversity_achieved": true,
+  "assessment_type": "Programming Assessment with Diversity Focus"
+}

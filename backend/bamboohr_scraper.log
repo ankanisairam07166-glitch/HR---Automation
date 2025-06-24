@@ -1,0 +1,1022 @@
+2025-06-07 00:23:54,261 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-07 00:23:54,262 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 00:24:10,605 - INFO - Launching browser with profile: ./pw_user_data_20250607_002354_33288
+2025-06-07 00:24:10,631 - WARNING - Failed to launch persistent context: BrowserType.launch_persistent_context: Executable doesn't exist at C:\Users\DIVYA\AppData\Local\ms-playwright\chromium-1169\chrome-win\chrome.exe
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-06-07 00:24:10,642 - INFO - Falling back to regular browser launch...
+2025-06-07 00:24:10,651 - ERROR - Error during scraping: BrowserType.launch: Executable doesn't exist at C:\Users\DIVYA\AppData\Local\ms-playwright\chromium-1169\chrome-win\chrome.exe
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-06-07 00:24:10,652 - INFO - Browser closed
+2025-06-07 00:24:10,653 - INFO - Cleaned up browser profile: ./pw_user_data_20250607_002354_33288
+2025-06-07 00:24:10,673 - ERROR - Fatal error: BrowserType.launch: Executable doesn't exist at C:\Users\DIVYA\AppData\Local\ms-playwright\chromium-1169\chrome-win\chrome.exe
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-06-07 00:51:17,119 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.36:5000
+2025-06-07 00:51:17,119 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-07 00:51:20,711 - INFO - 127.0.0.1 - - [07/Jun/2025 00:51:20] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-07 00:51:20,776 - INFO - 127.0.0.1 - - [07/Jun/2025 00:51:20] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 00:51:20,787 - INFO - 127.0.0.1 - - [07/Jun/2025 00:51:20] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 00:51:21,021 - INFO - 127.0.0.1 - - [07/Jun/2025 00:51:21] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 00:51:21,281 - INFO - 127.0.0.1 - - [07/Jun/2025 00:51:21] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 00:51:22,474 - INFO - 127.0.0.1 - - [07/Jun/2025 00:51:22] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 00:51:22,653 - INFO - 127.0.0.1 - - [07/Jun/2025 00:51:22] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 00:51:24,139 - INFO - 127.0.0.1 - - [07/Jun/2025 00:51:24] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 00:51:24,330 - INFO - 127.0.0.1 - - [07/Jun/2025 00:51:24] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 00:51:54,520 - INFO - 127.0.0.1 - - [07/Jun/2025 00:51:54] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 00:51:54,774 - INFO - 127.0.0.1 - - [07/Jun/2025 00:51:54] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 00:51:54,777 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-07 00:51:54,777 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 00:51:55,429 - INFO - Launching browser with profile: ./pw_user_data_20250607_005154_6620
+2025-06-07 00:51:56,558 - INFO - Navigating to login page: https://greenoceanpm.bamboohr.com/login.php
+2025-06-07 00:52:00,133 - INFO - → Please complete login and 2FA in the browser...
+2025-06-07 00:59:19,410 - INFO - 127.0.0.1 - - [07/Jun/2025 00:59:19] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 01:09:48,022 - INFO - 127.0.0.1 - - [07/Jun/2025 01:09:48] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 01:09:55,658 - INFO - 127.0.0.1 - - [07/Jun/2025 01:09:55] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 01:10:03,927 - INFO - 127.0.0.1 - - [07/Jun/2025 01:10:03] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 01:10:04,185 - INFO - 127.0.0.1 - - [07/Jun/2025 01:10:04] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 01:10:04,191 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-07 01:10:04,191 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 01:10:04,691 - INFO - Launching browser with profile: ./pw_user_data_20250607_011004_6620
+2025-06-07 01:10:05,214 - INFO - Navigating to login page: https://greenoceanpm.bamboohr.com/login.php
+2025-06-07 01:10:09,673 - INFO - → Please complete login and 2FA in the browser...
+2025-06-07 01:12:19,117 - INFO - 127.0.0.1 - - [07/Jun/2025 01:12:19] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 01:12:23,710 - INFO - 127.0.0.1 - - [07/Jun/2025 01:12:23] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 01:12:24,032 - INFO - 127.0.0.1 - - [07/Jun/2025 01:12:24] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 01:12:24,036 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-07 01:12:24,037 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 01:12:24,518 - INFO - Launching browser with profile: ./pw_user_data_20250607_011224_6620
+2025-06-07 01:12:25,052 - INFO - Navigating to login page: https://greenoceanpm.bamboohr.com/login.php
+2025-06-07 01:12:28,462 - INFO - → Please complete login and 2FA in the browser...
+2025-06-07 01:15:52,004 - INFO - 127.0.0.1 - - [07/Jun/2025 01:15:52] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 01:16:33,547 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-07 01:16:33,548 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 01:16:34,057 - INFO - Launching browser with profile: ./pw_user_data_20250607_011633_17584
+2025-06-07 01:16:34,617 - INFO - Navigating to login page: https://greenoceanpm.bamboohr.com/login.php
+2025-06-07 01:16:38,061 - INFO - → Please complete login and 2FA in the browser...
+2025-06-07 01:16:50,329 - WARNING - Still on login page - login may have failed
+2025-06-07 01:16:50,330 - ERROR - Login failed or was not completed properly
+2025-06-07 01:16:50,330 - ERROR - Error during scraping: Login failed
+2025-06-07 01:16:50,355 - ERROR - Fatal error: Login failed
+2025-06-07 11:00:55,645 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.36:5000
+2025-06-07 11:00:55,647 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-07 11:01:59,008 - INFO - 127.0.0.1 - - [07/Jun/2025 11:01:59] "GET /health HTTP/1.1" 200 -
+2025-06-07 11:02:03,319 - INFO - 127.0.0.1 - - [07/Jun/2025 11:02:03] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 11:02:05,370 - INFO - 127.0.0.1 - - [07/Jun/2025 11:02:05] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 11:02:07,417 - INFO - 127.0.0.1 - - [07/Jun/2025 11:02:07] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 11:02:07,432 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 1001
+2025-06-07 11:02:07,433 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 11:02:07,666 - INFO - Cleaned up old browser profile: pw_user_data_20250607_005154_6620
+2025-06-07 11:02:07,875 - INFO - Cleaned up old browser profile: pw_user_data_20250607_011004_6620
+2025-06-07 11:02:08,058 - INFO - Cleaned up old browser profile: pw_user_data_20250607_011224_6620
+2025-06-07 11:02:08,257 - INFO - Cleaned up old browser profile: pw_user_data_20250607_011633_17584
+2025-06-07 11:02:09,119 - INFO - Launching browser with profile: ./pw_user_data_20250607_110208_25216
+2025-06-07 11:02:10,007 - INFO - Navigating to login page: https://greenoceanpm.bamboohr.com/login.php
+2025-06-07 11:02:14,477 - INFO - 127.0.0.1 - - [07/Jun/2025 11:02:14] "GET /api/candidates?job_id=1001 HTTP/1.1" 200 -
+2025-06-07 11:02:14,480 - INFO - → Please complete login and 2FA in the browser...
+2025-06-07 11:23:17,449 - INFO - 127.0.0.1 - - [07/Jun/2025 11:23:17] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 11:23:17,463 - INFO - 127.0.0.1 - - [07/Jun/2025 11:23:17] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 11:23:17,491 - INFO - 127.0.0.1 - - [07/Jun/2025 11:23:17] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-07 11:23:17,677 - INFO - 127.0.0.1 - - [07/Jun/2025 11:23:17] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 11:23:17,926 - INFO - 127.0.0.1 - - [07/Jun/2025 11:23:17] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 11:23:19,140 - INFO - 127.0.0.1 - - [07/Jun/2025 11:23:19] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 11:23:19,269 - INFO - 127.0.0.1 - - [07/Jun/2025 11:23:19] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 11:23:21,173 - INFO - 127.0.0.1 - - [07/Jun/2025 11:23:21] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 11:23:21,197 - INFO - 127.0.0.1 - - [07/Jun/2025 11:23:21] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 11:23:23,221 - INFO - 127.0.0.1 - - [07/Jun/2025 11:23:23] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 11:23:41,497 - INFO - 127.0.0.1 - - [07/Jun/2025 11:23:41] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 11:23:41,812 - INFO - 127.0.0.1 - - [07/Jun/2025 11:23:41] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 11:23:41,819 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-07 11:23:41,820 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 11:23:42,336 - INFO - Launching browser with profile: ./pw_user_data_20250607_112341_25216
+2025-06-07 11:23:42,939 - INFO - Navigating to login page: https://greenoceanpm.bamboohr.com/login.php
+2025-06-07 11:23:46,993 - INFO - → Please complete login and 2FA in the browser...
+2025-06-07 11:24:04,953 - INFO - 127.0.0.1 - - [07/Jun/2025 11:24:04] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 11:25:40,837 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-07 11:25:40,837 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 11:25:41,298 - INFO - Launching browser with profile: ./pw_user_data_20250607_112540_13192
+2025-06-07 11:25:41,933 - INFO - Navigating to login page: https://greenoceanpm.bamboohr.com/login.php
+2025-06-07 11:25:44,978 - INFO - → Please complete login and 2FA in the browser...
+2025-06-07 11:25:50,648 - WARNING - Still on login page - login may have failed
+2025-06-07 11:25:50,649 - ERROR - Login failed or was not completed properly
+2025-06-07 11:25:50,649 - ERROR - Error during scraping: Login failed
+2025-06-07 11:25:50,673 - ERROR - Fatal error: Login failed
+2025-06-07 11:29:58,098 - INFO - 127.0.0.1 - - [07/Jun/2025 11:29:58] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 11:30:22,416 - INFO - 127.0.0.1 - - [07/Jun/2025 11:30:22] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 11:30:22,737 - INFO - 127.0.0.1 - - [07/Jun/2025 11:30:22] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 11:30:22,743 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-07 11:30:22,744 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 11:30:23,322 - INFO - Launching browser with profile: ./pw_user_data_20250607_113022_25216
+2025-06-07 11:30:23,964 - INFO - Navigating to login page: https://greenoceanpm.bamboohr.com/login.php
+2025-06-07 11:30:27,202 - INFO - → Please complete login and 2FA in the browser...
+2025-06-07 11:30:34,869 - INFO - 127.0.0.1 - - [07/Jun/2025 11:30:34] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 13:12:42,656 - INFO - 127.0.0.1 - - [07/Jun/2025 13:12:42] "GET / HTTP/1.1" 200 -
+2025-06-07 13:12:42,840 - INFO - 127.0.0.1 - - [07/Jun/2025 13:12:42] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-07 13:13:00,108 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:00] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 13:13:00,115 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-07 13:13:00,123 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:00] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 13:13:00,304 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:00] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 13:13:00,552 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:00] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 13:13:01,865 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:01] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 13:13:02,058 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:02] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 13:13:03,685 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:03] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 13:13:03,881 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:03] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 13:13:08,037 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:08] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 13:13:08,049 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:08] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 13:13:08,286 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:08] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 13:13:08,535 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:08] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 13:13:09,844 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:09] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 13:13:10,152 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:10] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 13:13:11,585 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:11] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 13:13:11,901 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:11] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 13:13:15,860 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:15] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 13:13:22,057 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:22] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 13:13:22,383 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:22] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 13:13:22,389 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-07 13:13:22,391 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 13:13:22,731 - INFO - Cleaned up old browser profile: pw_user_data_20250607_112341_25216
+2025-06-07 13:13:23,013 - INFO - Cleaned up old browser profile: pw_user_data_20250607_112540_13192
+2025-06-07 13:13:29,327 - INFO - 127.0.0.1 - - [07/Jun/2025 13:13:29] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 13:13:41,753 - INFO - Launching browser with profile: ./pw_user_data_20250607_131323_25216
+2025-06-07 13:13:43,996 - INFO - Navigating to login page: https://greenoceanpm.bamboohr.com/login.php
+2025-06-07 13:13:49,263 - INFO - → Please complete login and 2FA in the browser...
+2025-06-07 20:14:20,620 - INFO - Login appears successful
+2025-06-07 20:14:20,623 - INFO - → Navigating to job page: https://greenoceanpm.bamboohr.com/hiring/jobs/1001
+2025-06-07 20:14:20,636 - ERROR - Error getting candidates for job 1001: Page.goto: Target page, context or browser has been closed
+2025-06-07 20:14:20,636 - WARNING - No candidates found for this job ID
+2025-06-07 20:14:20,722 - INFO - Getting test suggestions from GPT...
+2025-06-07 20:14:24,939 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-07 20:14:24,950 - INFO - GPT suggested tests: ['Testing', 'Software', 'Automation', 'QA', 'Scripting', 'Debugging', 'Unit Testing']
+2025-06-07 20:14:24,950 - INFO - Starting automation for: Test Software Engineer
+2025-06-07 20:14:24,951 - INFO - Suggested role: Test Software Engineer
+2025-06-07 20:14:24,951 - INFO - Tests to add: ['Testing', 'Software', 'Automation', 'QA', 'Scripting', 'Debugging', 'Unit Testing']
+2025-06-07 20:14:41,897 - INFO - Clicked Create Assessment
+2025-06-07 20:14:44,903 - INFO - Job role selection - Attempt 1/3
+2025-06-07 20:14:46,919 - INFO - Trying to click the span element that's intercepting...
+2025-06-07 20:14:47,033 - INFO - Clicked the intercepting span element
+2025-06-07 20:14:51,149 - INFO - Used JavaScript to click through layers
+2025-06-07 20:14:51,593 - ERROR - Login verification failed: 
+2025-06-07 20:14:51,594 - ERROR - Login failed or was not completed properly
+2025-06-07 20:14:51,595 - ERROR - Error during scraping: Login failed
+2025-06-07 20:14:51,663 - ERROR - Fatal error: Login failed
+2025-06-07 20:14:52,162 - INFO - Typing job role: Test Software Engineer
+2025-06-07 20:14:52,186 - ERROR - Error in attempt 1: Keyboard.type: Connection closed while reading from the driver
+2025-06-07 20:14:52,187 - WARNING - Attempt 1 failed, retrying...
+2025-06-07 20:14:54,203 - INFO - Job role selection - Attempt 2/3
+2025-06-07 20:14:56,223 - INFO - Trying to click the span element that's intercepting...
+2025-06-07 20:14:56,229 - WARNING - socket.send() raised exception.
+2025-06-07 20:14:56,230 - INFO - Span element not found, trying parent div...
+2025-06-07 20:14:56,234 - WARNING - socket.send() raised exception.
+2025-06-07 20:14:56,239 - WARNING - socket.send() raised exception.
+2025-06-07 20:14:56,249 - INFO - Typing job role: Test Software Engineer
+2025-06-07 20:14:56,254 - WARNING - socket.send() raised exception.
+2025-06-07 20:14:56,255 - ERROR - Error in attempt 2: Keyboard.type: Connection closed while reading from the driver
+2025-06-07 20:14:56,255 - WARNING - Attempt 2 failed, retrying...
+2025-06-07 20:14:58,271 - INFO - Job role selection - Attempt 3/3
+2025-06-07 20:14:58,277 - WARNING - socket.send() raised exception.
+2025-06-07 20:14:58,281 - WARNING - socket.send() raised exception.
+2025-06-07 20:14:58,287 - WARNING - socket.send() raised exception.
+2025-06-07 20:15:00,288 - INFO - Trying to click the span element that's intercepting...
+2025-06-07 20:15:00,293 - WARNING - socket.send() raised exception.
+2025-06-07 20:15:00,293 - INFO - Span element not found, trying parent div...
+2025-06-07 20:15:00,297 - WARNING - socket.send() raised exception.
+2025-06-07 20:15:00,302 - WARNING - socket.send() raised exception.
+2025-06-07 20:15:00,303 - INFO - Typing job role: Test Software Engineer
+2025-06-07 20:15:00,307 - WARNING - socket.send() raised exception.
+2025-06-07 20:15:00,307 - ERROR - Error in attempt 3: Keyboard.type: Connection closed while reading from the driver
+2025-06-07 20:15:00,307 - WARNING - Attempt 3 failed, retrying...
+2025-06-07 20:15:02,317 - ERROR - Failed after 3 attempts
+2025-06-07 20:15:06,322 - WARNING - Still on login page - login may have failed
+2025-06-07 20:15:06,322 - ERROR - Login failed or was not completed properly
+2025-06-07 20:15:06,322 - ERROR - Error during scraping: Login failed
+2025-06-07 20:15:06,358 - ERROR - Fatal error: Login failed
+2025-06-07 20:15:09,742 - ERROR - Login verification failed: 
+2025-06-07 20:15:09,744 - ERROR - Login failed or was not completed properly
+2025-06-07 20:15:09,744 - ERROR - Error during scraping: Login failed
+2025-06-07 20:15:09,790 - ERROR - Fatal error: Login failed
+2025-06-07 20:15:17,042 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.33:5000
+2025-06-07 20:15:17,043 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-07 20:17:20,864 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:20] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 20:17:20,872 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:20] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 20:17:21,083 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:21] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 20:17:21,323 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:21] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 20:17:22,733 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:22] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 20:17:22,830 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:22] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 20:17:24,629 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:24] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 20:17:24,650 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:24] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 20:17:41,866 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.33:5000
+2025-06-07 20:17:41,867 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-07 20:17:53,148 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:53] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-07 20:17:53,156 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:53] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 20:17:53,168 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:53] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 20:17:53,349 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:53] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 20:17:53,609 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:53] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 20:17:54,976 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:54] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 20:17:55,143 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:55] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 20:17:56,780 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:56] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 20:17:56,920 - INFO - 127.0.0.1 - - [07/Jun/2025 20:17:56] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 22:15:45,947 - INFO - 127.0.0.1 - - [07/Jun/2025 22:15:45] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 22:20:23,796 - INFO - 127.0.0.1 - - [07/Jun/2025 22:20:23] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 22:20:24,056 - INFO - 127.0.0.1 - - [07/Jun/2025 22:20:24] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 22:20:24,074 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-07 22:20:24,075 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 22:20:24,397 - INFO - Cleaned up old browser profile: pw_user_data_20250607_110208_25216
+2025-06-07 22:20:24,654 - INFO - Cleaned up old browser profile: pw_user_data_20250607_113022_25216
+2025-06-07 22:20:24,938 - INFO - Cleaned up old browser profile: pw_user_data_20250607_131323_25216
+2025-06-07 22:20:30,755 - INFO - 127.0.0.1 - - [07/Jun/2025 22:20:30] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 22:20:41,464 - INFO - Launching browser with profile: ./pw_user_data_20250607_222024_12796
+2025-06-07 22:20:43,698 - INFO - Navigating to login page: https://greenoceanpm.bamboohr.com/login.php
+2025-06-07 22:20:48,844 - INFO - → Please complete login and 2FA in the browser...
+2025-06-07 22:27:05,225 - INFO - Login appears successful
+2025-06-07 22:27:05,226 - INFO - → Navigating to job page: https://greenoceanpm.bamboohr.com/hiring/jobs/67
+2025-06-07 22:27:13,798 - INFO - Found 4 candidate links
+2025-06-07 22:27:13,930 - INFO - Found 3 unique candidates
+2025-06-07 22:27:13,930 - INFO -    - Loris Salsi (ID: 1660)
+2025-06-07 22:27:13,930 - INFO -    - nitish sai (ID: 1659)
+2025-06-07 22:27:13,930 - INFO -    - NTR sai (ID: 1657)
+2025-06-07 22:27:13,932 - INFO - Saved metadata to C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes\job_67_metadata.json
+2025-06-07 22:27:13,932 - INFO - Starting download of 3 resumes...
+2025-06-07 22:27:13,932 - INFO - [1/3] Processing Loris Salsi
+2025-06-07 22:27:13,932 - INFO -    → Processing Loris Salsi (1660)
+2025-06-07 22:27:24,669 - INFO -       ✅ Saved C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes\Loris_Salsi_1660_20250607.pdf (70,800 bytes)
+2025-06-07 22:27:26,673 - INFO - [2/3] Processing nitish sai
+2025-06-07 22:27:26,673 - INFO -    → Processing nitish sai (1659)
+2025-06-07 22:27:35,509 - INFO -       ✅ Saved C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes\nitish_sai_1659_20250607.pdf (222,842 bytes)
+2025-06-07 22:27:37,522 - INFO - [3/3] Processing NTR sai
+2025-06-07 22:27:37,523 - INFO -    → Processing NTR sai (1657)
+2025-06-07 22:27:45,850 - INFO -       ✅ Saved C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes\NTR_sai_1657_20250607.pdf (272,659 bytes)
+2025-06-07 22:27:45,851 - INFO - 
+==================================================
+2025-06-07 22:27:45,851 - INFO - SCRAPING SUMMARY
+2025-06-07 22:27:45,851 - INFO - ==================================================
+2025-06-07 22:27:45,851 - INFO - Job ID: 67
+2025-06-07 22:27:45,851 - INFO - Total candidates: 3
+2025-06-07 22:27:45,851 - INFO - Successful downloads: 3
+2025-06-07 22:27:45,851 - INFO - Failed downloads: 0
+2025-06-07 22:27:45,852 - INFO - 
+All resumes downloaded successfully!
+2025-06-07 22:27:45,852 - INFO - Files saved to: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 22:27:46,247 - INFO - Browser closed
+2025-06-07 22:27:46,390 - INFO - Cleaned up browser profile: ./pw_user_data_20250607_222024_12796
+2025-06-07 22:27:46,413 - INFO - Getting test suggestions from GPT...
+2025-06-07 22:27:49,018 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-07 22:27:49,025 - INFO - GPT suggested tests: ['CAD', 'Programming', 'Mathematics', 'Problem Solving', 'Technical Writing', 'Teamwork', 'Communication']
+2025-06-07 22:27:49,025 - INFO - Starting automation for: junior engineer
+2025-06-07 22:27:49,026 - INFO - Suggested role: Junior Engineer
+2025-06-07 22:27:49,026 - INFO - Tests to add: ['CAD', 'Programming', 'Mathematics', 'Problem Solving', 'Technical Writing', 'Teamwork', 'Communication']
+2025-06-07 22:27:57,537 - INFO - Clicked Create Assessment
+2025-06-07 22:28:00,552 - INFO - Job role selection - Attempt 1/3
+2025-06-07 22:28:02,570 - INFO - Trying to click the span element that's intercepting...
+2025-06-07 22:28:02,638 - INFO - Clicked the intercepting span element
+2025-06-07 22:28:06,693 - INFO - Used JavaScript to click through layers
+2025-06-07 22:28:07,703 - INFO - Typing job role: Junior Engineer
+2025-06-07 22:28:21,112 - WARNING - Dropdown did not appear, trying Enter key...
+2025-06-07 22:28:22,149 - WARNING - Attempt 1 failed, retrying...
+2025-06-07 22:28:24,152 - INFO - Job role selection - Attempt 2/3
+2025-06-07 22:28:26,167 - INFO - Trying to click the span element that's intercepting...
+2025-06-07 22:28:29,188 - INFO - Span element not found, trying parent div...
+2025-06-07 22:28:32,217 - INFO - Used JavaScript to click through layers
+2025-06-07 22:28:33,219 - INFO - Typing job role: Junior Engineer
+2025-06-07 22:28:46,597 - WARNING - Dropdown did not appear, trying Enter key...
+2025-06-07 22:28:47,627 - WARNING - Attempt 2 failed, retrying...
+2025-06-07 22:28:49,633 - INFO - Job role selection - Attempt 3/3
+2025-06-07 22:28:51,649 - INFO - Trying to click the span element that's intercepting...
+2025-06-07 22:28:54,658 - INFO - Span element not found, trying parent div...
+2025-06-07 22:28:57,686 - INFO - Used JavaScript to click through layers
+2025-06-07 22:28:58,700 - INFO - Typing job role: Junior Engineer
+2025-06-07 22:29:12,061 - WARNING - Dropdown did not appear, trying Enter key...
+2025-06-07 22:29:13,092 - WARNING - Attempt 3 failed, retrying...
+2025-06-07 22:29:15,106 - ERROR - Failed after 3 attempts
+2025-06-07 22:37:06,556 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-07 22:37:06,556 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 22:37:06,966 - INFO - Launching browser with profile: ./pw_user_data_20250607_223706_36416
+2025-06-07 22:37:07,462 - INFO - Navigating to login page: https://greenoceanpm.bamboohr.com/login.php
+2025-06-07 22:37:10,781 - INFO - → Please complete login and 2FA in the browser...
+2025-06-07 22:37:36,037 - ERROR - Critical error: Page.wait_for_selector: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("button:has-text('Next'):not([disabled])") to be visible
+
+2025-06-07 22:37:39,307 - INFO - Navigating to assessments page...
+2025-06-07 22:37:50,336 - INFO - Looking for assessment: junior engineer
+2025-06-07 22:37:55,717 - ERROR - Could not find assessment: junior engineer
+2025-06-07 22:37:56,182 - INFO - ClintRecruitmentSystem initialized with 0 existing candidates
+2025-06-07 22:37:56,182 - INFO - ATS threshold set to 75.0
+2025-06-07 22:37:56,281 - INFO - Resume Parser Agent: Extracting candidate information...
+2025-06-07 22:37:58,937 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-07 22:37:58,954 - INFO - ATS Scorer Agent: Calculating ATS score...
+2025-06-07 22:38:05,803 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-07 22:38:05,873 - INFO - Decision Maker Agent: Determining status for candidate with score 85.0
+2025-06-07 22:38:05,874 - INFO - Feedback Generator Agent: Creating personalized feedback...
+2025-06-07 22:38:09,015 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-07 22:38:09,019 - INFO - Email Notification Agent: Sending email to candidate...
+2025-06-07 22:38:12,691 - INFO - Email sent to pelorissalsi.uni@gmail.com
+2025-06-07 22:38:12,809 - INFO - Resume Parser Agent: Extracting candidate information...
+2025-06-07 22:38:14,462 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-07 22:38:14,477 - INFO - ATS Scorer Agent: Calculating ATS score...
+2025-06-07 22:38:20,363 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-07 22:38:20,389 - INFO - Decision Maker Agent: Determining status for candidate with score 85.0
+2025-06-07 22:38:20,390 - INFO - Feedback Generator Agent: Creating personalized feedback...
+2025-06-07 22:38:23,477 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-07 22:38:23,482 - INFO - Email Notification Agent: Sending email to candidate...
+2025-06-07 22:38:26,614 - INFO - Email sent to dnnithis@gmail.com
+2025-06-07 22:38:26,733 - INFO - Resume Parser Agent: Extracting candidate information...
+2025-06-07 22:38:27,597 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-07 22:38:27,604 - INFO - ATS Scorer Agent: Calculating ATS score...
+2025-06-07 22:38:32,803 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-07 22:38:32,816 - INFO - Decision Maker Agent: Determining status for candidate with score 85.0
+2025-06-07 22:38:32,817 - INFO - Feedback Generator Agent: Creating personalized feedback...
+2025-06-07 22:38:36,621 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-07 22:38:36,625 - INFO - Email Notification Agent: Sending email to candidate...
+2025-06-07 22:38:40,012 - INFO - Email sent to sairam07133@gmail.com
+2025-06-07 22:40:23,436 - INFO - 127.0.0.1 - - [07/Jun/2025 22:40:23] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 22:40:23,438 - INFO - 127.0.0.1 - - [07/Jun/2025 22:40:23] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-07 22:40:23,446 - INFO - 127.0.0.1 - - [07/Jun/2025 22:40:23] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 22:40:23,673 - INFO - 127.0.0.1 - - [07/Jun/2025 22:40:23] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 22:40:23,917 - INFO - 127.0.0.1 - - [07/Jun/2025 22:40:23] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 22:40:25,112 - INFO - 127.0.0.1 - - [07/Jun/2025 22:40:25] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 22:40:25,222 - INFO - 127.0.0.1 - - [07/Jun/2025 22:40:25] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 22:40:27,410 - INFO - 127.0.0.1 - - [07/Jun/2025 22:40:27] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 22:40:27,418 - INFO - 127.0.0.1 - - [07/Jun/2025 22:40:27] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 22:40:28,017 - INFO - 127.0.0.1 - - [07/Jun/2025 22:40:28] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 22:41:15,235 - INFO - 127.0.0.1 - - [07/Jun/2025 22:41:15] "GET /api/candidates?job_id=65 HTTP/1.1" 200 -
+2025-06-07 22:41:18,838 - INFO - 127.0.0.1 - - [07/Jun/2025 22:41:18] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 22:42:44,769 - INFO - 127.0.0.1 - - [07/Jun/2025 22:42:44] "OPTIONS /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 22:42:45,027 - INFO - 127.0.0.1 - - [07/Jun/2025 22:42:45] "POST /api/run_full_pipeline HTTP/1.1" 200 -
+2025-06-07 22:42:45,031 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-07 22:42:45,031 - INFO - 📁 Download directory: C:\Users\DIVYA\Downloads\hr-frontend (2)\hr-frontend\backend\resumes
+2025-06-07 22:42:45,437 - INFO - Launching browser with profile: ./pw_user_data_20250607_224245_12796
+2025-06-07 22:42:45,907 - INFO - Navigating to login page: https://greenoceanpm.bamboohr.com/login.php
+2025-06-07 22:42:48,997 - INFO - → Please complete login and 2FA in the browser...
+2025-06-07 22:43:03,449 - INFO - 127.0.0.1 - - [07/Jun/2025 22:43:03] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 23:25:43,995 - INFO - 127.0.0.1 - - [07/Jun/2025 23:25:43] "GET /api/candidates?job_id=65 HTTP/1.1" 200 -
+2025-06-07 23:31:47,656 - INFO - 127.0.0.1 - - [07/Jun/2025 23:31:47] "GET /api/candidates?job_id=25 HTTP/1.1" 200 -
+2025-06-07 23:39:33,866 - INFO - 127.0.0.1 - - [07/Jun/2025 23:39:33] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-07 23:39:33,872 - INFO - 127.0.0.1 - - [07/Jun/2025 23:39:33] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 23:39:33,887 - INFO - 127.0.0.1 - - [07/Jun/2025 23:39:33] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 23:39:34,117 - INFO - 127.0.0.1 - - [07/Jun/2025 23:39:34] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 23:39:34,373 - INFO - 127.0.0.1 - - [07/Jun/2025 23:39:34] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-07 23:39:35,463 - INFO - 127.0.0.1 - - [07/Jun/2025 23:39:35] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 23:39:35,621 - INFO - 127.0.0.1 - - [07/Jun/2025 23:39:35] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 23:39:37,077 - INFO - 127.0.0.1 - - [07/Jun/2025 23:39:37] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 23:39:37,135 - INFO - 127.0.0.1 - - [07/Jun/2025 23:39:37] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-07 23:39:38,539 - INFO - 127.0.0.1 - - [07/Jun/2025 23:39:38] "GET /api/candidates?job_id=67 HTTP/1.1" 200 -
+2025-06-07 23:39:42,712 - INFO - 127.0.0.1 - - [07/Jun/2025 23:39:42] "GET /api/candidates?job_id=64 HTTP/1.1" 200 -
+2025-06-07 23:39:45,525 - INFO - 127.0.0.1 - - [07/Jun/2025 23:39:45] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-08 02:10:24,285 - INFO - 127.0.0.1 - - [08/Jun/2025 02:10:24] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-08 02:10:24,309 - INFO - 127.0.0.1 - - [08/Jun/2025 02:10:24] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-08 02:10:24,333 - INFO - 127.0.0.1 - - [08/Jun/2025 02:10:24] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-08 02:10:24,456 - INFO - 127.0.0.1 - - [08/Jun/2025 02:10:24] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-08 02:10:24,719 - INFO - 127.0.0.1 - - [08/Jun/2025 02:10:24] "GET /api/candidates HTTP/1.1" 200 -
+2025-06-08 02:10:26,009 - INFO - 127.0.0.1 - - [08/Jun/2025 02:10:26] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-08 02:10:26,141 - INFO - 127.0.0.1 - - [08/Jun/2025 02:10:26] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-08 02:10:27,658 - INFO - 127.0.0.1 - - [08/Jun/2025 02:10:27] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-08 02:10:27,857 - INFO - 127.0.0.1 - - [08/Jun/2025 02:10:27] "GET /api/jobs HTTP/1.1" 200 -
+2025-06-11 04:43:02,029 - INFO - 🚀 Starting BambooHR resume scraper for job ID: 67
+2025-06-11 04:43:02,032 - INFO - 📁 Download directory: C:\Users\NISHITHA SAI\OneDrive\Desktop\hr-frontend\hr-frontend\backend\resumes
+2025-06-11 04:43:02,521 - INFO - Cleaned up: pw_user_data
+2025-06-11 04:43:02,706 - INFO - Cleaned up: pw_user_data_20250607_223706_36416
+2025-06-11 04:43:02,891 - INFO - Cleaned up: pw_user_data_20250607_224245_12796
+2025-06-11 04:43:03,399 - INFO - Launching browser...
+2025-06-11 04:43:04,313 - INFO - Starting automated login process...
+2025-06-11 04:43:04,315 - INFO - Navigating to login page (attempt 1/3): https://greenoceanpm.bamboohr.com/login.php
+2025-06-11 04:43:09,930 - INFO - Screenshot saved: 01_initial_login_page.png
+2025-06-11 04:43:09,931 - INFO - Trying selector 1: button.js-normalLoginLink
+2025-06-11 04:43:09,991 - INFO - Found email login button with selector: button.js-normalLoginLink
+2025-06-11 04:43:10,041 - INFO - Clicked 'Log in with Email and Password'
+2025-06-11 04:43:14,277 - INFO - Looking for email input field...
+2025-06-11 04:43:14,277 - INFO - Trying email selector 1: input[name='email']
+2025-06-11 04:43:22,291 - INFO - Trying email selector 2: input[type='email']
+2025-06-11 04:43:30,296 - INFO - Trying email selector 3: input[id='femail']
+2025-06-11 04:43:30,321 - INFO - Found email input with selector: input[id='femail']
+2025-06-11 04:43:30,322 - INFO - Filling email: support@smoothoperations.ai
+2025-06-11 04:43:53,536 - ERROR - Error filling email: Element is not attached to the DOM
+=========================== logs ===========================
+attempting click action
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #1
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #2
+  waiting 20ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #3
+  waiting 100ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #4
+  waiting 100ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #5
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #6
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #7
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #8
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #9
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #10
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #11
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #12
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #13
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #14
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #15
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #16
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #17
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #18
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #19
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #20
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #21
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #22
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #23
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #24
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #25
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #26
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #27
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #28
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #29
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #30
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #31
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #32
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #33
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #34
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #35
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #36
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #37
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #38
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #39
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #40
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #41
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #42
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+============================================================
+2025-06-11 04:43:53,538 - ERROR - Error during automated login: Element is not attached to the DOM
+=========================== logs ===========================
+attempting click action
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #1
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #2
+  waiting 20ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #3
+  waiting 100ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #4
+  waiting 100ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #5
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #6
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #7
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #8
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #9
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #10
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #11
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #12
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #13
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #14
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #15
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #16
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #17
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #18
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #19
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #20
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #21
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #22
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #23
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #24
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #25
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #26
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #27
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #28
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #29
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #30
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #31
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #32
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #33
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #34
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #35
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #36
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #37
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #38
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #39
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #40
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #41
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+  done scrolling
+  <input tabindex="4" id="password" name="password" type=…/> from <div class="front">…</div> subtree intercepts pointer events
+retrying click action, attempt #42
+  waiting 500ms
+  waiting for element to be visible, enabled and stable
+============================================================
+2025-06-11 04:43:54,153 - ERROR - Automated login failed!
+2025-06-11 04:43:54,153 - ERROR - Error during scraping: Login failed
+2025-06-11 04:43:54,433 - INFO - Browser closed successfully
+2025-06-11 04:43:54,467 - ERROR - Fatal error: Login failed

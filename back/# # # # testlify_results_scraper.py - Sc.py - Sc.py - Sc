@@ -1,0 +1,3931 @@
+# # # # testlify_results_scraper.py - Scrape assessment results from Testlify
+
+# # # import asyncio
+# # # import json
+# # # import logging
+# # # from pathlib import Path
+# # # from playwright.async_api import async_playwright
+# # # import re
+# # # from datetime import datetime
+# # # import time
+# # # import os
+# # # from typing import Dict, List, Optional
+# # # from db import Candidate, SessionLocal
+# # # from email_util import send_interview_link_email, send_rejection_email
+# # # from sqlalchemy import and_
+
+# # # # Same user data directory as test_link.py
+# # # USER_DATA_DIR = r"D:\interview link\testlify_browser_profile"
+# # # OUTPUT_DIR = "scraped_results"
+
+# # # logging.basicConfig(
+# # #     level=logging.INFO,
+# # #     format='%(asctime)s - %(levelname)s - %(message)s'
+# # # )
+
+# # # class TestlifyResultsScraper:
+# # #     """Scrape assessment results from Testlify dashboard"""
+    
+# # #     def __init__(self):
+# # #         self.session = SessionLocal()
+# # #         Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+    
+# # #     async def scrape_assessment_results(self, assessment_name: str) -> List[Dict]:
+# # #         """
+# # #         Scrape all candidate results for a specific assessment
+# # #         """
+# # #         async with async_playwright() as playwright:
+# # #             context = await playwright.chromium.launch_persistent_context(
+# # #                 user_data_dir=USER_DATA_DIR,
+# # #                 headless=False,
+# # #                 viewport={'width': 1280, 'height': 900}
+# # #             )
+# # #             page = context.pages[0] if context.pages else await context.new_page()
+            
+# # #             try:
+# # #                 # Navigate to assessments page
+# # #                 logging.info("Navigating to Testlify assessments...")
+# # #                 await page.goto("https://app.testlify.com/login", wait_until="networkidle")
+# # #                 await asyncio.sleep(3)
+                
+# # #                 # Check if login needed
+# # #                 if await page.query_selector("input[type='email']"):
+# # #                     print("⚠️ Please log in manually...")
+# # #                     input("Press ENTER after logging in: ")
+# # #                     await page.wait_for_load_state("networkidle")
+                
+# # #                 # Navigate to assessments list
+# # #                 await page.goto("https://app.testlify.com/assessments", wait_until="networkidle")
+# # #                 await asyncio.sleep(2)
+                
+# # #                 # Find and click on the specific assessment
+# # #                 assessment_found = await self._find_and_click_assessment(page, assessment_name)
+                
+# # #                 if not assessment_found:
+# # #                     logging.error(f"Assessment '{assessment_name}' not found")
+# # #                     return []
+                
+# # #                 await page.wait_for_load_state("networkidle")
+# # #                 await asyncio.sleep(3)
+                
+# # #                 # Navigate to candidates tab
+# # #                 candidates_tab = await page.wait_for_selector("text=Candidates", timeout=10000)
+# # #                 if candidates_tab:
+# # #                     await candidates_tab.click()
+# # #                     await page.wait_for_load_state("networkidle")
+# # #                     await asyncio.sleep(3)
+                
+# # #                 # Scrape all candidate results
+# # #                 results = await self._scrape_all_candidates(page, assessment_name)
+                
+# # #                 # Save results to file
+# # #                 self._save_results(assessment_name, results)
+                
+# # #                 # Process results and update database
+# # #                 await self._process_scraped_results(results, assessment_name)
+                
+# # #                 return results
+                
+# # #             except Exception as e:
+# # #                 logging.error(f"Error scraping results: {e}")
+# # #                 await page.screenshot(path="scraping_error.png")
+# # #                 return []
+# # #             finally:
+# # #                 await context.close()
+    
+# # #     async def _find_and_click_assessment(self, page, assessment_name: str) -> bool:
+# # #         """Find and click on the assessment"""
+# # #         try:
+# # #             # Method 1: Direct text match
+# # #             assessment_link = await page.query_selector(f"text={assessment_name}")
+# # #             if assessment_link:
+# # #                 await assessment_link.click()
+# # #                 logging.info("Found assessment via direct text match")
+# # #                 return True
+            
+# # #             # Method 2: Search in table rows
+# # #             rows = await page.query_selector_all("tr, .assessment-row, [class*='assessment']")
+# # #             for row in rows:
+# # #                 row_text = await row.inner_text()
+# # #                 if assessment_name.lower() in row_text.lower():
+# # #                     # Try to click the row or find a clickable element
+# # #                     clickable = await row.query_selector("a, button, .clickable")
+# # #                     if clickable:
+# # #                         await clickable.click()
+# # #                     else:
+# # #                         await row.click()
+# # #                     logging.info("Found assessment via table row search")
+# # #                     return True
+            
+# # #             # Method 3: Search by partial name
+# # #             partial_matches = await page.query_selector_all(f"*:has-text('{assessment_name[:10]}')")
+# # #             for match in partial_matches:
+# # #                 match_text = await match.inner_text()
+# # #                 if assessment_name.lower() in match_text.lower():
+# # #                     await match.click()
+# # #                     logging.info("Found assessment via partial match")
+# # #                     return True
+            
+# # #             return False
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error finding assessment: {e}")
+# # #             return False
+    
+# # #     async def _scrape_all_candidates(self, page, assessment_name: str) -> List[Dict]:
+# # #         """Scrape all candidate data from the candidates table"""
+# # #         candidates_data = []
+        
+# # #         try:
+# # #             # Wait for candidates table to load
+# # #             await page.wait_for_selector("table, .candidates-table, [class*='table']", timeout=10000)
+# # #             await asyncio.sleep(2)
+            
+# # #             # Check if there are any candidates
+# # #             no_candidates = await page.query_selector("text=No candidates found")
+# # #             if no_candidates:
+# # #                 logging.info("No candidates found for this assessment")
+# # #                 return []
+            
+# # #             # Get all candidate rows
+# # #             candidate_rows = await page.query_selector_all("tr:has(td), .candidate-row")
+            
+# # #             logging.info(f"Found {len(candidate_rows)} candidate rows")
+            
+# # #             for i, row in enumerate(candidate_rows):
+# # #                 try:
+# # #                     candidate_data = await self._extract_candidate_data_from_row(page, row, i)
+# # #                     if candidate_data:
+# # #                         candidates_data.append(candidate_data)
+# # #                         logging.info(f"Extracted data for candidate: {candidate_data.get('email', 'Unknown')}")
+# # #                 except Exception as e:
+# # #                     logging.error(f"Error extracting data from row {i}: {e}")
+# # #                     continue
+            
+# # #             logging.info(f"Successfully extracted data for {len(candidates_data)} candidates")
+# # #             return candidates_data
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error scraping candidates: {e}")
+# # #             return []
+    
+# # #     async def _extract_candidate_data_from_row(self, page, row, row_index: int) -> Optional[Dict]:
+# # #         """Extract candidate data from a single table row"""
+# # #         try:
+# # #             row_text = await row.inner_text()
+            
+# # #             # Skip header rows
+# # #             if "name" in row_text.lower() and "email" in row_text.lower():
+# # #                 return None
+            
+# # #             # Extract basic info from row text
+# # #             cells = await row.query_selector_all("td")
+# # #             if len(cells) < 3:  # Need at least name, email, status
+# # #                 return None
+            
+# # #             candidate_data = {
+# # #                 'row_index': row_index,
+# # #                 'assessment_name': '',
+# # #                 'name': '',
+# # #                 'email': '',
+# # #                 'status': '',
+# # #                 'score': None,
+# # #                 'percentage': None,
+# # #                 'invited_on': '',
+# # #                 'completed_on': '',
+# # #                 'stage': '',
+# # #                 'grading': '',
+# # #                 'detailed_results': None
+# # #             }
+            
+# # #             # Extract text from cells
+# # #             cell_texts = []
+# # #             for cell in cells:
+# # #                 cell_text = await cell.inner_text()
+# # #                 cell_texts.append(cell_text.strip())
+            
+# # #             # Map cell data (adjust indices based on your table structure)
+# # #             if len(cell_texts) >= 6:
+# # #                 candidate_data['name'] = cell_texts[0]
+# # #                 candidate_data['email'] = cell_texts[1] if '@' in cell_texts[1] else ''
+# # #                 candidate_data['invited_on'] = cell_texts[2]
+# # #                 candidate_data['score'] = cell_texts[3]
+# # #                 candidate_data['grading'] = cell_texts[4]
+# # #                 candidate_data['status'] = cell_texts[5]
+# # #                 candidate_data['stage'] = cell_texts[6] if len(cell_texts) > 6 else ''
+            
+# # #             # Extract email if not found
+# # #             if not candidate_data['email']:
+# # #                 email_match = re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', row_text)
+# # #                 if email_match:
+# # #                     candidate_data['email'] = email_match.group()
+            
+# # #             # Extract percentage from score
+# # #             if candidate_data['score']:
+# # #                 percentage_match = re.search(r'(\d+(?:\.\d+)?)%', candidate_data['score'])
+# # #                 if percentage_match:
+# # #                     candidate_data['percentage'] = float(percentage_match.group(1))
+            
+# # #             # Click on the candidate to get detailed results
+# # #             detailed_results = await self._get_detailed_candidate_results(page, row, candidate_data['email'])
+# # #             if detailed_results:
+# # #                 candidate_data['detailed_results'] = detailed_results
+# # #                 # Update with detailed info
+# # #                 if 'percentage' in detailed_results:
+# # #                     candidate_data['percentage'] = detailed_results['percentage']
+# # #                 if 'completed_on' in detailed_results:
+# # #                     candidate_data['completed_on'] = detailed_results['completed_on']
+            
+# # #             return candidate_data
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error extracting candidate data: {e}")
+# # #             return None
+    
+# # #     async def _get_detailed_candidate_results(self, page, row, email: str) -> Optional[Dict]:
+# # #         """Click on candidate row to get detailed results"""
+# # #         try:
+# # #             # Click on the row to open detailed view
+# # #             await row.click()
+# # #             await asyncio.sleep(2)
+            
+# # #             # Look for detailed results in modal or sidebar
+# # #             detailed_data = {}
+            
+# # #             # Extract detailed score information
+# # #             score_elements = await page.query_selector_all("[class*='score'], .percentage, .result")
+# # #             for element in score_elements:
+# # #                 text = await element.inner_text()
+# # #                 # Look for percentage
+# # #                 percentage_match = re.search(r'(\d+(?:\.\d+)?)%', text)
+# # #                 if percentage_match:
+# # #                     detailed_data['percentage'] = float(percentage_match.group(1))
+                
+# # #                 # Look for score format like "3/104"
+# # #                 score_match = re.search(r'(\d+)/(\d+)', text)
+# # #                 if score_match:
+# # #                     correct = int(score_match.group(1))
+# # #                     total = int(score_match.group(2))
+# # #                     detailed_data['correct_answers'] = correct
+# # #                     detailed_data['total_questions'] = total
+# # #                     if 'percentage' not in detailed_data:
+# # #                         detailed_data['percentage'] = (correct / total) * 100
+            
+# # #             # Extract completion date
+# # #             date_elements = await page.query_selector_all("[class*='date'], .completed, .timestamp")
+# # #             for element in date_elements:
+# # #                 text = await element.inner_text()
+# # #                 # Look for date patterns
+# # #                 date_match = re.search(r'(Jun|Jul|Aug|Sep|Oct|Nov|Dec|Jan|Feb|Mar|Apr|May)\s+\d+,\s+\d+\s+\d+:\d+\s+(AM|PM)', text)
+# # #                 if date_match:
+# # #                     detailed_data['completed_on'] = date_match.group()
+            
+# # #             # Extract AI insights if available
+# # #             insights_element = await page.query_selector(".ai-insights, [class*='insight']")
+# # #             if insights_element:
+# # #                 insights_text = await insights_element.inner_text()
+# # #                 detailed_data['ai_insights'] = insights_text
+            
+# # #             # Extract test breakdown
+# # #             test_sections = await page.query_selector_all(".test-section, [class*='section']")
+# # #             sections_data = []
+# # #             for section in test_sections:
+# # #                 section_text = await section.inner_text()
+# # #                 # Extract section name and score
+# # #                 lines = section_text.split('\n')
+# # #                 if len(lines) >= 2:
+# # #                     section_name = lines[0]
+# # #                     score_line = lines[1]
+# # #                     score_match = re.search(r'(\d+)/(\d+)', score_line)
+# # #                     if score_match:
+# # #                         sections_data.append({
+# # #                             'section': section_name,
+# # #                             'score': f"{score_match.group(1)}/{score_match.group(2)}",
+# # #                             'correct': int(score_match.group(1)),
+# # #                             'total': int(score_match.group(2))
+# # #                         })
+            
+# # #             if sections_data:
+# # #                 detailed_data['test_sections'] = sections_data
+            
+# # #             # Close the detailed view (press escape or click close)
+# # #             await page.keyboard.press('Escape')
+# # #             await asyncio.sleep(1)
+            
+# # #             return detailed_data if detailed_data else None
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error getting detailed results for {email}: {e}")
+# # #             # Try to close any open modal
+# # #             try:
+# # #                 await page.keyboard.press('Escape')
+# # #             except:
+# # #                 pass
+# # #             return None
+    
+# # #     def _save_results(self, assessment_name: str, results: List[Dict]):
+# # #         """Save scraped results to JSON file"""
+# # #         try:
+# # #             output_data = {
+# # #                 "assessment_name": assessment_name,
+# # #                 "scraped_at": datetime.now().isoformat(),
+# # #                 "total_candidates": len(results),
+# # #                 "candidates": results
+# # #             }
+            
+# # #             filename = f"results_{assessment_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+# # #             output_file = Path(OUTPUT_DIR) / filename
+            
+# # #             with open(output_file, 'w', encoding='utf-8') as f:
+# # #                 json.dump(output_data, f, indent=2, ensure_ascii=False)
+            
+# # #             logging.info(f"Results saved to: {output_file}")
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error saving results: {e}")
+    
+# # #     async def _process_scraped_results(self, results: List[Dict], assessment_name: str):
+# # #         """Process scraped results and update database"""
+# # #         try:
+# # #             for candidate_data in results:
+# # #                 email = candidate_data.get('email')
+# # #                 if not email:
+# # #                     continue
+                
+# # #                 # Find candidate in database
+# # #                 candidate = self.session.query(Candidate).filter_by(email=email).first()
+# # #                 if not candidate:
+# # #                     logging.warning(f"Candidate {email} not found in database")
+# # #                     continue
+                
+# # #                 # Update candidate with scraped data
+# # #                 await self._update_candidate_from_scraped_data(candidate, candidate_data)
+            
+# # #             self.session.commit()
+# # #             logging.info(f"Updated database with scraped results for {len(results)} candidates")
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error processing scraped results: {e}")
+# # #             self.session.rollback()
+    
+# # #     async def _update_candidate_from_scraped_data(self, candidate: Candidate, scraped_data: Dict):
+# # #         """Update candidate record with scraped data"""
+# # #         try:
+# # #             # Update exam completion status
+# # #             if scraped_data.get('status', '').lower() == 'completed':
+# # #                 candidate.exam_completed = True
+# # #                 candidate.exam_completed_date = datetime.now()
+                
+# # #                 # Update scores
+# # #                 if scraped_data.get('percentage'):
+# # #                     candidate.exam_percentage = scraped_data['percentage']
+                
+# # #                 if scraped_data.get('detailed_results'):
+# # #                     details = scraped_data['detailed_results']
+# # #                     candidate.exam_score = details.get('correct_answers', 0)
+# # #                     candidate.exam_total_questions = details.get('total_questions', 0)
+                    
+# # #                     # Store AI insights as feedback
+# # #                     if details.get('ai_insights'):
+# # #                         candidate.exam_feedback = details['ai_insights']
+                
+# # #                 # Process based on score
+# # #                 if candidate.exam_percentage >= 70:
+# # #                     candidate.final_status = 'Interview Scheduled'
+# # #                     candidate.interview_scheduled = True
+# # #                     candidate.interview_date = datetime.now() + timedelta(days=3)
+                    
+# # #                     # Send interview email
+# # #                     try:
+# # #                         interview_link = send_interview_link_email(candidate)
+# # #                         candidate.interview_link = interview_link
+# # #                         logging.info(f"Scheduled interview for {candidate.email}")
+# # #                     except Exception as e:
+# # #                         logging.error(f"Failed to send interview email to {candidate.email}: {e}")
+# # #                 else:
+# # #                     candidate.final_status = 'Rejected After Exam'
+# # #                     try:
+# # #                         send_rejection_email(candidate)
+# # #                         logging.info(f"Sent rejection email to {candidate.email}")
+# # #                     except Exception as e:
+# # #                         logging.error(f"Failed to send rejection email to {candidate.email}: {e}")
+            
+# # #             elif scraped_data.get('status', '').lower() == 'enrolled':
+# # #                 candidate.exam_link_sent = True
+# # #                 candidate.exam_link_sent_date = datetime.now()
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error updating candidate {candidate.email}: {e}")
+
+
+# # # async def scrape_assessment_results_by_name(assessment_name: str) -> List[Dict]:
+# # #     """Main function to scrape results for an assessment"""
+# # #     scraper = TestlifyResultsScraper()
+# # #     try:
+# # #         results = await scraper.scrape_assessment_results(assessment_name)
+# # #         return results
+# # #     finally:
+# # #         scraper.session.close()
+
+
+# # # async def scrape_all_pending_assessments():
+# # #     """Scrape results for all assessments that have pending candidates"""
+# # #     session = SessionLocal()
+# # #     try:
+# # #         # Get all unique assessment names from candidates with pending exams
+# # #         pending_assessments = session.query(Candidate.job_title).filter(
+# # #             and_(
+# # #                 Candidate.exam_link_sent == True,
+# # #                 Candidate.exam_completed == False
+# # #             )
+# # #         ).distinct().all()
+        
+# # #         results_summary = {}
+        
+# # #         for (assessment_name,) in pending_assessments:
+# # #             if assessment_name:
+# # #                 logging.info(f"Scraping results for: {assessment_name}")
+# # #                 results = await scrape_assessment_results_by_name(assessment_name)
+# # #                 results_summary[assessment_name] = len(results)
+        
+# # #         return results_summary
+        
+# # #     finally:
+# # #         session.close()
+
+
+# # # # CLI interface
+# # # async def main():
+# # #     print("🔍 Testlify Results Scraper")
+# # #     print("=" * 50)
+    
+# # #     choice = input("Choose option:\n1. Scrape specific assessment\n2. Scrape all pending assessments\nChoice (1/2): ").strip()
+    
+# # #     if choice == "1":
+# # #         assessment_name = input("Enter assessment name: ").strip()
+# # #         if assessment_name:
+# # #             results = await scrape_assessment_results_by_name(assessment_name)
+# # #             print(f"\n✅ Scraped {len(results)} candidates for '{assessment_name}'")
+# # #             for result in results:
+# # #                 print(f"  - {result.get('name', 'Unknown')}: {result.get('email', 'No email')} - {result.get('status', 'Unknown status')}")
+    
+# # #     elif choice == "2":
+# # #         results_summary = await scrape_all_pending_assessments()
+# # #         print(f"\n✅ Scraped results for {len(results_summary)} assessments:")
+# # #         for assessment, count in results_summary.items():
+# # #             print(f"  - {assessment}: {count} candidates")
+    
+# # #     else:
+# # #         print("Invalid choice!")
+
+
+# # # if __name__ == "__main__":
+# # #     asyncio.run(main())
+# # # testlify_results_scraper_fixed.py - Corrected version based on actual Testlify UI
+
+# # # import asyncio
+# # # import json
+# # # import logging
+# # # from pathlib import Path
+# # # from playwright.async_api import async_playwright
+# # # import re
+# # # from datetime import datetime
+# # # import time
+# # # import os
+# # # from typing import Dict, List, Optional
+# # # from db import Candidate, SessionLocal
+# # # from email_util import send_interview_link_email, send_rejection_email
+# # # from sqlalchemy import and_
+
+# # # # Same user data directory
+# # # USER_DATA_DIR = r"D:\interview link\testlify_browser_profile"
+# # # OUTPUT_DIR = "assessment_results"
+
+# # # logging.basicConfig(
+# # #     level=logging.INFO,
+# # #     format='%(asctime)s - %(levelname)s - %(message)s'
+# # # )
+
+# # # class TestlifyResultsScraperFixed:
+# # #     """Fixed scraper that follows correct Testlify navigation flow"""
+    
+# # #     def __init__(self):
+# # #         self.session = SessionLocal()
+# # #         Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+    
+# # #     async def scrape_assessment_scores(self, assessment_name: str) -> List[Dict]:
+# # #         """
+# # #         Correctly scrape assessment scores from Testlify
+# # #         Flow: Assessments page → Click assessment → Get individual candidate scores
+# # #         """
+# # #         async with async_playwright() as playwright:
+# # #             context = await playwright.chromium.launch_persistent_context(
+# # #                 user_data_dir=USER_DATA_DIR,
+# # #                 headless=False,
+# # #                 viewport={'width': 1280, 'height': 900}
+# # #             )
+# # #             page = context.pages[0] if context.pages else await context.new_page()
+            
+# # #             try:
+# # #                 # Step 1: Navigate to Testlify and ensure we're logged in
+# # #                 logging.info("Navigating to Testlify assessments...")
+# # #                 await page.goto("https://app.testlify.com/assessments", wait_until="networkidle")
+# # #                 await asyncio.sleep(3)
+                
+# # #                 # Check if login needed
+# # #                 if await page.query_selector("input[type='email']"):
+# # #                     print("⚠️ Please log in manually...")
+# # #                     input("Press ENTER after logging in: ")
+# # #                     await page.wait_for_load_state("networkidle")
+                
+# # #                 # Step 2: Find and click on the specific assessment
+# # #                 assessment_found = await self._find_and_click_assessment(page, assessment_name)
+                
+# # #                 if not assessment_found:
+# # #                     logging.error(f"Assessment '{assessment_name}' not found")
+# # #                     return []
+                
+# # #                 await page.wait_for_load_state("networkidle")
+# # #                 await asyncio.sleep(3)
+                
+# # #                 # Step 3: We should now be INSIDE the assessment page
+# # #                 # Extract candidate scores from this assessment detail page
+# # #                 results = await self._extract_candidate_scores_from_assessment(page, assessment_name)
+                
+# # #                 # Step 4: Save and process results
+# # #                 self._save_results(assessment_name, results)
+# # #                 await self._process_scraped_results(results, assessment_name)
+                
+# # #                 return results
+                
+# # #             except Exception as e:
+# # #                 logging.error(f"Error scraping assessment scores: {e}")
+# # #                 await page.screenshot(path="assessment_scraping_error.png")
+# # #                 return []
+# # #             finally:
+# # #                 await context.close()
+    
+# # #     async def _find_and_click_assessment(self, page, assessment_name: str) -> bool:
+# # #         """Find and click on the assessment from the assessments list"""
+# # #         try:
+# # #             logging.info(f"Looking for assessment: {assessment_name}")
+            
+# # #             # Method 1: Look for assessment cards/tiles
+# # #             assessment_cards = await page.query_selector_all("[class*='assessment'], [class*='card'], .assessment-item")
+# # #             for card in assessment_cards:
+# # #                 card_text = await card.inner_text()
+# # #                 if assessment_name.lower() in card_text.lower():
+# # #                     await card.click()
+# # #                     logging.info("Found and clicked assessment card")
+# # #                     return True
+            
+# # #             # Method 2: Look for assessment in a table/list
+# # #             assessment_links = await page.query_selector_all("a, button, [role='button']")
+# # #             for link in assessment_links:
+# # #                 try:
+# # #                     link_text = await link.inner_text()
+# # #                     if assessment_name.lower() in link_text.lower():
+# # #                         await link.click()
+# # #                         logging.info("Found and clicked assessment link")
+# # #                         return True
+# # #                 except:
+# # #                     continue
+            
+# # #             # Method 3: Direct text search and click
+# # #             try:
+# # #                 element = await page.wait_for_selector(f"text={assessment_name}", timeout=5000)
+# # #                 if element:
+# # #                     await element.click()
+# # #                     logging.info("Found assessment via direct text match")
+# # #                     return True
+# # #             except:
+# # #                 pass
+            
+# # #             # Method 4: Partial text search
+# # #             try:
+# # #                 # Try with partial name
+# # #                 partial_name = assessment_name.split()[0] if " " in assessment_name else assessment_name[:10]
+# # #                 elements = await page.query_selector_all(f"*:has-text('{partial_name}')")
+# # #                 for element in elements:
+# # #                     element_text = await element.inner_text()
+# # #                     if assessment_name.lower() in element_text.lower():
+# # #                         await element.click()
+# # #                         logging.info("Found assessment via partial match")
+# # #                         return True
+# # #             except:
+# # #                 pass
+            
+# # #             return False
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error finding assessment: {e}")
+# # #             return False
+    
+# # #     async def _extract_candidate_scores_from_assessment(self, page, assessment_name: str) -> List[Dict]:
+# # #         """
+# # #         Extract candidate scores from inside the assessment page
+# # #         This is where we get the actual scores like "2.88% (3/104)"
+# # #         """
+# # #         candidates_data = []
+        
+# # #         try:
+# # #             logging.info("Extracting candidate scores from assessment page...")
+            
+# # #             # Wait for the assessment page to load completely
+# # #             await asyncio.sleep(3)
+            
+# # #             # Look for candidate results - could be in various formats
+# # #             # Based on your screenshots, we need to find score displays like "2.88%"
+            
+# # #             # Method 1: Look for candidate cards or rows with scores
+# # #             candidate_elements = await page.query_selector_all(
+# # #                 "[class*='candidate'], [class*='result'], tr, .score-card, [class*='assessment-result']"
+# # #             )
+            
+# # #             logging.info(f"Found {len(candidate_elements)} potential candidate elements")
+            
+# # #             for i, element in enumerate(candidate_elements):
+# # #                 try:
+# # #                     candidate_data = await self._extract_score_from_element(element, i)
+# # #                     if candidate_data and candidate_data.get('email'):
+# # #                         candidates_data.append(candidate_data)
+# # #                         logging.info(f"Extracted score for: {candidate_data['email']} - {candidate_data.get('percentage', 'No score')}%")
+# # #                 except Exception as e:
+# # #                     logging.error(f"Error extracting from element {i}: {e}")
+# # #                     continue
+            
+# # #             # Method 2: If no results, try looking at the page structure
+# # #             if not candidates_data:
+# # #                 candidates_data = await self._extract_scores_from_page_structure(page)
+            
+# # #             logging.info(f"Successfully extracted scores for {len(candidates_data)} candidates")
+# # #             return candidates_data
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error extracting candidate scores: {e}")
+# # #             return []
+    
+# # #     async def _extract_score_from_element(self, element, index: int) -> Optional[Dict]:
+# # #         """Extract candidate score data from a single element"""
+# # #         try:
+# # #             element_text = await element.inner_text()
+            
+# # #             # Skip if this doesn't look like candidate data
+# # #             if not element_text or len(element_text.strip()) < 5:
+# # #                 return None
+            
+# # #             candidate_data = {
+# # #                 'row_index': index,
+# # #                 'name': '',
+# # #                 'email': '',
+# # #                 'percentage': None,
+# # #                 'score': None,
+# # #                 'total_questions': None,
+# # #                 'status': '',
+# # #                 'completed_date': '',
+# # #                 'detailed_results': {}
+# # #             }
+            
+# # #             # Extract email (most reliable identifier)
+# # #             email_match = re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', element_text)
+# # #             if email_match:
+# # #                 candidate_data['email'] = email_match.group()
+# # #             else:
+# # #                 return None  # Skip if no email found
+            
+# # #             # Extract percentage score (like "2.88%")
+# # #             percentage_match = re.search(r'(\d+(?:\.\d+)?)%', element_text)
+# # #             if percentage_match:
+# # #                 candidate_data['percentage'] = float(percentage_match.group(1))
+            
+# # #             # Extract score format like "3/104"
+# # #             score_match = re.search(r'(\d+)/(\d+)', element_text)
+# # #             if score_match:
+# # #                 candidate_data['score'] = int(score_match.group(1))
+# # #                 candidate_data['total_questions'] = int(score_match.group(2))
+                
+# # #                 # Calculate percentage if not already found
+# # #                 if not candidate_data['percentage']:
+# # #                     candidate_data['percentage'] = (candidate_data['score'] / candidate_data['total_questions']) * 100
+            
+# # #             # Extract status (Completed, Not suitable, etc.)
+# # #             status_indicators = ['completed', 'not suitable', 'suitable', 'passed', 'failed', 'pending']
+# # #             for status in status_indicators:
+# # #                 if status in element_text.lower():
+# # #                     candidate_data['status'] = status.title()
+# # #                     break
+            
+# # #             # Extract completion date
+# # #             date_patterns = [
+# # #                 r'(Jun|Jul|Aug|Sep|Oct|Nov|Dec|Jan|Feb|Mar|Apr|May)\s+\d+,\s+\d+\s+\d+:\d+\s+(AM|PM)',
+# # #                 r'\d{1,2}/\d{1,2}/\d{4}',
+# # #                 r'\d{4}-\d{2}-\d{2}'
+# # #             ]
+# # #             for pattern in date_patterns:
+# # #                 date_match = re.search(pattern, element_text)
+# # #                 if date_match:
+# # #                     candidate_data['completed_date'] = date_match.group()
+# # #                     break
+            
+# # #             # Extract name (usually before email or at beginning)
+# # #             lines = element_text.split('\n')
+# # #             for line in lines:
+# # #                 line = line.strip()
+# # #                 if line and '@' not in line and not re.search(r'\d+%', line) and not re.search(r'\d+/\d+', line):
+# # #                     # This might be a name
+# # #                     if len(line.split()) <= 4 and len(line) < 50:  # Reasonable name length
+# # #                         candidate_data['name'] = line
+# # #                         break
+            
+# # #             return candidate_data
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error extracting score from element: {e}")
+# # #             return None
+    
+# # #     async def _extract_scores_from_page_structure(self, page) -> List[Dict]:
+# # #         """Alternative method to extract scores by analyzing page structure"""
+# # #         try:
+# # #             logging.info("Trying alternative extraction method...")
+            
+# # #             # Look for specific score patterns in the entire page
+# # #             page_content = await page.content()
+            
+# # #             # Find all email addresses
+# # #             emails = re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', page_content)
+            
+# # #             candidates_data = []
+# # #             for email in emails:
+# # #                 # Try to find score near this email
+# # #                 candidate_data = await self._find_score_near_email(page, email)
+# # #                 if candidate_data:
+# # #                     candidates_data.append(candidate_data)
+            
+# # #             return candidates_data
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error in alternative extraction: {e}")
+# # #             return []
+    
+# # #     async def _find_score_near_email(self, page, email: str) -> Optional[Dict]:
+# # #         """Find score data near a specific email address"""
+# # #         try:
+# # #             # Use JavaScript to find elements containing the email and nearby score
+# # #             result = await page.evaluate(f"""
+# # #                 () => {{
+# # #                     const email = '{email}';
+# # #                     const allElements = document.querySelectorAll('*');
+                    
+# # #                     for (let element of allElements) {{
+# # #                         if (element.textContent && element.textContent.includes(email)) {{
+# # #                             // Found element containing email, look for score in same element or nearby
+# # #                             const text = element.textContent;
+                            
+# # #                             // Look for percentage
+# # #                             const percentMatch = text.match(/(\\d+(?:\\.\\d+)?)%/);
+# # #                             const scoreMatch = text.match(/(\\d+)\\/(\\d+)/);
+                            
+# # #                             if (percentMatch || scoreMatch) {{
+# # #                                 return {{
+# # #                                     email: email,
+# # #                                     text: text,
+# # #                                     percentage: percentMatch ? parseFloat(percentMatch[1]) : null,
+# # #                                     score: scoreMatch ? parseInt(scoreMatch[1]) : null,
+# # #                                     total: scoreMatch ? parseInt(scoreMatch[2]) : null
+# # #                                 }};
+# # #                             }}
+# # #                         }}
+# # #                     }}
+# # #                     return null;
+# # #                 }}
+# # #             """)
+            
+# # #             if result:
+# # #                 return {
+# # #                     'email': result['email'],
+# # #                     'percentage': result['percentage'],
+# # #                     'score': result['score'],
+# # #                     'total_questions': result['total'],
+# # #                     'status': 'Completed' if result['percentage'] is not None else 'Unknown',
+# # #                     'name': '',
+# # #                     'completed_date': '',
+# # #                     'detailed_results': result
+# # #                 }
+            
+# # #             return None
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error finding score near email {email}: {e}")
+# # #             return None
+    
+# # #     def _save_results(self, assessment_name: str, results: List[Dict]):
+# # #         """Save scraped results to JSON file"""
+# # #         try:
+# # #             output_data = {
+# # #                 "assessment_name": assessment_name,
+# # #                 "scraped_at": datetime.now().isoformat(),
+# # #                 "total_candidates": len(results),
+# # #                 "candidates_with_scores": len([r for r in results if r.get('percentage') is not None]),
+# # #                 "candidates": results
+# # #             }
+            
+# # #             filename = f"scores_{assessment_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+# # #             output_file = Path(OUTPUT_DIR) / filename
+            
+# # #             with open(output_file, 'w', encoding='utf-8') as f:
+# # #                 json.dump(output_data, f, indent=2, ensure_ascii=False)
+            
+# # #             logging.info(f"Results saved to: {output_file}")
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error saving results: {e}")
+    
+# # #     async def _process_scraped_results(self, results: List[Dict], assessment_name: str):
+# # #         """Process scraped results and update database"""
+# # #         try:
+# # #             processed_count = 0
+            
+# # #             for candidate_data in results:
+# # #                 email = candidate_data.get('email')
+# # #                 percentage = candidate_data.get('percentage')
+                
+# # #                 if not email or percentage is None:
+# # #                     continue
+                
+# # #                 # Find candidate in database
+# # #                 candidate = self.session.query(Candidate).filter_by(email=email).first()
+# # #                 if not candidate:
+# # #                     logging.warning(f"Candidate {email} not found in database")
+# # #                     continue
+                
+# # #                 # Update candidate with scraped data
+# # #                 await self._update_candidate_with_score(candidate, candidate_data)
+# # #                 processed_count += 1
+            
+# # #             self.session.commit()
+# # #             logging.info(f"Updated {processed_count} candidates with assessment scores")
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error processing scraped results: {e}")
+# # #             self.session.rollback()
+    
+# # #     async def _update_candidate_with_score(self, candidate: Candidate, scraped_data: Dict):
+# # #         """Update candidate record with scraped score data"""
+# # #         try:
+# # #             from datetime import datetime, timedelta
+            
+# # #             # Update exam completion status
+# # #             candidate.exam_completed = True
+# # #             candidate.exam_completed_date = datetime.now()
+            
+# # #             # Update scores
+# # #             percentage = scraped_data.get('percentage', 0)
+# # #             candidate.exam_percentage = percentage
+# # #             candidate.exam_score = scraped_data.get('score', 0)
+# # #             candidate.exam_total_questions = scraped_data.get('total_questions', 100)
+            
+# # #             # Add feedback based on performance
+# # #             if percentage >= 90:
+# # #                 candidate.exam_feedback = "Outstanding performance! Exceptional technical knowledge demonstrated."
+# # #             elif percentage >= 80:
+# # #                 candidate.exam_feedback = "Excellent performance! Strong technical competence shown."
+# # #             elif percentage >= 70:
+# # #                 candidate.exam_feedback = "Good performance! Solid understanding of key concepts."
+# # #             elif percentage >= 60:
+# # #                 candidate.exam_feedback = "Fair performance. Shows potential with room for improvement."
+# # #             else:
+# # #                 candidate.exam_feedback = "Performance indicates significant opportunities for growth."
+            
+# # #             # Process based on score threshold (70%)
+# # #             if percentage >= 70:
+# # #                 candidate.final_status = 'Interview Scheduled'
+# # #                 candidate.interview_scheduled = True
+# # #                 candidate.interview_date = datetime.now() + timedelta(days=3)
+                
+# # #                 # Send interview email
+# # #                 try:
+# # #                     interview_link = send_interview_link_email(candidate)
+# # #                     candidate.interview_link = interview_link
+# # #                     logging.info(f"✅ Interview scheduled for {candidate.email} (Score: {percentage:.1f}%)")
+# # #                 except Exception as e:
+# # #                     logging.error(f"Failed to send interview email to {candidate.email}: {e}")
+# # #             else:
+# # #                 candidate.final_status = 'Rejected After Exam'
+# # #                 try:
+# # #                     send_rejection_email(candidate)
+# # #                     logging.info(f"❌ Rejection sent to {candidate.email} (Score: {percentage:.1f}%)")
+# # #                 except Exception as e:
+# # #                     logging.error(f"Failed to send rejection email to {candidate.email}: {e}")
+            
+# # #         except Exception as e:
+# # #             logging.error(f"Error updating candidate {candidate.email}: {e}")
+
+
+# # # # Wrapper functions for backward compatibility
+# # # async def scrape_assessment_results_by_name(assessment_name: str) -> List[Dict]:
+# # #     """Main function to scrape results for an assessment"""
+# # #     scraper = TestlifyResultsScraperFixed()
+# # #     try:
+# # #         results = await scraper.scrape_assessment_scores(assessment_name)
+# # #         return results
+# # #     finally:
+# # #         scraper.session.close()
+
+
+# # # async def scrape_all_pending_assessments():
+# # #     """Scrape results for all assessments that have pending candidates"""
+# # #     session = SessionLocal()
+# # #     try:
+# # #         # Get all unique assessment names from candidates with pending exams
+# # #         pending_assessments = session.query(Candidate.job_title).filter(
+# # #             and_(
+# # #                 Candidate.exam_link_sent == True,
+# # #                 Candidate.exam_completed == False
+# # #             )
+# # #         ).distinct().all()
+        
+# # #         results_summary = {}
+        
+# # #         for (assessment_name,) in pending_assessments:
+# # #             if assessment_name:
+# # #                 logging.info(f"Scraping scores for: {assessment_name}")
+# # #                 results = await scrape_assessment_results_by_name(assessment_name)
+# # #                 results_summary[assessment_name] = len([r for r in results if r.get('percentage') is not None])
+        
+# # #         return results_summary
+        
+# # #     finally:
+# # #         session.close()
+
+
+# # # # CLI interface
+# # # async def main():
+# # #     print("🔍 Testlify Assessment Scores Scraper (Fixed Version)")
+# # #     print("=" * 60)
+# # #     print("This version correctly navigates: Assessments → Click Assessment → Extract Scores")
+# # #     print("=" * 60)
+    
+# # #     choice = input("Choose option:\n1. Scrape specific assessment scores\n2. Scrape all pending assessments\nChoice (1/2): ").strip()
+    
+# # #     if choice == "1":
+# # #         assessment_name = input("Enter assessment name (e.g., 'Junior AI Engineer'): ").strip()
+# # #         if assessment_name:
+# # #             results = await scrape_assessment_results_by_name(assessment_name)
+# # #             print(f"\n✅ Scraped scores for {len(results)} candidates from '{assessment_name}'")
+            
+# # #             # Show summary
+# # #             scored_candidates = [r for r in results if r.get('percentage') is not None]
+# # #             print(f"📊 Candidates with scores: {len(scored_candidates)}")
+            
+# # #             if scored_candidates:
+# # #                 avg_score = sum(r['percentage'] for r in scored_candidates) / len(scored_candidates)
+# # #                 passed = len([r for r in scored_candidates if r['percentage'] >= 70])
+# # #                 print(f"📈 Average score: {avg_score:.1f}%")
+# # #                 print(f"✅ Passed (≥70%): {passed}/{len(scored_candidates)}")
+                
+# # #                 print("\nTop performers:")
+# # #                 sorted_candidates = sorted(scored_candidates, key=lambda x: x['percentage'], reverse=True)
+# # #                 for candidate in sorted_candidates[:5]:
+# # #                     print(f"  - {candidate['email']}: {candidate['percentage']:.1f}%")
+    
+# # #     elif choice == "2":
+# # #         results_summary = await scrape_all_pending_assessments()
+# # #         print(f"\n✅ Scraped scores for {len(results_summary)} assessments:")
+# # #         for assessment, count in results_summary.items():
+# # #             print(f"  - {assessment}: {count} candidates with scores")
+    
+# # #     else:
+# # #         print("Invalid choice!")
+
+
+# # # if __name__ == "__main__":
+# # #     asyncio.run(main())
+# # # testlify_enhanced_scraper.py - More robust extraction based on actual UI structure
+
+# # import asyncio
+# # import json
+# # import logging
+# # from pathlib import Path
+# # from playwright.async_api import async_playwright
+# # import re
+# # from datetime import datetime, timedelta
+# # import time
+# # import os
+# # from typing import Dict, List, Optional
+# # from db import Candidate, SessionLocal
+# # from email_util import send_interview_link_email, send_rejection_email
+# # from sqlalchemy import and_
+
+# # # Same user data directory
+# # USER_DATA_DIR = r"D:\interview link\testlify_browser_profile"
+# # OUTPUT_DIR = "assessment_results"
+
+# # logging.basicConfig(
+# #     level=logging.INFO,
+# #     format='%(asctime)s - %(levelname)s - %(message)s'
+# # )
+
+# # class EnhancedTestlifyScorer:
+# #     """Enhanced scraper specifically designed for Testlify's candidate scoring interface"""
+    
+# #     def __init__(self):
+# #         self.session = SessionLocal()
+# #         Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+    
+# #     async def scrape_candidate_scores(self, assessment_name: str) -> List[Dict]:
+# #         """
+# #         Enhanced scraping method that handles Testlify's specific UI structure
+# #         """
+# #         async with async_playwright() as playwright:
+# #             context = await playwright.chromium.launch_persistent_context(
+# #                 user_data_dir=USER_DATA_DIR,
+# #                 headless=False,
+# #                 viewport={'width': 1400, 'height': 1000}
+# #             )
+# #             page = context.pages[0] if context.pages else await context.new_page()
+            
+# #             try:
+# #                 # Step 1: Navigate and login
+# #                 await self._ensure_logged_in(page)
+                
+# #                 # Step 2: Navigate to assessments and find our target
+# #                 success = await self._navigate_to_assessment(page, assessment_name)
+# #                 if not success:
+# #                     logging.error(f"Could not find assessment: {assessment_name}")
+# #                     return []
+                
+# #                 # Step 3: Extract scores using multiple strategies
+# #                 candidates_data = await self._extract_all_candidate_scores(page, assessment_name)
+                
+# #                 # Step 4: Save and process
+# #                 self._save_enhanced_results(assessment_name, candidates_data)
+# #                 await self._process_candidates_with_scores(candidates_data)
+                
+# #                 return candidates_data
+                
+# #             except Exception as e:
+# #                 logging.error(f"Scraping error: {e}")
+# #                 await page.screenshot(path=f"error_{int(time.time())}.png")
+# #                 return []
+# #             finally:
+# #                 await context.close()
+    
+# #     async def _ensure_logged_in(self, page):
+# #         """Ensure we're logged into Testlify"""
+# #         logging.info("Ensuring Testlify login...")
+# #         await page.goto("https://app.testlify.com/assessments", wait_until="networkidle")
+# #         await asyncio.sleep(2)
+        
+# #         # Check if we need to login
+# #         if await page.query_selector("input[type='email']"):
+# #             print("🔐 Please log in to Testlify manually...")
+# #             input("Press ENTER after you've logged in: ")
+# #             await page.wait_for_load_state("networkidle")
+    
+# #     async def _navigate_to_assessment(self, page, assessment_name: str) -> bool:
+# #         """Navigate to the specific assessment"""
+# #         logging.info(f"Looking for assessment: {assessment_name}")
+        
+# #         # Wait for assessments to load
+# #         await asyncio.sleep(3)
+        
+# #         # Strategy 1: Look for exact text match
+# #         try:
+# #             element = await page.wait_for_selector(f"text={assessment_name}", timeout=5000)
+# #             await element.click()
+# #             logging.info("✅ Found assessment via exact text match")
+# #             await page.wait_for_load_state("networkidle")
+# #             return True
+# #         except:
+# #             pass
+        
+# #         # Strategy 2: Case-insensitive search
+# #         try:
+# #             elements = await page.query_selector_all("*")
+# #             for element in elements:
+# #                 try:
+# #                     text = await element.inner_text()
+# #                     if assessment_name.lower() in text.lower() and len(text.strip()) < 100:
+# #                         await element.click()
+# #                         logging.info("✅ Found assessment via case-insensitive match")
+# #                         await page.wait_for_load_state("networkidle")
+# #                         return True
+# #                 except:
+# #                     continue
+# #         except:
+# #             pass
+        
+# #         # Strategy 3: Partial name match
+# #         try:
+# #             partial_name = assessment_name.split()[0] if " " in assessment_name else assessment_name[:8]
+# #             element = await page.wait_for_selector(f"*:has-text('{partial_name}')", timeout=5000)
+# #             await element.click()
+# #             logging.info("✅ Found assessment via partial match")
+# #             await page.wait_for_load_state("networkidle")
+# #             return True
+# #         except:
+# #             pass
+        
+# #         return False
+    
+# #     async def _extract_all_candidate_scores(self, page, assessment_name: str) -> List[Dict]:
+# #         """Extract candidate scores using multiple robust strategies"""
+# #         logging.info("🔍 Extracting candidate scores...")
+        
+# #         # Wait for page to fully load
+# #         await asyncio.sleep(3)
+        
+# #         candidates_data = []
+        
+# #         # Strategy 1: Look for candidate table rows
+# #         candidates_data.extend(await self._extract_from_table_rows(page))
+        
+# #         # Strategy 2: Look for candidate cards/containers
+# #         if not candidates_data:
+# #             candidates_data.extend(await self._extract_from_candidate_cards(page))
+        
+# #         # Strategy 3: Use JavaScript to find score patterns
+# #         if not candidates_data:
+# #             candidates_data.extend(await self._extract_using_javascript(page))
+        
+# #         # Strategy 4: OCR-style text analysis (last resort)
+# #         if not candidates_data:
+# #             candidates_data.extend(await self._extract_from_page_text(page))
+        
+# #         logging.info(f"📊 Extracted {len(candidates_data)} candidate records")
+# #         return candidates_data
+    
+# #     async def _extract_from_table_rows(self, page) -> List[Dict]:
+# #         """Extract from table-style layout"""
+# #         try:
+# #             logging.info("Trying table row extraction...")
+            
+# #             # Look for table rows containing candidate data
+# #             rows = await page.query_selector_all("tr, .table-row, [class*='row']")
+# #             candidates = []
+            
+# #             for i, row in enumerate(rows):
+# #                 try:
+# #                     row_text = await row.inner_text()
+                    
+# #                     # Skip header rows
+# #                     if any(header in row_text.lower() for header in ['name', 'email', 'score', 'status']):
+# #                         continue
+                    
+# #                     # Look for email pattern
+# #                     email_match = re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', row_text)
+# #                     if not email_match:
+# #                         continue
+                    
+# #                     candidate_data = await self._parse_candidate_row(row, row_text, email_match.group())
+# #                     if candidate_data:
+# #                         candidates.append(candidate_data)
+# #                         logging.info(f"✅ Row {i}: {candidate_data['email']} - {candidate_data.get('percentage', 'No score')}%")
+                
+# #                 except Exception as e:
+# #                     continue
+            
+# #             return candidates
+            
+# #         except Exception as e:
+# #             logging.error(f"Table extraction failed: {e}")
+# #             return []
+    
+# #     async def _parse_candidate_row(self, row_element, row_text: str, email: str) -> Optional[Dict]:
+# #         """Parse a single candidate row for score data"""
+# #         try:
+# #             candidate_data = {
+# #                 'email': email,
+# #                 'name': '',
+# #                 'percentage': None,
+# #                 'score': None,
+# #                 'total_questions': None,
+# #                 'status': '',
+# #                 'completed_date': '',
+# #                 'extraction_method': 'table_row'
+# #             }
+            
+# #             # Extract percentage (e.g., "2.88%", "15.38%")
+# #             percentage_patterns = [
+# #                 r'(\d+(?:\.\d+)?)%',
+# #                 r'(\d+(?:\.\d+)?)\s*percent',
+# #                 r'Score:\s*(\d+(?:\.\d+)?)%'
+# #             ]
+            
+# #             for pattern in percentage_patterns:
+# #                 match = re.search(pattern, row_text, re.IGNORECASE)
+# #                 if match:
+# #                     candidate_data['percentage'] = float(match.group(1))
+# #                     break
+            
+# #             # Extract score format (e.g., "3/104", "2/13")
+# #             score_patterns = [
+# #                 r'(\d+)\s*/\s*(\d+)',
+# #                 r'(\d+)\s+out\s+of\s+(\d+)',
+# #                 r'(\d+)\s+/\s+(\d+)'
+# #             ]
+            
+# #             for pattern in score_patterns:
+# #                 match = re.search(pattern, row_text)
+# #                 if match:
+# #                     candidate_data['score'] = int(match.group(1))
+# #                     candidate_data['total_questions'] = int(match.group(2))
+                    
+# #                     # Calculate percentage if not found
+# #                     if not candidate_data['percentage']:
+# #                         candidate_data['percentage'] = (candidate_data['score'] / candidate_data['total_questions']) * 100
+# #                     break
+            
+# #             # Extract status
+# #             status_keywords = {
+# #                 'completed': ['completed', 'finished', 'done'],
+# #                 'not suitable': ['not suitable', 'unsuitable', 'failed'],
+# #                 'suitable': ['suitable', 'passed', 'pass'],
+# #                 'in progress': ['in progress', 'started', 'ongoing'],
+# #                 'enrolled': ['enrolled', 'invited']
+# #             }
+            
+# #             row_text_lower = row_text.lower()
+# #             for status, keywords in status_keywords.items():
+# #                 if any(keyword in row_text_lower for keyword in keywords):
+# #                     candidate_data['status'] = status.title()
+# #                     break
+            
+# #             # Extract completion date
+# #             date_patterns = [
+# #                 r'(Jun|Jul|Aug|Sep|Oct|Nov|Dec|Jan|Feb|Mar|Apr|May)\s+\d+,\s+\d+\s+\d+:\d+\s+(AM|PM)',
+# #                 r'\d{1,2}/\d{1,2}/\d{4}',
+# #                 r'\d{4}-\d{2}-\d{2}'
+# #             ]
+            
+# #             for pattern in date_patterns:
+# #                 match = re.search(pattern, row_text)
+# #                 if match:
+# #                     candidate_data['completed_date'] = match.group()
+# #                     break
+            
+# #             # Extract name (try to find a reasonable name)
+# #             lines = row_text.split('\n')
+# #             for line in lines:
+# #                 line = line.strip()
+# #                 # Skip lines with email, percentages, dates
+# #                 if (line and '@' not in line and not re.search(r'\d+%', line) 
+# #                     and not re.search(r'\d+/\d+', line) and len(line.split()) <= 4 
+# #                     and len(line) < 50):
+# #                     candidate_data['name'] = line
+# #                     break
+            
+# #             # Only return if we found meaningful data
+# #             if candidate_data['percentage'] is not None or candidate_data['score'] is not None:
+# #                 return candidate_data
+            
+# #             return None
+            
+# #         except Exception as e:
+# #             logging.error(f"Error parsing candidate row: {e}")
+# #             return None
+    
+# #     async def _extract_from_candidate_cards(self, page) -> List[Dict]:
+# #         """Extract from card-style layout"""
+# #         try:
+# #             logging.info("Trying candidate cards extraction...")
+            
+# #             # Look for card-like containers
+# #             cards = await page.query_selector_all(".card, .candidate-card, [class*='candidate'], .result-card")
+# #             candidates = []
+            
+# #             for card in cards:
+# #                 try:
+# #                     card_text = await card.inner_text()
+                    
+# #                     # Look for email in this card
+# #                     email_match = re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', card_text)
+# #                     if email_match:
+# #                         candidate_data = await self._parse_candidate_row(card, card_text, email_match.group())
+# #                         if candidate_data:
+# #                             candidate_data['extraction_method'] = 'candidate_card'
+# #                             candidates.append(candidate_data)
+                
+# #                 except Exception as e:
+# #                     continue
+            
+# #             return candidates
+            
+# #         except Exception as e:
+# #             logging.error(f"Card extraction failed: {e}")
+# #             return []
+    
+# #     async def _extract_using_javascript(self, page) -> List[Dict]:
+# #         """Use JavaScript to find candidate score patterns"""
+# #         try:
+# #             logging.info("Trying JavaScript extraction...")
+            
+# #             result = await page.evaluate("""
+# #                 () => {
+# #                     const candidates = [];
+# #                     const emailRegex = /\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b/;
+# #                     const percentageRegex = /(\\d+(?:\\.\\d+)?)%/;
+# #                     const scoreRegex = /(\\d+)\\s*\\/\\s*(\\d+)/;
+                    
+# #                     // Find all elements containing emails
+# #                     const allElements = Array.from(document.querySelectorAll('*'));
+                    
+# #                     for (let element of allElements) {
+# #                         const text = element.textContent || '';
+# #                         const emailMatch = text.match(emailRegex);
+                        
+# #                         if (emailMatch) {
+# #                             const email = emailMatch[0];
+# #                             const percentageMatch = text.match(percentageRegex);
+# #                             const scoreMatch = text.match(scoreRegex);
+                            
+# #                             if (percentageMatch || scoreMatch) {
+# #                                 const candidate = {
+# #                                     email: email,
+# #                                     percentage: percentageMatch ? parseFloat(percentageMatch[1]) : null,
+# #                                     score: scoreMatch ? parseInt(scoreMatch[1]) : null,
+# #                                     total_questions: scoreMatch ? parseInt(scoreMatch[2]) : null,
+# #                                     text_sample: text.substring(0, 200),
+# #                                     extraction_method: 'javascript'
+# #                                 };
+                                
+# #                                 // Calculate percentage if missing
+# #                                 if (!candidate.percentage && candidate.score && candidate.total_questions) {
+# #                                     candidate.percentage = (candidate.score / candidate.total_questions) * 100;
+# #                                 }
+                                
+# #                                 candidates.push(candidate);
+# #                             }
+# #                         }
+# #                     }
+                    
+# #                     return candidates;
+# #                 }
+# #             """)
+            
+# #             if result:
+# #                 logging.info(f"JavaScript found {len(result)} candidates")
+# #                 return result
+            
+# #             return []
+            
+# #         except Exception as e:
+# #             logging.error(f"JavaScript extraction failed: {e}")
+# #             return []
+    
+# #     async def _extract_from_page_text(self, page) -> List[Dict]:
+# #         """Extract from full page text as last resort"""
+# #         try:
+# #             logging.info("Trying full page text extraction...")
+            
+# #             page_content = await page.content()
+            
+# #             # Find all emails
+# #             emails = re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', page_content)
+            
+# #             candidates = []
+# #             for email in set(emails):  # Remove duplicates
+# #                 # Try to find score near this email in the HTML
+# #                 # Look for patterns within 500 characters of the email
+# #                 email_pos = page_content.find(email)
+# #                 if email_pos != -1:
+# #                     surrounding_text = page_content[max(0, email_pos-250):email_pos+250]
+                    
+# #                     # Look for percentage
+# #                     percentage_match = re.search(r'(\d+(?:\.\d+)?)%', surrounding_text)
+# #                     score_match = re.search(r'(\d+)/(\d+)', surrounding_text)
+                    
+# #                     if percentage_match or score_match:
+# #                         candidate_data = {
+# #                             'email': email,
+# #                             'percentage': float(percentage_match.group(1)) if percentage_match else None,
+# #                             'score': int(score_match.group(1)) if score_match else None,
+# #                             'total_questions': int(score_match.group(2)) if score_match else None,
+# #                             'extraction_method': 'page_text'
+# #                         }
+                        
+# #                         if not candidate_data['percentage'] and candidate_data['score']:
+# #                             candidate_data['percentage'] = (candidate_data['score'] / candidate_data['total_questions']) * 100
+                        
+# #                         candidates.append(candidate_data)
+            
+# #             return candidates
+            
+# #         except Exception as e:
+# #             logging.error(f"Page text extraction failed: {e}")
+# #             return []
+    
+# #     def _save_enhanced_results(self, assessment_name: str, results: List[Dict]):
+# #         """Save results with enhanced metadata"""
+# #         try:
+# #             scored_candidates = [r for r in results if r.get('percentage') is not None]
+            
+# #             output_data = {
+# #                 "assessment_name": assessment_name,
+# #                 "scraped_at": datetime.now().isoformat(),
+# #                 "total_candidates_found": len(results),
+# #                 "candidates_with_scores": len(scored_candidates),
+# #                 "extraction_methods_used": list(set(r.get('extraction_method', 'unknown') for r in results)),
+# #                 "average_score": sum(r['percentage'] for r in scored_candidates) / len(scored_candidates) if scored_candidates else 0,
+# #                 "candidates": results
+# #             }
+            
+# #             filename = f"enhanced_scores_{assessment_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+# #             output_file = Path(OUTPUT_DIR) / filename
+            
+# #             with open(output_file, 'w', encoding='utf-8') as f:
+# #                 json.dump(output_data, f, indent=2, ensure_ascii=False)
+            
+# #             logging.info(f"📁 Results saved to: {output_file}")
+# #             logging.info(f"📊 Summary: {len(scored_candidates)}/{len(results)} candidates with scores")
+            
+# #         except Exception as e:
+# #             logging.error(f"Error saving results: {e}")
+    
+# #     async def _process_candidates_with_scores(self, candidates_data: List[Dict]):
+# #         """Process candidates with extracted scores"""
+# #         try:
+# #             processed_count = 0
+# #             interview_count = 0
+# #             rejection_count = 0
+            
+# #             for candidate_data in candidates_data:
+# #                 email = candidate_data.get('email')
+# #                 percentage = candidate_data.get('percentage')
+                
+# #                 if not email or percentage is None:
+# #                     continue
+                
+# #                 # Find candidate in database
+# #                 candidate = self.session.query(Candidate).filter_by(email=email).first()
+# #                 if not candidate:
+# #                     logging.warning(f"⚠️ Candidate {email} not found in database")
+# #                     continue
+                
+# #                 # Update candidate with score
+# #                 candidate.exam_completed = True
+# #                 candidate.exam_completed_date = datetime.now()
+# #                 candidate.exam_percentage = percentage
+# #                 candidate.exam_score = candidate_data.get('score', 0)
+# #                 candidate.exam_total_questions = candidate_data.get('total_questions', 100)
+                
+# #                 # Add feedback
+# #                 if percentage >= 90:
+# #                     candidate.exam_feedback = "Outstanding performance! Exceptional technical knowledge demonstrated."
+# #                 elif percentage >= 80:
+# #                     candidate.exam_feedback = "Excellent performance! Strong technical competence shown."
+# #                 elif percentage >= 70:
+# #                     candidate.exam_feedback = "Good performance! Solid understanding of key concepts."
+# #                 elif percentage >= 60:
+# #                     candidate.exam_feedback = "Fair performance. Shows potential with room for improvement."
+# #                 else:
+# #                     candidate.exam_feedback = "Performance indicates opportunities for growth in fundamental areas."
+                
+# #                 # Process next steps
+# #                 if percentage >= 70:
+# #                     candidate.final_status = 'Interview Scheduled'
+# #                     candidate.interview_scheduled = True
+# #                     candidate.interview_date = datetime.now() + timedelta(days=3)
+                    
+# #                     try:
+# #                         interview_link = send_interview_link_email(candidate)
+# #                         candidate.interview_link = interview_link
+# #                         interview_count += 1
+# #                         logging.info(f"✅ Interview scheduled: {email} ({percentage:.1f}%)")
+# #                     except Exception as e:
+# #                         logging.error(f"❌ Failed to send interview email to {email}: {e}")
+# #                 else:
+# #                     candidate.final_status = 'Rejected After Exam'
+# #                     try:
+# #                         send_rejection_email(candidate)
+# #                         rejection_count += 1
+# #                         logging.info(f"❌ Rejection sent: {email} ({percentage:.1f}%)")
+# #                     except Exception as e:
+# #                         logging.error(f"❌ Failed to send rejection email to {email}: {e}")
+                
+# #                 processed_count += 1
+            
+# #             self.session.commit()
+            
+# #             logging.info(f"📈 Processing Summary:")
+# #             logging.info(f"   • Total processed: {processed_count}")
+# #             logging.info(f"   • Interviews scheduled: {interview_count}")
+# #             logging.info(f"   • Rejections sent: {rejection_count}")
+            
+# #         except Exception as e:
+# #             logging.error(f"Error processing candidates: {e}")
+# #             self.session.rollback()
+
+
+# # # Main functions for compatibility
+# # async def scrape_assessment_results_by_name(assessment_name: str) -> List[Dict]:
+# #     """Enhanced scraping function"""
+# #     scraper = EnhancedTestlifyScorer()
+# #     try:
+# #         results = await scraper.scrape_candidate_scores(assessment_name)
+# #         return results
+# #     finally:
+# #         scraper.session.close()
+
+
+# # async def scrape_all_pending_assessments():
+# #     """Scrape all pending assessments with enhanced method"""
+# #     session = SessionLocal()
+# #     try:
+# #         pending_assessments = session.query(Candidate.job_title).filter(
+# #             and_(
+# #                 Candidate.exam_link_sent == True,
+# #                 Candidate.exam_completed == False
+# #             )
+# #         ).distinct().all()
+        
+# #         results_summary = {}
+        
+# #         for (assessment_name,) in pending_assessments:
+# #             if assessment_name:
+# #                 logging.info(f"🎯 Scraping scores for: {assessment_name}")
+# #                 results = await scrape_assessment_results_by_name(assessment_name)
+# #                 scored_count = len([r for r in results if r.get('percentage') is not None])
+# #                 results_summary[assessment_name] = scored_count
+        
+# #         return results_summary
+        
+# #     finally:
+# #         session.close()
+
+
+# # # CLI interface with enhanced feedback
+# # async def main():
+# #     print("🚀 Enhanced Testlify Scorer")
+# #     print("=" * 50)
+# #     print("Features:")
+# #     print("• Multiple extraction strategies")
+# #     print("• Robust score pattern matching")
+# #     print("• Detailed extraction reporting")
+# #     print("• Automatic candidate processing")
+# #     print("=" * 50)
+    
+# #     choice = input("Choose option:\n1. Scrape specific assessment\n2. Scrape all pending\nChoice (1/2): ").strip()
+    
+# #     if choice == "1":
+# #         assessment_name = input("Enter assessment name: ").strip()
+# #         if assessment_name:
+# #             print(f"\n🔍 Starting enhanced scraping for: {assessment_name}")
+# #             results = await scrape_assessment_results_by_name(assessment_name)
+            
+# #             scored = [r for r in results if r.get('percentage') is not None]
+# #             print(f"\n📊 Results Summary:")
+# #             print(f"   • Total candidates found: {len(results)}")
+# #             print(f"   • Candidates with scores: {len(scored)}")
+            
+# #             if scored:
+# #                 avg_score = sum(r['percentage'] for r in scored) / len(scored)
+# #                 passed = len([r for r in scored if r['percentage'] >= 70])
+                
+# #                 print(f"   • Average score: {avg_score:.1f}%")
+# #                 print(f"   • Pass rate: {passed}/{len(scored)} ({(passed/len(scored)*100):.1f}%)")
+                
+# #                 print(f"\n🎯 Top Performers:")
+# #                 top_performers = sorted(scored, key=lambda x: x['percentage'], reverse=True)[:5]
+# #                 for i, candidate in enumerate(top_performers, 1):
+# #                     print(f"   {i}. {candidate['email']}: {candidate['percentage']:.1f}%")
+    
+# #     elif choice == "2":
+# #         print("\n🔍 Starting bulk enhanced scraping...")
+# #         results_summary = await scrape_all_pending_assessments()
+# #         print(f"\n📊 Bulk Results Summary:")
+# #         total_scored = sum(results_summary.values())
+# #         print(f"   • Assessments processed: {len(results_summary)}")
+# #         print(f"   • Total candidates scored: {total_scored}")
+        
+# #         for assessment, count in results_summary.items():
+# #             print(f"   • {assessment}: {count} candidates")
+    
+# #     else:
+# #         print("❌ Invalid choice!")
+
+
+# # if __name__ == "__main__":
+# #     asyncio.run(main())
+# # testlify_improved_scraper.py - Fixed scraper based on debug analysis
+
+# import asyncio
+# import json
+# import logging
+# from pathlib import Path
+# from playwright.async_api import async_playwright
+# import re
+# from datetime import datetime, timedelta
+# from typing import Dict, List, Optional
+# from db import Candidate, SessionLocal
+# from email_util import send_interview_link_email, send_rejection_email
+# from sqlalchemy import and_
+
+# # Same user data directory
+# USER_DATA_DIR = r"D:\interview link\testlify_browser_profile"
+# OUTPUT_DIR = "testlify_results"
+
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format='%(asctime)s - %(levelname)s - %(message)s'
+# )
+
+# class ImprovedTestlifyScraper:
+#     """Improved scraper based on actual Testlify UI structure analysis"""
+    
+#     def __init__(self):
+#         self.session = SessionLocal()
+#         Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+    
+#     async def scrape_assessment_scores(self, assessment_name: str) -> List[Dict]:
+#         """Main scraping method with improved extraction logic"""
+#         async with async_playwright() as playwright:
+#             context = await playwright.chromium.launch_persistent_context(
+#                 user_data_dir=USER_DATA_DIR,
+#                 headless=False,
+#                 viewport={'width': 1400, 'height': 1000}
+#             )
+#             page = context.pages[0] if context.pages else await context.new_page()
+            
+#             try:
+#                 # Navigate to assessment
+#                 success = await self._navigate_to_assessment(page, assessment_name)
+#                 if not success:
+#                     return []
+                
+#                 # Extract candidate data using multiple strategies
+#                 candidates_data = await self._extract_candidates_comprehensive(page)
+                
+#                 # Clean and validate data
+#                 valid_candidates = self._clean_and_validate_data(candidates_data)
+                
+#                 # Save results
+#                 self._save_results(assessment_name, valid_candidates)
+                
+#                 # Process candidates (send emails, update database)
+#                 await self._process_candidates(valid_candidates)
+                
+#                 return valid_candidates
+                
+#             except Exception as e:
+#                 logging.error(f"Scraping error: {e}")
+#                 await page.screenshot(path="scraping_error.png")
+#                 return []
+#             finally:
+#                 await context.close()
+    
+#     async def _navigate_to_assessment(self, page, assessment_name: str) -> bool:
+#         """Navigate to the specific assessment"""
+#         logging.info("Navigating to Testlify assessments...")
+#         await page.goto("https://app.testlify.com/assessments", wait_until="networkidle")
+#         await asyncio.sleep(3)
+        
+#         # Check login
+#         if await page.query_selector("input[type='email']"):
+#             print("⚠️ Please log in manually...")
+#             input("Press ENTER after logging in: ")
+#             await page.wait_for_load_state("networkidle")
+        
+#         # Find assessment
+#         logging.info(f"Looking for assessment: {assessment_name}")
+        
+#         # Try exact text match first
+#         try:
+#             element = await page.wait_for_selector(f"text={assessment_name}", timeout=5000)
+#             await element.click()
+#             logging.info("✅ Found assessment via exact match")
+#             await page.wait_for_load_state("networkidle")
+#             await asyncio.sleep(3)
+#             return True
+#         except:
+#             pass
+        
+#         # Try partial match
+#         try:
+#             elements = await page.query_selector_all("*")
+#             for element in elements:
+#                 try:
+#                     text = await element.inner_text()
+#                     if (assessment_name.lower() in text.lower() and 
+#                         len(text.strip()) < 100 and 
+#                         len(text.strip()) > len(assessment_name) - 5):
+#                         await element.click()
+#                         logging.info("✅ Found assessment via partial match")
+#                         await page.wait_for_load_state("networkidle")
+#                         await asyncio.sleep(3)
+#                         return True
+#                 except:
+#                     continue
+#         except:
+#             pass
+        
+#         logging.error(f"Could not find assessment: {assessment_name}")
+#         return False
+    
+#     async def _extract_candidates_comprehensive(self, page) -> List[Dict]:
+#         """Extract candidates using all available methods"""
+#         logging.info("🔍 Starting comprehensive candidate extraction...")
+        
+#         candidates_data = []
+        
+#         # Method 1: JavaScript extraction (most reliable based on debug output)
+#         js_candidates = await self._extract_via_javascript(page)
+#         candidates_data.extend(js_candidates)
+#         logging.info(f"JavaScript method found: {len(js_candidates)} candidates")
+        
+#         # Method 2: Table row extraction
+#         if not candidates_data:
+#             table_candidates = await self._extract_from_table_rows(page)
+#             candidates_data.extend(table_candidates)
+#             logging.info(f"Table method found: {len(table_candidates)} candidates")
+        
+#         # Method 3: Element-by-element search
+#         if not candidates_data:
+#             element_candidates = await self._extract_from_elements(page)
+#             candidates_data.extend(element_candidates)
+#             logging.info(f"Element method found: {len(element_candidates)} candidates")
+        
+#         return candidates_data
+    
+#     async def _extract_via_javascript(self, page) -> List[Dict]:
+#         """Enhanced JavaScript extraction based on debug findings"""
+#         try:
+#             result = await page.evaluate("""
+#                 () => {
+#                     const candidates = [];
+#                     const emailRegex = /\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b/;
+#                     const percentageRegex = /(\\d+(?:\\.\\d+)?)%/g;
+#                     const scoreRegex = /(\\d+)\\s*\\/\\s*(\\d+)/;
+                    
+#                     // Find all table rows first (most structured data)
+#                     const tableRows = document.querySelectorAll('tr');
+                    
+#                     for (let row of tableRows) {
+#                         const rowText = row.textContent || '';
+#                         const emailMatch = rowText.match(emailRegex);
+                        
+#                         if (emailMatch) {
+#                             const email = emailMatch[0];
+                            
+#                             // Extract all percentages from this row
+#                             const percentageMatches = [...rowText.matchAll(percentageRegex)];
+#                             const scoreMatch = rowText.match(scoreRegex);
+                            
+#                             // Find the main assessment percentage (usually the first non-zero one)
+#                             let mainPercentage = null;
+#                             for (let match of percentageMatches) {
+#                                 const pct = parseFloat(match[1]);
+#                                 if (pct > 0) {
+#                                     mainPercentage = pct;
+#                                     break;
+#                                 }
+#                             }
+                            
+#                             // If no positive percentage found, take the first one
+#                             if (!mainPercentage && percentageMatches.length > 0) {
+#                                 mainPercentage = parseFloat(percentageMatches[0][1]);
+#                             }
+                            
+#                             if (mainPercentage !== null || scoreMatch) {
+#                                 // Extract status
+#                                 let status = 'Unknown';
+#                                 const statusKeywords = {
+#                                     'completed': /completed|finished/i,
+#                                     'enrolled': /enrolled|invited/i,
+#                                     'not suitable': /not suitable|unsuitable/i,
+#                                     'suitable': /suitable|passed/i
+#                                 };
+                                
+#                                 for (let [statusName, regex] of Object.entries(statusKeywords)) {
+#                                     if (regex.test(rowText)) {
+#                                         status = statusName;
+#                                         break;
+#                                     }
+#                                 }
+                                
+#                                 // Extract name (look for text before email that looks like a name)
+#                                 let name = '';
+#                                 const lines = rowText.split('\\n').map(l => l.trim()).filter(l => l);
+#                                 for (let line of lines) {
+#                                     if (!line.includes('@') && 
+#                                         !line.includes('%') && 
+#                                         !line.includes('/') &&
+#                                         line.length > 2 && 
+#                                         line.length < 50 &&
+#                                         /^[A-Za-z\\s]+$/.test(line)) {
+#                                         name = line;
+#                                         break;
+#                                     }
+#                                 }
+                                
+#                                 const candidate = {
+#                                     email: email,
+#                                     name: name,
+#                                     percentage: mainPercentage,
+#                                     score: scoreMatch ? parseInt(scoreMatch[1]) : null,
+#                                     total_questions: scoreMatch ? parseInt(scoreMatch[2]) : null,
+#                                     status: status,
+#                                     raw_text: rowText.substring(0, 200) + '...',
+#                                     extraction_method: 'javascript_table'
+#                                 };
+                                
+#                                 candidates.push(candidate);
+#                             }
+#                         }
+#                     }
+                    
+#                     // If no table data found, try other elements
+#                     if (candidates.length === 0) {
+#                         const allElements = document.querySelectorAll('*');
+#                         for (let element of allElements) {
+#                             const text = element.textContent || '';
+#                             if (text.length > 20 && text.length < 1000) {
+#                                 const emailMatch = text.match(emailRegex);
+#                                 if (emailMatch) {
+#                                     const percentageMatches = [...text.matchAll(percentageRegex)];
+#                                     if (percentageMatches.length > 0) {
+#                                         candidates.push({
+#                                             email: emailMatch[0],
+#                                             percentage: parseFloat(percentageMatches[0][1]),
+#                                             extraction_method: 'javascript_element'
+#                                         });
+#                                     }
+#                                 }
+#                             }
+#                         }
+#                     }
+                    
+#                     return candidates;
+#                 }
+#             """)
+            
+#             return result if result else []
+            
+#         except Exception as e:
+#             logging.error(f"JavaScript extraction failed: {e}")
+#             return []
+    
+#     async def _extract_from_table_rows(self, page) -> List[Dict]:
+#         """Extract from table rows using Playwright selectors"""
+#         try:
+#             candidates = []
+            
+#             # Get all table rows
+#             rows = await page.query_selector_all("tr")
+            
+#             for i, row in enumerate(rows):
+#                 try:
+#                     row_text = await row.inner_text()
+                    
+#                     # Skip header rows
+#                     if any(header in row_text.lower() for header in ['name', 'email', 'score', 'invited on']):
+#                         continue
+                    
+#                     # Look for email
+#                     email_match = re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', row_text)
+#                     if not email_match:
+#                         continue
+                    
+#                     email = email_match.group()
+                    
+#                     # Extract percentage
+#                     percentage_matches = re.findall(r'(\d+(?:\.\d+)?)%', row_text)
+#                     percentage = None
+                    
+#                     # Find the first non-zero percentage, or take the first one
+#                     for pct_str in percentage_matches:
+#                         pct = float(pct_str)
+#                         if pct > 0:
+#                             percentage = pct
+#                             break
+                    
+#                     if not percentage and percentage_matches:
+#                         percentage = float(percentage_matches[0])
+                    
+#                     # Extract score format
+#                     score_match = re.search(r'(\d+)/(\d+)', row_text)
+#                     score = None
+#                     total_questions = None
+                    
+#                     if score_match:
+#                         score = int(score_match.group(1))
+#                         total_questions = int(score_match.group(2))
+                        
+#                         # Calculate percentage if not found
+#                         if percentage is None:
+#                             percentage = (score / total_questions) * 100
+                    
+#                     if percentage is not None or score is not None:
+#                         candidate = {
+#                             'email': email,
+#                             'percentage': percentage,
+#                             'score': score,
+#                             'total_questions': total_questions,
+#                             'status': self._extract_status_from_text(row_text),
+#                             'name': self._extract_name_from_text(row_text, email),
+#                             'extraction_method': 'table_row'
+#                         }
+                        
+#                         candidates.append(candidate)
+#                         logging.info(f"Found candidate: {email} - {percentage}%")
+                
+#                 except Exception as e:
+#                     continue
+            
+#             return candidates
+            
+#         except Exception as e:
+#             logging.error(f"Table extraction failed: {e}")
+#             return []
+    
+#     async def _extract_from_elements(self, page) -> List[Dict]:
+#         """Extract from individual elements as fallback"""
+#         try:
+#             candidates = []
+            
+#             # Look for elements containing candidate data
+#             elements = await page.query_selector_all(".candidate, [class*='candidate'], [class*='result']")
+            
+#             for element in elements:
+#                 try:
+#                     element_text = await element.inner_text()
+                    
+#                     email_match = re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', element_text)
+#                     if not email_match:
+#                         continue
+                    
+#                     percentage_match = re.search(r'(\d+(?:\.\d+)?)%', element_text)
+#                     if percentage_match:
+#                         candidate = {
+#                             'email': email_match.group(),
+#                             'percentage': float(percentage_match.group(1)),
+#                             'extraction_method': 'element'
+#                         }
+#                         candidates.append(candidate)
+                
+#                 except Exception as e:
+#                     continue
+            
+#             return candidates
+            
+#         except Exception as e:
+#             logging.error(f"Element extraction failed: {e}")
+#             return []
+    
+#     def _extract_status_from_text(self, text: str) -> str:
+#         """Extract status from text"""
+#         text_lower = text.lower()
+        
+#         if 'completed' in text_lower:
+#             return 'Completed'
+#         elif 'enrolled' in text_lower:
+#             return 'Enrolled'
+#         elif 'not suitable' in text_lower:
+#             return 'Not Suitable'
+#         elif 'suitable' in text_lower:
+#             return 'Suitable'
+#         else:
+#             return 'Unknown'
+    
+#     def _extract_name_from_text(self, text: str, email: str) -> str:
+#         """Extract candidate name from text"""
+#         lines = text.split('\n')
+#         for line in lines:
+#             line = line.strip()
+#             if (line and '@' not in line and '%' not in line and 
+#                 '/' not in line and len(line.split()) <= 4 and 
+#                 len(line) < 50 and re.match(r'^[A-Za-z\s]+$', line)):
+#                 return line
+#         return ''
+    
+#     def _clean_and_validate_data(self, candidates_data: List[Dict]) -> List[Dict]:
+#         """Clean and validate extracted data"""
+#         valid_candidates = []
+#         seen_emails = set()
+        
+#         for candidate in candidates_data:
+#             email = candidate.get('email')
+#             percentage = candidate.get('percentage')
+            
+#             # Skip if no email or duplicate
+#             if not email or email in seen_emails:
+#                 continue
+            
+#             # Skip if no meaningful score data
+#             if percentage is None and candidate.get('score') is None:
+#                 continue
+            
+#             # Ensure percentage is within valid range
+#             if percentage is not None and (percentage < 0 or percentage > 100):
+#                 logging.warning(f"Invalid percentage for {email}: {percentage}%")
+#                 continue
+            
+#             seen_emails.add(email)
+#             valid_candidates.append(candidate)
+            
+#             logging.info(f"✅ Valid candidate: {email} - {percentage}%")
+        
+#         return valid_candidates
+    
+#     def _save_results(self, assessment_name: str, results: List[Dict]):
+#         """Save results to JSON file"""
+#         try:
+#             output_data = {
+#                 "assessment_name": assessment_name,
+#                 "scraped_at": datetime.now().isoformat(),
+#                 "total_candidates": len(results),
+#                 "candidates_with_scores": len([r for r in results if r.get('percentage') is not None]),
+#                 "candidates": results
+#             }
+            
+#             filename = f"improved_results_{assessment_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+#             output_file = Path(OUTPUT_DIR) / filename
+            
+#             with open(output_file, 'w', encoding='utf-8') as f:
+#                 json.dump(output_data, f, indent=2, ensure_ascii=False)
+            
+#             logging.info(f"📁 Results saved to: {output_file}")
+            
+#         except Exception as e:
+#             logging.error(f"Error saving results: {e}")
+    
+#     async def _process_candidates(self, candidates_data: List[Dict]):
+#         """Process candidates with scores - update database and send emails"""
+#         try:
+#             processed_count = 0
+#             interview_count = 0
+#             rejection_count = 0
+            
+#             for candidate_data in candidates_data:
+#                 email = candidate_data.get('email')
+#                 percentage = candidate_data.get('percentage')
+                
+#                 if not email or percentage is None:
+#                     continue
+                
+#                 # Find candidate in database
+#                 candidate = self.session.query(Candidate).filter_by(email=email).first()
+#                 if not candidate:
+#                     logging.warning(f"⚠️ Candidate {email} not found in database")
+#                     continue
+                
+#                 # Update exam completion
+#                 candidate.exam_completed = True
+#                 candidate.exam_completed_date = datetime.now()
+#                 candidate.exam_percentage = percentage
+#                 candidate.exam_score = candidate_data.get('score', 0)
+#                 candidate.exam_total_questions = candidate_data.get('total_questions', 100)
+                
+#                 # Add performance feedback
+#                 if percentage >= 90:
+#                     feedback = "Outstanding performance! Exceptional technical knowledge demonstrated."
+#                 elif percentage >= 80:
+#                     feedback = "Excellent performance! Strong technical competence shown."
+#                 elif percentage >= 70:
+#                     feedback = "Good performance! Solid understanding of key concepts."
+#                 elif percentage >= 60:
+#                     feedback = "Fair performance. Shows potential with room for improvement."
+#                 else:
+#                     feedback = "Performance indicates opportunities for growth."
+                
+#                 candidate.exam_feedback = feedback
+                
+#                 # Determine next steps based on score
+#                 if percentage >= 70:  # Pass threshold
+#                     candidate.final_status = 'Interview Scheduled'
+#                     candidate.interview_scheduled = True
+#                     candidate.interview_date = datetime.now() + timedelta(days=3)
+                    
+#                     try:
+#                         interview_link = send_interview_link_email(candidate)
+#                         candidate.interview_link = interview_link
+#                         interview_count += 1
+#                         logging.info(f"✅ Interview scheduled: {email} ({percentage:.1f}%)")
+#                     except Exception as e:
+#                         logging.error(f"❌ Failed to send interview email to {email}: {e}")
+#                 else:
+#                     candidate.final_status = 'Rejected After Exam'
+#                     try:
+#                         send_rejection_email(candidate)
+#                         rejection_count += 1
+#                         logging.info(f"❌ Rejection sent: {email} ({percentage:.1f}%)")
+#                     except Exception as e:
+#                         logging.error(f"❌ Failed to send rejection email to {email}: {e}")
+                
+#                 processed_count += 1
+            
+#             self.session.commit()
+            
+#             # Print summary
+#             logging.info(f"\n📊 Processing Summary:")
+#             logging.info(f"   • Total processed: {processed_count}")
+#             logging.info(f"   • Interviews scheduled: {interview_count}")
+#             logging.info(f"   • Rejections sent: {rejection_count}")
+            
+#         except Exception as e:
+#             logging.error(f"Error processing candidates: {e}")
+#             self.session.rollback()
+
+
+# # Main functions
+# async def scrape_assessment_results_by_name(assessment_name: str) -> List[Dict]:
+#     """Main function to scrape assessment results"""
+#     scraper = ImprovedTestlifyScraper()
+#     try:
+#         results = await scraper.scrape_assessment_scores(assessment_name)
+#         return results
+#     finally:
+#         scraper.session.close()
+
+
+# async def scrape_all_pending_assessments():
+#     """Scrape all pending assessments"""
+#     session = SessionLocal()
+#     try:
+#         pending_assessments = session.query(Candidate.job_title).filter(
+#             and_(
+#                 Candidate.exam_link_sent == True,
+#                 Candidate.exam_completed == False
+#             )
+#         ).distinct().all()
+        
+#         results_summary = {}
+        
+#         for (assessment_name,) in pending_assessments:
+#             if assessment_name:
+#                 logging.info(f"🎯 Scraping: {assessment_name}")
+#                 results = await scrape_assessment_results_by_name(assessment_name)
+#                 scored_count = len([r for r in results if r.get('percentage') is not None])
+#                 results_summary[assessment_name] = scored_count
+        
+#         return results_summary
+        
+#     finally:
+#         session.close()
+
+
+# # CLI interface
+# async def main():
+#     print("🚀 Improved Testlify Results Scraper")
+#     print("=" * 50)
+#     print("Based on debug analysis of actual Testlify UI structure")
+#     print("Features:")
+#     print("• Multi-method extraction (JavaScript + Table + Element)")
+#     print("• Data validation and cleaning")
+#     print("• Automatic candidate processing")
+#     print("• Comprehensive error handling")
+#     print("=" * 50)
+    
+#     choice = input("Choose option:\n1. Scrape specific assessment\n2. Scrape all pending assessments\nChoice (1/2): ").strip()
+    
+#     if choice == "1":
+#         assessment_name = input("Enter assessment name (e.g., 'Junior AI Engineer'): ").strip()
+#         if assessment_name:
+#             print(f"\n🔍 Starting improved scraping for: {assessment_name}")
+#             results = await scrape_assessment_results_by_name(assessment_name)
+            
+#             scored = [r for r in results if r.get('percentage') is not None]
+#             print(f"\n📊 Results Summary:")
+#             print(f"   • Total candidates found: {len(results)}")
+#             print(f"   • Candidates with valid scores: {len(scored)}")
+            
+#             if scored:
+#                 avg_score = sum(r['percentage'] for r in scored) / len(scored)
+#                 passed = len([r for r in scored if r['percentage'] >= 70])
+                
+#                 print(f"   • Average score: {avg_score:.1f}%")
+#                 print(f"   • Pass rate: {passed}/{len(scored)} ({(passed/len(scored)*100):.1f}%)")
+                
+#                 print(f"\n🎯 Score Breakdown:")
+#                 for candidate in sorted(scored, key=lambda x: x['percentage'], reverse=True):
+#                     status_emoji = "✅" if candidate['percentage'] >= 70 else "❌"
+#                     print(f"   {status_emoji} {candidate['email']}: {candidate['percentage']:.1f}%")
+    
+#     elif choice == "2":
+#         print("\n🔍 Starting bulk scraping...")
+#         results_summary = await scrape_all_pending_assessments()
+#         total_scored = sum(results_summary.values())
+#         print(f"\n📊 Bulk Results Summary:")
+#         print(f"   • Assessments processed: {len(results_summary)}")
+#         print(f"   • Total candidates scored: {total_scored}")
+        
+#         for assessment, count in results_summary.items():
+#             print(f"   • {assessment}: {count} candidates scored")
+    
+#     else:
+#         print("❌ Invalid choice!")
+
+
+# if __name__ == "__main__":
+#     asyncio.run(main())
+# testlify_fixed_scraper.py - Fixed scraper to extract TOTAL assessment score (2.88%) not section scores
+-------------
+# # backend.py - Production Ready Version with All Enhancements
+
+# from flask import Flask, request, jsonify, redirect, render_template_string, send_from_directory
+# from flask_cors import CORS
+# from datetime import datetime, timedelta
+# from db import Candidate, SessionLocal
+# import threading
+
+# import asyncio
+# import threading
+# import time
+# import traceback
+# from datetime import datetime, timedelta
+# import asyncio
+# import traceback
+# import os
+# import json
+# from sqlalchemy import func, and_
+# import requests
+# import logging
+# from logging.handlers import RotatingFileHandler
+# import time
+# from functools import wraps
+# from tenacity import retry, stop_after_attempt, wait_exponential
+# import sys
+# # Import your existing modules
+# try:
+#     from scraper import scrape_job
+#     from latest import create_assessment
+#     from test_link import get_invite_link
+#     from clint_recruitment_system import run_recruitment_with_invite_link
+#     from email_util import send_assessment_email, send_assessment_reminder, send_interview_confirmation_email
+# except ImportError as e:
+#     logging.error(f"Critical module import failed: {e}")
+#     raise
+# # Add after existing imports
+# try:
+#     from testlify_results_scraper import scrape_all_pending_assessments,scrape_assessment_results_by_name
+# except ImportError as e:
+#     logging.warning(f"Testlify scraper not available: {e}")
+# # Setup proper logging
+# def setup_logging():
+#     """Configure logging for production"""
+#     if not os.path.exists('logs'):
+#         os.makedirs('logs')
+    
+#     # Create formatter
+#     formatter = logging.Formatter(
+#         '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+#     )
+    
+#     # File handler
+#     file_handler = RotatingFileHandler(
+#         'logs/talentflow.log',
+#         maxBytes=10485760,  # 10MB
+#         backupCount=10,
+#         encoding='utf-8'
+#     )
+#     file_handler.setFormatter(formatter)
+#     file_handler.setLevel(logging.INFO)
+    
+#     # Console handler  
+#     console_handler = logging.StreamHandler()
+#     console_handler.setLevel(logging.DEBUG)
+#     console_handler.setFormatter(formatter)
+    
+#     # Configure root logger
+#     logger = logging.getLogger()
+#     logger.setLevel(logging.INFO)
+    
+#     # Clear existing handlers
+#     for handler in logger.handlers[:]:
+#         logger.removeHandler(handler)
+    
+#     # Add our handlers
+#     logger.addHandler(file_handler)
+    
+#     # Only add console handler in development
+#     if os.getenv('FLASK_ENV') == 'development':
+#         logger.addHandler(console_handler)
+    
+#     return logger
+
+# logger = setup_logging()
+
+# # Environment validation
+# def validate_environment():
+#     """Validate all required environment variables"""
+#     required_vars = [
+#         'OPENAI_API_KEY',
+#         'BAMBOOHR_API_KEY',
+#         'BAMBOOHR_SUBDOMAIN',
+#         'SMTP_SERVER',
+#         'SENDER_EMAIL',
+#         'SENDER_PASSWORD',
+#         'COMPANY_NAME'
+#     ]
+    
+#     missing = []
+#     for var in required_vars:
+#         if not os.getenv(var):
+#             missing.append(var)
+    
+#     if missing:
+#         error_msg = f"Missing required environment variables: {', '.join(missing)}"
+#         logger.error(error_msg)
+#         raise EnvironmentError(error_msg)
+    
+#     logger.info("Environment validation passed")
+
+# # Configuration from environment
+# ASSESSMENT_CONFIG = {
+#     'EXPIRY_HOURS': int(os.getenv('ASSESSMENT_EXPIRY_HOURS', '48')),
+#     'REMINDER_HOURS': int(os.getenv('ASSESSMENT_REMINDER_HOURS', '24')),
+#     'INTERVIEW_DELAY_DAYS': int(os.getenv('INTERVIEW_DELAY_DAYS', '3')),
+#     'ATS_THRESHOLD': float(os.getenv('ATS_THRESHOLD', '70')),
+#     'MAX_RETRIES': int(os.getenv('MAX_RETRIES', '3')),
+#     'RETRY_DELAY': int(os.getenv('RETRY_DELAY', '2'))
+# }
+
+# app = Flask(__name__)
+# CORS(app, origins="*", allow_headers="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+
+# # Admin notification function
+# def notify_admin(subject, message, error_details=None):
+#     """Send critical notifications to admin"""
+#     try:
+#         admin_email = os.getenv('ADMIN_EMAIL')
+#         if not admin_email:
+#             logger.warning("ADMIN_EMAIL not set, skipping notification")
+#             return
+        
+#         from email_util import send_email
+        
+#         body_html = f"""
+#         <html>
+#             <body>
+#                 <h2>TalentFlow AI Alert: {subject}</h2>
+#                 <p>{message}</p>
+#                 {f'<pre>{error_details}</pre>' if error_details else ''}
+#                 <p>Time: {datetime.now().isoformat()}</p>
+#             </body>
+#         </html>
+#         """
+        
+#         send_email(admin_email, f"[TalentFlow Alert] {subject}", body_html)
+        
+#     except Exception as e:
+#         logger.error(f"Failed to send admin notification: {e}")
+
+# # Rate limiting decorator
+# def rate_limit(max_calls=10, time_window=60):
+#     """Simple rate limiting decorator"""
+#     calls = {}
+    
+#     def decorator(func):
+#         @wraps(func)
+#         def wrapper(*args, **kwargs):
+#             now = time.time()
+#             key = request.remote_addr
+            
+#             if key not in calls:
+#                 calls[key] = []
+            
+#             # Remove old calls
+#             calls[key] = [call_time for call_time in calls[key] if now - call_time < time_window]
+            
+#             if len(calls[key]) >= max_calls:
+#                 return jsonify({"error": "Rate limit exceeded"}), 429
+            
+#             calls[key].append(now)
+#             return func(*args, **kwargs)
+#         return wrapper
+#     return decorator
+
+# @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+# def get_jobs_from_bamboohr():
+#     """Get jobs from BambooHR with retry logic"""
+#     try:
+#         API_KEY = os.getenv("BAMBOOHR_API_KEY")
+#         SUBDOMAIN = os.getenv("BAMBOOHR_SUBDOMAIN")
+        
+#         if not API_KEY or not SUBDOMAIN:
+#             raise ValueError("BambooHR credentials not configured")
+            
+#         auth = (API_KEY, "x")
+#         headers = {"Accept": "application/json", "Content-Type": "application/json"}
+#         url = f"https://api.bamboohr.com/api/gateway.php/{SUBDOMAIN}/v1/applicant_tracking/jobs/"
+        
+#         resp = requests.get(url, auth=auth, headers=headers, timeout=100)
+#         resp.raise_for_status()
+        
+#         jobs = resp.json()
+#         open_jobs = []
+        
+#         session = SessionLocal()
+#         try:
+#             for job in jobs:
+#                 if job.get("status", {}).get("label", "").lower() == "open":
+#                     # Get candidate count for this job
+#                     candidate_count = session.query(Candidate).filter_by(job_id=str(job["id"])).count()
+                    
+#                     open_jobs.append({
+#                         "id": job["id"],
+#                         "title": job.get("title", {}).get("label", ""),
+#                         "location": job.get("location", {}).get("label", ""),
+#                         "department": job.get("department", {}).get("label", ""),
+#                         "postingUrl": job.get("postingUrl", ""),
+#                         "applications": candidate_count,
+#                         "status": "Active",
+#                         "description": job.get("description", "")
+#                     })
+#         finally:
+#             session.close()
+        
+#         return jsonify(open_jobs)
+        
+#     except requests.exceptions.RequestException as e:
+#         logger.error(f"BambooHR API error: {e}")
+#         notify_admin("BambooHR API Error", f"Failed to fetch jobs: {str(e)}")
+#         return jsonify({"error": "Failed to fetch jobs"}), 503
+#     except Exception as e:
+#         logger.error(f"Unexpected error fetching jobs: {e}")
+#         return jsonify({"error": "Internal server error"}), 500
+
+# # @app.route('/api/jobs', methods=['GET'])
+# # @rate_limit(max_calls=30, time_window=60)
+# # def api_jobs():
+# #     """API endpoint to get jobs"""
+# #     return get_jobs_from_bamboohr()
+
+# @app.route('/api/run_full_pipeline', methods=['POST', 'OPTIONS'])
+# @rate_limit(max_calls=5, time_window=300)  # Max 5 pipeline runs per 5 minutes
+# def api_run_full_pipeline():
+#     """API endpoint to start the full recruitment pipeline"""
+#     if request.method == 'OPTIONS':
+#         return '', 200
+        
+#     try:
+#         data = request.json
+#         job_id = data.get('job_id')
+#         job_title = data.get('job_title')
+#         job_desc = data.get('job_desc', "")
+        
+#         logger.info(f"Pipeline request received: job_id={job_id}, job_title={job_title}")
+        
+#         if not job_id or not job_title:
+#             return jsonify({"success": False, "message": "job_id and job_title are required"}), 400
+        
+#         # Start the pipeline in a separate thread
+#         pipeline_thread = threading.Thread(
+#             target=lambda: run_pipeline_with_monitoring(job_id, job_title, job_desc),
+#             daemon=True,
+#             name=f"pipeline_{job_id}_{int(time.time())}"
+#         )
+#         pipeline_thread.start()
+        
+#         # Store thread info for monitoring
+#         if not hasattr(app, 'active_pipelines'):
+#             app.active_pipelines = {}
+        
+#         app.active_pipelines[pipeline_thread.name] = {
+#             'job_id': job_id,
+#             'job_title': job_title,
+#             'started_at': datetime.now(),
+#             'thread': pipeline_thread
+#         }
+        
+#         return jsonify({
+#             "success": True, 
+#             "message": f"Pipeline started for {job_title}",
+#             "pipeline_id": pipeline_thread.name,
+#             "estimated_time": "5-10 minutes"
+#         }), 200
+        
+#     except Exception as e:
+#         logger.error(f"Error in run_full_pipeline: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+# def run_pipeline_with_monitoring(job_id, job_title, job_desc):
+#     """Wrapper to run pipeline with monitoring and error handling"""
+#     start_time = time.time()
+    
+#     try:
+#         logger.info(f"Starting monitored pipeline for job_id={job_id}")
+#         full_recruitment_pipeline(job_id, job_title, job_desc)
+        
+#         duration = time.time() - start_time
+#         logger.info(f"Pipeline completed successfully in {duration:.2f} seconds")
+        
+#         # Send success notification
+#         notify_admin(
+#             "Pipeline Completed Successfully",
+#             f"Job: {job_title} (ID: {job_id})\nDuration: {duration:.2f} seconds"
+#         )
+        
+#     except Exception as e:
+#         duration = time.time() - start_time
+#         error_msg = f"Pipeline failed for job {job_title} (ID: {job_id}) after {duration:.2f} seconds"
+#         logger.error(error_msg, exc_info=True)
+        
+#         # Send failure notification
+#         notify_admin(
+#             "Pipeline Failed",
+#             error_msg,
+#             error_details=traceback.format_exc()
+#         )
+        
+#         # Update database with failure status
+#         session = SessionLocal()
+#         try:
+#             # You might want to add a pipeline_runs table to track this
+#             pass
+#         finally:
+#             session.close()
+
+# def full_recruitment_pipeline(job_id, job_title, job_desc):
+#     """Run the full recruitment pipeline with proper error handling"""
+#     session = SessionLocal()
+#     pipeline_status = {
+#         'job_id': job_id,
+#         'steps_completed': [],
+#         'errors': []
+#     }
+    
+#     try:
+#         logger.info(f"Starting full recruitment pipeline for job_id={job_id}, job_title={job_title}")
+        
+#         # STEP 1: Scraping
+#         try:
+#             logger.info(f"STEP 1: Scraping resumes for job_id={job_id}")
+#             asyncio.run(scrape_job(job_id))
+#             pipeline_status['steps_completed'].append('scraping')
+#             logger.info("✅ Scraping completed successfully")
+#         except Exception as e:
+#             error_msg = f"Scraping failed: {str(e)}"
+#             logger.error(error_msg, exc_info=True)
+#             pipeline_status['errors'].append(error_msg)
+#             # Continue with pipeline even if scraping fails
+        
+#         # STEP 2: Create assessment
+#         try:
+#             logger.info(f"STEP 2: Creating assessment for '{job_title}' in Testlify")
+#             create_assessment(job_title, job_desc)
+#             pipeline_status['steps_completed'].append('assessment_creation')
+#             logger.info("✅ Assessment created successfully")
+#         except Exception as e:
+#             error_msg = f"Assessment creation failed: {str(e)}"
+#             logger.error(error_msg, exc_info=True)
+#             pipeline_status['errors'].append(error_msg)
+        
+#         # STEP 3: Get invite link
+#         invite_link = None
+#         try:
+#             logger.info(f"STEP 3: Extracting invite link for '{job_title}' from Testlify")
+#             invite_link = get_invite_link(job_title)
+#             if invite_link:
+#                 pipeline_status['steps_completed'].append('invite_link_extraction')
+#                 logger.info(f"✅ Got invite link: {invite_link}")
+#         except Exception as e:
+#             error_msg = f"Invite link extraction failed: {str(e)}"
+#             logger.error(error_msg, exc_info=True)
+#             pipeline_status['errors'].append(error_msg)
+        
+#         if not invite_link:
+#             invite_link = f"https://candidate.testlify.com/assessment/{job_id}"
+#             logger.warning(f"Using fallback invite link: {invite_link}")
+        
+#         # STEP 4: Run AI screening
+#         try:
+#             logger.info("STEP 4: Running AI-powered screening...")
+#             run_recruitment_with_invite_link(
+#                 job_id=job_id, 
+#                 job_title=job_title, 
+#                 job_desc=job_desc, 
+#                 invite_link=invite_link
+#             )
+#             pipeline_status['steps_completed'].append('ai_screening')
+#             logger.info("✅ AI screening completed successfully")
+#         except Exception as e:
+#             error_msg = f"AI screening failed: {str(e)}"
+#             logger.error(error_msg, exc_info=True)
+#             pipeline_status['errors'].append(error_msg)
+#             raise  # This is critical, so we raise
+        
+#         # Log pipeline summary
+#         logger.info(f"Pipeline completed. Steps: {pipeline_status['steps_completed']}, Errors: {len(pipeline_status['errors'])}")
+        
+#         if pipeline_status['errors']:
+#             notify_admin(
+#                 "Pipeline Completed with Warnings",
+#                 f"Job: {job_title}\nCompleted steps: {', '.join(pipeline_status['steps_completed'])}\nErrors: {', '.join(pipeline_status['errors'])}"
+#             )
+            
+#     except Exception as e:
+#         logger.error(f"Fatal pipeline error: {e}", exc_info=True)
+#         raise
+#     finally:
+#         session.close()
+#         logger.info("🚀 Recruitment pipeline finished")
+
+# # @app.route('/api/candidates', methods=['GET'])
+# # @rate_limit(max_calls=60, time_window=60)
+# # def api_candidates():
+# #     """API endpoint to get candidates with enhanced error handling"""
+# #     session = SessionLocal()
+# #     try:
+# #         job_id = request.args.get('job_id')
+# #         status_filter = request.args.get('status')
+        
+# #         query = session.query(Candidate)
+        
+# #         if job_id:
+# #             query = query.filter_by(job_id=str(job_id))
+        
+# #         if status_filter:
+# #             query = query.filter_by(status=status_filter)
+        
+# #         candidates = query.all()
+        
+# #         logger.info(f"Found {len(candidates)} candidates for job_id={job_id}, status={status_filter}")
+        
+# #         result = []
+# #         for c in candidates:
+# #             # Calculate time remaining for assessment
+# #             time_remaining = None
+# #             if c.exam_link_sent_date and not c.exam_completed:
+# #                 deadline = c.exam_link_sent_date + timedelta(hours=ASSESSMENT_CONFIG['EXPIRY_HOURS'])
+# #                 if datetime.now() < deadline:
+# #                     time_remaining = (deadline - datetime.now()).total_seconds() / 3600  # hours
+            
+# #             result.append({
+# #                 "id": c.id,
+# #                 "name": c.name or "Unknown",
+# #                 "email": c.email or "",
+# #                 "job_id": c.job_id,
+# #                 "job_title": c.job_title or "Unknown Position",
+# #                 "status": c.status,
+# #                 "ats_score": c.ats_score or 0,
+# #                 "assessment_invite_link": c.assessment_invite_link,
+# #                 "exam_link_sent": c.exam_link_sent or False,
+# #                 "exam_link_sent_date": c.exam_link_sent_date.isoformat() if c.exam_link_sent_date else None,
+# #                 "time_remaining_hours": time_remaining,
+# #                 "link_clicked": c.link_clicked or False,
+# #                 "link_clicked_date": c.link_clicked_date.isoformat() if c.link_clicked_date else None,
+# #                 "exam_started": c.exam_started or False,
+# #                 "exam_started_date": c.exam_started_date.isoformat() if c.exam_started_date else None,
+# #                 "exam_completed": c.exam_completed or False,
+# #                 "exam_completed_date": c.exam_completed_date.isoformat() if c.exam_completed_date else None,
+# #                 "exam_score": c.exam_score,
+# #                 "exam_percentage": c.exam_percentage,
+# #                 "interview_scheduled": c.interview_scheduled or False,
+# #                 "interview_date": c.interview_date.isoformat() if c.interview_date else None,
+# #                 "final_status": c.final_status,
+# #                 "processed_date": c.processed_date.isoformat() if c.processed_date else None,
+# #                 "score_reasoning": c.score_reasoning,
+# #                 "linkedin": c.linkedin,
+# #                 "github": c.github,
+# #                 "resume_path": c.resume_path
+# #             })
+        
+# #         return jsonify(result), 200
+        
+# #     except Exception as e:
+# #         logger.error(f"Error in api_candidates: {e}", exc_info=True)
+# #         return jsonify({"error": "Failed to fetch candidates"}), 500
+# #     finally:
+# #         session.close()
+
+# @app.route('/api/webhook/testlify', methods=['POST'])
+# def testlify_webhook():
+#     """Webhook endpoint for Testlify real-time updates"""
+#     try:
+#         data = request.json
+#         logger.info(f"Received Testlify webhook: {data}")
+        
+#         # Validate webhook signature (implement based on Testlify docs)
+#         # if not validate_webhook_signature(request):
+#         #     return jsonify({"error": "Invalid signature"}), 401
+        
+#         event_type = data.get('event')
+#         candidate_email = data.get('candidate_email')
+        
+#         if not candidate_email:
+#             return jsonify({"error": "Missing candidate_email"}), 400
+        
+#         session = SessionLocal()
+#         try:
+#             candidate = session.query(Candidate).filter_by(email=candidate_email).first()
+            
+#             if not candidate:
+#                 logger.warning(f"Candidate not found: {candidate_email}")
+#                 return jsonify({"error": "Candidate not found"}), 404
+            
+#             # Handle different event types
+#             if event_type == 'assessment_started':
+#                 candidate.exam_started = True
+#                 candidate.exam_started_date = datetime.now()
+#                 candidate.link_clicked = True
+#                 candidate.link_clicked_date = datetime.now()
+#                 logger.info(f"Assessment started for {candidate_email}")
+                
+#             elif event_type == 'assessment_completed':
+#                 candidate.exam_completed = True
+#                 candidate.exam_completed_date = datetime.now()
+                
+#                 # Extract score data
+#                 score_data = data.get('score', {})
+#                 candidate.exam_score = score_data.get('correct_answers', 0)
+#                 candidate.exam_total_questions = score_data.get('total_questions', 0)
+#                 candidate.exam_percentage = score_data.get('percentage', 0)
+#                 candidate.exam_time_taken = score_data.get('time_taken_minutes', 0)
+                
+#                 # Process results
+#                 if candidate.exam_percentage >= 70:
+#                     candidate.final_status = 'Interview Scheduled'
+#                     candidate.interview_scheduled = True
+#                     candidate.interview_date = datetime.now() + timedelta(days=ASSESSMENT_CONFIG['INTERVIEW_DELAY_DAYS'])
+                    
+#                     # Send interview link
+#                     from email_util import send_interview_link_email
+#                     interview_link = send_interview_link_email(candidate)
+#                     candidate.interview_link = interview_link
+#                 else:
+#                     candidate.final_status = 'Rejected After Exam'
+                    
+#                     # Send rejection email
+#                     from email_util import send_rejection_email
+#                     send_rejection_email(candidate)
+                
+#                 logger.info(f"Assessment completed for {candidate_email}: {candidate.exam_percentage}%")
+            
+#             session.commit()
+#             return jsonify({"success": True}), 200
+            
+#         finally:
+#             session.close()
+            
+#     except Exception as e:
+#         logger.error(f"Webhook processing error: {e}", exc_info=True)
+#         return jsonify({"error": "Internal server error"}), 500
+# # ####################################################
+# # Add these routes to your backend.py file
+# # Place them after your existing routes
+
+# @app.route('/api/send_assessment', methods=['POST'])
+# @rate_limit(max_calls=20, time_window=60)
+# def api_send_assessment():
+#     """Send assessment link to a specific candidate"""
+#     try:
+#         data = request.json
+#         candidate_id = data.get('candidate_id')
+        
+#         if not candidate_id:
+#             return jsonify({"success": False, "message": "candidate_id is required"}), 400
+        
+#         session = SessionLocal()
+#         try:
+#             candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+#             if not candidate:
+#                 return jsonify({"success": False, "message": "Candidate not found"}), 404
+            
+#             # Update candidate with assessment sent info
+#             candidate.exam_link_sent = True
+#             candidate.exam_link_sent_date = datetime.now()
+            
+#             # Generate assessment link (use your existing logic or create a default)
+#             if not candidate.assessment_invite_link:
+#                 candidate.assessment_invite_link = f"https://app.testlify.com/assessment/{candidate.assessment_id or candidate.job_id}"
+            
+#             # Send email with assessment link
+#             try:
+#                 from email_util import send_assessment_email  # You'll need to create this function
+#                 send_assessment_email(candidate)
+#                 logger.info(f"Assessment link sent to {candidate.email}")
+#             except Exception as e:
+#                 logger.warning(f"Failed to send assessment email to {candidate.email}: {e}")
+#                 # Continue even if email fails
+            
+#             session.commit()
+            
+#             return jsonify({
+#                 "success": True,
+#                 "message": f"Assessment link sent to {candidate.name}",
+#                 "candidate": {
+#                     "id": candidate.id,
+#                     "name": candidate.name,
+#                     "email": candidate.email,
+#                     "assessment_link": candidate.assessment_invite_link
+#                 }
+#             }), 200
+            
+#         finally:
+#             session.close()
+        
+#     except Exception as e:
+#         logger.error(f"Error in send_assessment: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+
+# @app.route('/api/send_reminders', methods=['POST'])
+# @rate_limit(max_calls=10, time_window=60)
+# def api_send_reminders():
+#     """Send reminder emails to specific candidates"""
+#     try:
+#         data = request.json
+#         candidate_ids = data.get('candidate_ids', [])
+        
+#         if not candidate_ids:
+#             return jsonify({"success": False, "message": "candidate_ids array is required"}), 400
+        
+#         session = SessionLocal()
+#         try:
+#             reminded_count = 0
+#             failed_count = 0
+            
+#             for candidate_id in candidate_ids:
+#                 try:
+#                     candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+#                     if not candidate:
+#                         failed_count += 1
+#                         continue
+                    
+#                     # Check if candidate is eligible for reminder
+#                     if not candidate.exam_link_sent or candidate.exam_completed:
+#                         failed_count += 1
+#                         continue
+                    
+#                     # Send reminder email
+#                     try:
+#                         from email_util import send_assessment_reminder
+                        
+#                         # Calculate hours remaining
+#                         hours_remaining = 24  # Default
+#                         if candidate.exam_link_sent_date:
+#                             deadline = candidate.exam_link_sent_date + timedelta(hours=48)
+#                             hours_remaining = max(0, int((deadline - datetime.now()).total_seconds() / 3600))
+                        
+#                         send_assessment_reminder(candidate, hours_remaining)
+                        
+#                         # Update reminder tracking
+#                         candidate.reminder_sent = True
+#                         candidate.reminder_sent_date = datetime.now()
+                        
+#                         reminded_count += 1
+                        
+#                     except Exception as e:
+#                         logger.error(f"Failed to send reminder to {candidate.email}: {e}")
+#                         failed_count += 1
+                
+#                 except Exception as e:
+#                     logger.error(f"Error processing candidate {candidate_id}: {e}")
+#                     failed_count += 1
+            
+#             session.commit()
+            
+#             return jsonify({
+#                 "success": True,
+#                 "reminded_count": reminded_count,
+#                 "failed_count": failed_count,
+#                 "message": f"Sent reminders to {reminded_count} candidates. {failed_count} failed."
+#             }), 200
+            
+#         finally:
+#             session.close()
+        
+#     except Exception as e:
+#         logger.error(f"Error in send_reminders: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+
+# @app.route('/api/send_reminder/<int:candidate_id>', methods=['POST'])
+# @rate_limit(max_calls=20, time_window=60)
+# def api_send_single_reminder(candidate_id):
+#     """Send reminder to a single candidate"""
+#     try:
+#         return api_send_reminders(jsonify({"candidate_ids": [candidate_id]}))
+#     except Exception as e:
+#         logger.error(f"Error in send_single_reminder: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+
+# @app.route('/api/schedule-interview', methods=['POST'])
+# @rate_limit(max_calls=10, time_window=60)
+# def api_schedule_interview():
+#     """Schedule an interview for a candidate"""
+#     try:
+#         data = request.json
+#         candidate_id = data.get('candidate_id')
+#         email = data.get('email')
+#         interview_date = data.get('date')
+#         time_slot = data.get('time_slot')
+        
+#         if not candidate_id and not email:
+#             return jsonify({"success": False, "message": "candidate_id or email is required"}), 400
+        
+#         session = SessionLocal()
+#         try:
+#             # Find candidate
+#             if candidate_id:
+#                 candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+#             else:
+#                 candidate = session.query(Candidate).filter_by(email=email).first()
+            
+#             if not candidate:
+#                 return jsonify({"success": False, "message": "Candidate not found"}), 404
+            
+#             # Parse interview date
+#             if isinstance(interview_date, str):
+#                 interview_datetime = datetime.fromisoformat(interview_date.replace('Z', '+00:00'))
+#             else:
+#                 interview_datetime = datetime.now() + timedelta(days=3)
+            
+#             # Update candidate
+#             candidate.interview_scheduled = True
+#             candidate.interview_date = interview_datetime
+#             candidate.final_status = 'Interview Scheduled'
+            
+#             # Generate Google Meet link (you can integrate with Google Calendar API)
+#             meeting_link = f"https://meet.google.com/lookup/generated-meeting-id-{candidate.id}"
+#             candidate.interview_link = meeting_link
+            
+#             # Send interview confirmation email
+#             try:
+#                 from email_util import send_interview_confirmation_email
+#                 send_interview_confirmation_email(candidate, interview_datetime, meeting_link)
+#             except Exception as e:
+#                 logger.warning(f"Failed to send interview email to {candidate.email}: {e}")
+            
+#             session.commit()
+            
+#             return jsonify({
+#                 "success": True,
+#                 "message": f"Interview scheduled for {candidate.name}",
+#                 "meeting_link": meeting_link,
+#                 "interview_date": interview_datetime.isoformat(),
+#                 "candidate": {
+#                     "id": candidate.id,
+#                     "name": candidate.name,
+#                     "email": candidate.email
+#                 }
+#             }), 200
+            
+#         finally:
+#             session.close()
+        
+#     except Exception as e:
+#         logger.error(f"Error in schedule_interview: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+
+# # Fix your existing candidates endpoint to handle job_id filter properly
+# @app.route('/api/candidates', methods=['GET'])
+# @rate_limit(max_calls=60, time_window=60)
+# def api_candidates_fixed():
+#     """API endpoint to get candidates with enhanced error handling"""
+#     session = SessionLocal()
+#     try:
+#         job_id = request.args.get('job_id')
+#         status_filter = request.args.get('status')
+#         limit = int(request.args.get('limit', 100))
+#         offset = int(request.args.get('offset', 0))
+        
+#         query = session.query(Candidate)
+        
+#         if job_id:
+#             query = query.filter_by(job_id=str(job_id))
+        
+#         if status_filter:
+#             query = query.filter_by(status=status_filter)
+        
+#         # Add pagination
+#         candidates = query.offset(offset).limit(limit).all()
+#         total_count = query.count()
+        
+#         logger.info(f"Found {len(candidates)} candidates (total: {total_count}) for job_id={job_id}, status={status_filter}")
+        
+#         result = []
+#         for c in candidates:
+#             try:
+#                 # Calculate time remaining for assessment
+#                 time_remaining = None
+#                 link_expired = False
+                
+#                 if c.exam_link_sent_date and not c.exam_completed:
+#                     deadline = c.exam_link_sent_date + timedelta(hours=ASSESSMENT_CONFIG['EXPIRY_HOURS'])
+#                     if datetime.now() < deadline:
+#                         time_remaining = (deadline - datetime.now()).total_seconds() / 3600  # hours
+#                     else:
+#                         link_expired = True
+                
+#                 candidate_data = {
+#                     "id": c.id,
+#                     "name": c.name or "Unknown",
+#                     "email": c.email or "",
+#                     "job_id": c.job_id,
+#                     "job_title": c.job_title or "Unknown Position",
+#                     "status": c.status,
+#                     "ats_score": float(c.ats_score) if c.ats_score else 0.0,
+#                     "linkedin": c.linkedin,
+#                     "github": c.github,
+#                     "phone": c.phone,
+#                     "resume_path": c.resume_path,
+#                     "processed_date": c.processed_date.isoformat() if c.processed_date else None,
+#                     "score_reasoning": c.score_reasoning,
+#                     "decision_reason": c.decision_reason,
+                    
+#                     # Assessment fields
+#                     "assessment_invite_link": c.assessment_invite_link,
+#                     "assessment_id": c.assessment_id,
+#                     "exam_link_sent": bool(c.exam_link_sent),
+#                     "exam_link_sent_date": c.exam_link_sent_date.isoformat() if c.exam_link_sent_date else None,
+#                     "link_clicked": bool(c.link_clicked),
+#                     "link_clicked_date": c.link_clicked_date.isoformat() if c.link_clicked_date else None,
+#                     "exam_started": bool(c.exam_started),
+#                     "exam_started_date": c.exam_started_date.isoformat() if c.exam_started_date else None,
+#                     "exam_completed": bool(c.exam_completed),
+#                     "exam_completed_date": c.exam_completed_date.isoformat() if c.exam_completed_date else None,
+#                     "exam_expired": bool(c.exam_expired) if c.exam_expired is not None else link_expired,
+#                     "link_expired": link_expired,  # Add this for frontend compatibility
+#                     "time_remaining_hours": time_remaining,
+                    
+#                     # Exam results
+#                     "exam_score": c.exam_score,
+#                     "exam_total_questions": c.exam_total_questions,
+#                     "exam_correct_answers": c.exam_correct_answers,
+#                     "exam_percentage": float(c.exam_percentage) if c.exam_percentage else None,
+#                     "exam_time_taken": c.exam_time_taken,
+#                     "exam_feedback": c.exam_feedback,
+#                     "exam_sections_scores": c.exam_sections_scores,
+#                     "exam_difficulty_level": c.exam_difficulty_level,
+#                     "exam_cheating_flag": bool(c.exam_cheating_flag) if c.exam_cheating_flag is not None else False,
+                    
+#                     # Interview fields
+#                     "interview_scheduled": bool(c.interview_scheduled),
+#                     "interview_date": c.interview_date.isoformat() if c.interview_date else None,
+#                     "interview_link": c.interview_link,
+#                     "interview_type": c.interview_type,
+#                     "interview_feedback": c.interview_feedback,
+#                     "interview_score": float(c.interview_score) if c.interview_score else None,
+#                     "interviewer_name": c.interviewer_name,
+                    
+#                     # Status fields
+#                     "final_status": c.final_status,
+#                     "rejection_reason": c.rejection_reason,
+#                     "notification_sent": bool(c.notification_sent),
+#                     "notification_sent_date": c.notification_sent_date.isoformat() if c.notification_sent_date else None,
+#                     "reminder_sent": bool(c.reminder_sent),
+#                     "reminder_sent_date": c.reminder_sent_date.isoformat() if c.reminder_sent_date else None,
+                    
+#                     # Offer fields
+#                     "offer_extended": bool(c.offer_extended) if c.offer_extended is not None else False,
+#                     "offer_extended_date": c.offer_extended_date.isoformat() if c.offer_extended_date else None,
+#                     "offer_accepted": bool(c.offer_accepted) if c.offer_accepted is not None else False,
+#                     "offer_accepted_date": c.offer_accepted_date.isoformat() if c.offer_accepted_date else None,
+#                     "joining_date": c.joining_date.isoformat() if c.joining_date else None,
+#                     "offered_salary": float(c.offered_salary) if c.offered_salary else None,
+                    
+#                     # Additional fields
+#                     "source": c.source,
+#                     "recruiter_notes": c.recruiter_notes,
+#                     "tags": c.tags,
+#                     "created_at": c.created_at.isoformat() if c.created_at else None,
+#                     "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+                    
+#                     # Legacy fields for backward compatibility
+#                     "testlify_link": c.testlify_link or c.assessment_invite_link,
+#                     "attendance_deadline": c.attendance_deadline,
+#                     "attended_assessment": bool(c.attended_assessment) if c.attended_assessment is not None else bool(c.exam_completed),
+#                     "attended_at": c.attended_at.isoformat() if c.attended_at else (c.exam_completed_date.isoformat() if c.exam_completed_date else None)
+#                 }
+                
+#                 result.append(candidate_data)
+                
+#             except Exception as e:
+#                 logger.error(f"Error processing candidate {c.id}: {e}")
+#                 # Continue with next candidate
+#                 continue
+        
+#         return jsonify(result), 200
+        
+#     except Exception as e:
+#         logger.error(f"Error in api_candidates: {e}", exc_info=True)
+#         return jsonify({"error": "Failed to fetch candidates", "message": str(e)}), 500
+#     finally:
+#         session.close()
+
+
+# # Enhanced jobs endpoint to return proper format
+# @app.route('/api/jobs', methods=['GET'])
+# @rate_limit(max_calls=30, time_window=60)
+# def api_jobs_enhanced():
+#     """Enhanced API endpoint to get jobs with candidate counts"""
+#     try:
+#         # Try to get from BambooHR first
+#         try:
+#             return get_jobs_from_bamboohr()
+#         except Exception as bamboo_error:
+#             logger.warning(f"BambooHR unavailable, falling back to database: {bamboo_error}")
+        
+#         # Fallback to database
+#         session = SessionLocal()
+#         try:
+#             # Get unique jobs from candidates table
+#             jobs_data = session.query(
+#                 Candidate.job_id,
+#                 Candidate.job_title,
+#                 func.count(Candidate.id).label('applications')
+#             ).filter(
+#                 Candidate.job_id.isnot(None),
+#                 Candidate.job_title.isnot(None)
+#             ).group_by(
+#                 Candidate.job_id, 
+#                 Candidate.job_title
+#             ).all()
+            
+#             jobs = []
+#             for job_id, job_title, app_count in jobs_data:
+#                 # Get additional stats
+#                 shortlisted = session.query(Candidate).filter_by(
+#                     job_id=job_id, 
+#                     status='Shortlisted'
+#                 ).count()
+                
+#                 completed_assessments = session.query(Candidate).filter_by(
+#                     job_id=job_id, 
+#                     exam_completed=True
+#                 ).count()
+                
+#                 jobs.append({
+#                     'id': str(job_id),
+#                     'title': job_title,
+#                     'department': 'Engineering',  # Default
+#                     'location': 'Remote',  # Default
+#                     'applications': app_count,
+#                     'shortlisted': shortlisted,
+#                     'completed_assessments': completed_assessments,
+#                     'status': 'Active',
+#                     'description': f'Job description for {job_title}',
+#                     'postingUrl': ''
+#                 })
+            
+#             logger.info(f"Found {len(jobs)} jobs from database")
+#             return jsonify(jobs), 200
+            
+#         finally:
+#             session.close()
+        
+#     except Exception as e:
+#         logger.error(f"Error in api_jobs: {e}", exc_info=True)
+#         return jsonify({"error": "Failed to fetch jobs", "message": str(e)}), 500
+
+
+# # Fix the recruitment stats endpoint
+# @app.route('/api/recruitment-stats', methods=['GET'])
+# @rate_limit(max_calls=20, time_window=60)
+# def api_recruitment_stats_fixed():
+#     """Get recruitment statistics for charts with better error handling"""
+#     session = SessionLocal()
+#     try:
+#         stats = []
+#         current_date = datetime.now()
+        
+#         # Get last 6 months of data
+#         for i in range(6):
+#             try:
+#                 month_date = current_date - timedelta(days=30*i)
+#                 month_name = month_date.strftime('%b')
+                
+#                 # Calculate month boundaries
+#                 month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+#                 if month_start.month == 12:
+#                     month_end = month_start.replace(year=month_start.year + 1, month=1, day=1) - timedelta(seconds=1)
+#                 else:
+#                     month_end = month_start.replace(month=month_start.month + 1, day=1) - timedelta(seconds=1)
+                
+#                 # Get statistics for this month
+#                 applications = session.query(Candidate).filter(
+#                     and_(
+#                         Candidate.processed_date >= month_start,
+#                         Candidate.processed_date <= month_end
+#                     )
+#                 ).count()
+                
+#                 interviews = session.query(Candidate).filter(
+#                     and_(
+#                         Candidate.interview_scheduled == True,
+#                         Candidate.interview_date >= month_start,
+#                         Candidate.interview_date <= month_end
+#                     )
+#                 ).count()
+                
+#                 hires = session.query(Candidate).filter(
+#                     and_(
+#                         Candidate.final_status == "Hired",
+#                         Candidate.processed_date >= month_start,
+#                         Candidate.processed_date <= month_end
+#                     )
+#                 ).count()
+                
+#                 stats.append({
+#                     "month": month_name,
+#                     "applications": applications,
+#                     "interviews": interviews,
+#                     "hires": hires
+#                 })
+                
+#             except Exception as e:
+#                 logger.error(f"Error calculating stats for month {i}: {e}")
+#                 # Add empty data for this month
+#                 stats.append({
+#                     "month": (current_date - timedelta(days=30*i)).strftime('%b'),
+#                     "applications": 0,
+#                     "interviews": 0,
+#                     "hires": 0
+#                 })
+        
+#         # Reverse to get chronological order
+#         stats.reverse()
+        
+#         logger.info(f"Generated recruitment stats for {len(stats)} months")
+#         return jsonify(stats), 200
+        
+#     except Exception as e:
+#         logger.error(f"Error in api_recruitment_stats: {e}", exc_info=True)
+#         # # Return mock data if database fails
+#         # mock_stats = [
+#         #     {'month': 'Jan', 'applications': 45, 'interviews': 12, 'hires': 3},
+#         #     {'month': 'Feb', 'applications': 52, 'interviews': 15, 'hires': 4},
+#         #     {'month': 'Mar', 'applications': 38, 'interviews': 10, 'hires': 2},
+#         #     {'month': 'Apr', 'applications': 61, 'interviews': 18, 'hires': 5},
+#         #     {'month': 'May', 'applications': 73, 'interviews': 22, 'hires': 6},
+#         #     {'month': 'Jun', 'applications': 85, 'interviews': 25, 'hires': 7}
+#         # ]
+#         # return jsonify(mock_stats), 200
+#     finally:
+#         session.close()
+
+
+# # Add CORS preflight handling for all API routes
+# @app.before_request
+# def handle_preflight():
+#     if request.method == "OPTIONS":
+#         response = jsonify({})
+#         response.headers.add("Access-Control-Allow-Origin", "*")
+#         response.headers.add('Access-Control-Allow-Headers', "*")
+#         response.headers.add('Access-Control-Allow-Methods', "*")
+#         return response
+
+
+# # Enhanced error handling middleware
+# @app.after_request
+# def after_request(response):
+#     """Add CORS headers and logging"""
+#     response.headers.add('Access-Control-Allow-Origin', '*')
+#     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+#     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    
+#     # Log API requests
+#     if request.endpoint and request.endpoint.startswith('api_'):
+#         logger.info(f"API {request.method} {request.path} -> {response.status_code}")
+    
+#     return response
+
+
+# # Replace your existing routes with these fixed versions
+# # Comment out or remove the old routes to avoid conflicts
+# # @app.route('/api/send_reminders', methods=['POST'])
+# # def send_assessment_reminders():
+# #     """Send reminders to candidates who haven't completed assessment"""
+# #     session = SessionLocal()
+# #     try:
+# #         # Find candidates who need reminders
+# #         reminder_time = datetime.now() - timedelta(hours=ASSESSMENT_CONFIG['REMINDER_HOURS'])
+# #         expiry_time = datetime.now() - timedelta(hours=ASSESSMENT_CONFIG['EXPIRY_HOURS'])
+        
+# #         candidates_to_remind = session.query(Candidate).filter(
+# #             and_(
+# #                 Candidate.exam_link_sent == True,
+# #                 Candidate.exam_completed == False,
+# #                 Candidate.exam_link_sent_date < reminder_time,
+# #                 Candidate.exam_link_sent_date > expiry_time
+# #             )
+# #         ).all()
+        
+# #         reminded_count = 0
+# #         for candidate in candidates_to_remind:
+# #             try:
+# #                 # Calculate hours remaining
+# #                 deadline = candidate.exam_link_sent_date + timedelta(hours=ASSESSMENT_CONFIG['EXPIRY_HOURS'])
+# #                 hours_remaining = int((deadline - datetime.now()).total_seconds() / 3600)
+                
+# #                 if hours_remaining > 0:
+# #                     from email_util import send_assessment_reminder
+# #                     send_assessment_reminder(candidate, hours_remaining)
+# #                     reminded_count += 1
+                    
+# #             except Exception as e:
+# #                 logger.error(f"Failed to send reminder to {candidate.email}: {e}")
+        
+# #         logger.info(f"Sent {reminded_count} assessment reminders")
+# #         return jsonify({
+# #             "success": True,
+# #             "reminded_count": reminded_count
+# #         }), 200
+        
+# #     except Exception as e:
+# #         logger.error(f"Error sending reminders: {e}", exc_info=True)
+# #         return jsonify({"error": "Failed to send reminders"}), 500
+# #     finally:
+# #         session.close()
+
+# # @app.route('/api/recruitment-stats', methods=['GET'])
+# # def api_recruitment_stats():
+# #     """Get recruitment statistics with proper error handling"""
+# #     session = SessionLocal()
+# #     try:
+# #         stats = []
+# #         current_date = datetime.now()
+        
+# #         for i in range(6):
+# #             month_date = current_date - timedelta(days=30*i)
+# #             month_name = month_date.strftime('%b')
+# #             month_start = month_date.replace(day=1)
+            
+# #             # Calculate month end properly
+# #             if month_start.month == 12:
+# #                 month_end = month_start.replace(year=month_start.year + 1, month=1, day=1) - timedelta(days=1)
+# #             else:
+# #                 month_end = month_start.replace(month=month_start.month + 1, day=1) - timedelta(days=1)
+            
+# #             # Get statistics
+# #             applications = session.query(Candidate).filter(
+# #                 and_(
+# #                     Candidate.processed_date >= month_start,
+# #                     Candidate.processed_date <= month_end
+# #                 )
+# #             ).count()
+            
+# #             interviews = session.query(Candidate).filter(
+# #                 and_(
+# #                     Candidate.interview_scheduled == True,
+# #                     Candidate.interview_date >= month_start,
+# #                     Candidate.interview_date <= month_end
+# #                 )
+# #             ).count()
+            
+# #             hires = session.query(Candidate).filter(
+# #                 and_(
+# #                     Candidate.final_status == "Hired",
+# #                     Candidate.processed_date >= month_start,
+# #                     Candidate.processed_date <= month_end
+# #                 )
+# #             ).count()
+            
+# #             stats.append({
+# #                 "month": month_name,
+# #                 "applications": applications,
+# #                 "interviews": interviews,
+# #                 "hires": hires
+# #             })
+        
+# #         stats.reverse()
+# #         return jsonify(stats), 200
+        
+# #     except Exception as e:
+# #         logger.error(f"Error in api_recruitment_stats: {e}", exc_info=True)
+# #         return jsonify({"error": "Failed to get statistics"}), 500
+# #     finally:
+# #         session.close()
+
+# @app.route('/api/pipeline-status/<pipeline_id>', methods=['GET'])
+# def get_pipeline_status(pipeline_id):
+#     """Get status of a running pipeline"""
+#     if not hasattr(app, 'active_pipelines'):
+#         return jsonify({"error": "No active pipelines"}), 404
+    
+#     pipeline = app.active_pipelines.get(pipeline_id)
+    
+#     if not pipeline:
+#         return jsonify({"error": "Pipeline not found"}), 404
+    
+#     return jsonify({
+#         "pipeline_id": pipeline_id,
+#         "job_id": pipeline['job_id'],
+#         "job_title": pipeline['job_title'],
+#         "started_at": pipeline['started_at'].isoformat(),
+#         "is_alive": pipeline['thread'].is_alive(),
+#         "duration_seconds": (datetime.now() - pipeline['started_at']).total_seconds()
+#     }), 200
+# # Add these endpoints to your backend.py file
+
+
+# @app.route('/api/scrape_assessment_results', methods=['POST'])
+# @rate_limit(max_calls=3, time_window=300)  # Max 3 scraping requests per 5 minutes
+# def api_scrape_assessment_results():
+#     """API endpoint to scrape assessment results for a specific assessment"""
+#     try:
+#         data = request.json
+#         assessment_name = data.get('assessment_name')
+        
+#         if not assessment_name:
+#             return jsonify({"success": False, "message": "assessment_name is required"}), 400
+        
+#         logger.info(f"Starting results scraping for assessment: {assessment_name}")
+        
+#         # Start scraping in a separate thread
+#         scraping_thread = threading.Thread(
+#             target=lambda: run_scraping_with_monitoring(assessment_name),
+#             daemon=True,
+#             name=f"scraping_{assessment_name.replace(' ', '_')}_{int(time.time())}"
+#         )
+#         scraping_thread.start()
+        
+#         return jsonify({
+#             "success": True,
+#             "message": f"Started scraping results for '{assessment_name}'",
+#             "estimated_time": "2-5 minutes"
+#         }), 200
+        
+#     except Exception as e:
+#         logger.error(f"Error in scrape_assessment_results: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+
+# @app.route('/api/scrape_all_pending_results', methods=['POST'])
+# @rate_limit(max_calls=1, time_window=600)  # Max 1 bulk scraping per 10 minutes
+# def api_scrape_all_pending_results():
+#     """API endpoint to scrape all pending assessment results"""
+#     try:
+#         logger.info("Starting bulk results scraping for all pending assessments")
+        
+#         # Start bulk scraping in a separate thread
+#         scraping_thread = threading.Thread(
+#             target=lambda: run_bulk_scraping_with_monitoring(),
+#             daemon=True,
+#             name=f"bulk_scraping_{int(time.time())}"
+#         )
+#         scraping_thread.start()
+        
+#         return jsonify({
+#             "success": True,
+#             "message": "Started bulk scraping for all pending assessments",
+#             "estimated_time": "5-15 minutes"
+#         }), 200
+        
+#     except Exception as e:
+#         logger.error(f"Error in scrape_all_pending_results: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+
+# @app.route('/api/manual_process_candidate', methods=['POST'])
+# @rate_limit(max_calls=10, time_window=60)
+# def api_manual_process_candidate():
+#     """Manually process a candidate's exam result"""
+#     try:
+#         data = request.json
+#         candidate_email = data.get('candidate_email')
+#         exam_score = data.get('exam_score')
+#         total_questions = data.get('total_questions', 100)
+#         time_taken = data.get('time_taken', 0)
+        
+#         if not candidate_email:
+#             return jsonify({"success": False, "message": "candidate_email is required"}), 400
+        
+#         if exam_score is None:
+#             return jsonify({"success": False, "message": "exam_score is required"}), 400
+        
+#         session = SessionLocal()
+#         try:
+#             candidate = session.query(Candidate).filter_by(email=candidate_email).first()
+#             if not candidate:
+#                 return jsonify({"success": False, "message": "Candidate not found"}), 404
+            
+#             # Calculate percentage
+#             exam_percentage = (exam_score / total_questions * 100) if total_questions else 0
+            
+#             # Update candidate
+#             candidate.exam_completed = True
+#             candidate.exam_completed_date = datetime.now()
+#             candidate.exam_score = exam_score
+#             candidate.exam_total_questions = total_questions
+#             candidate.exam_time_taken = time_taken
+#             candidate.exam_percentage = exam_percentage
+            
+#             # Add detailed feedback based on performance
+#             if exam_percentage >= 90:
+#                 candidate.exam_feedback = "Outstanding performance! Exceptional technical knowledge and problem-solving skills demonstrated."
+#             elif exam_percentage >= 80:
+#                 candidate.exam_feedback = "Excellent performance! Strong technical competence and understanding shown."
+#             elif exam_percentage >= 70:
+#                 candidate.exam_feedback = "Good performance! Solid understanding of key concepts with room for growth."
+#             elif exam_percentage >= 60:
+#                 candidate.exam_feedback = "Fair performance. Shows promise with some areas needing improvement."
+#             else:
+#                 candidate.exam_feedback = "Performance indicates opportunities for growth in fundamental concepts."
+            
+#             # Process next steps based on score
+#             if exam_percentage >= 70:
+#                 candidate.final_status = 'Interview Scheduled'
+#                 candidate.interview_scheduled = True
+#                 candidate.interview_date = datetime.now() + timedelta(days=ASSESSMENT_CONFIG['INTERVIEW_DELAY_DAYS'])
+                
+#                 # Send interview email
+#                 try:
+#                     from email_util import send_interview_link_email
+#                     interview_link = send_interview_link_email(candidate)
+#                     candidate.interview_link = interview_link
+#                     message = f"Interview scheduled for {candidate.name}. Score: {exam_percentage:.1f}%"
+#                 except Exception as e:
+#                     logger.error(f"Failed to send interview email: {e}")
+#                     message = f"Result processed for {candidate.name} (Score: {exam_percentage:.1f}%) but email failed"
+                
+#             else:
+#                 candidate.final_status = 'Rejected After Exam'
+                
+#                 # Send rejection email
+#                 try:
+#                     from email_util import send_rejection_email
+#                     send_rejection_email(candidate)
+#                     message = f"Rejection email sent to {candidate.name}. Score: {exam_percentage:.1f}%"
+#                 except Exception as e:
+#                     logger.error(f"Failed to send rejection email: {e}")
+#                     message = f"Result processed for {candidate.name} (Score: {exam_percentage:.1f}%) but email failed"
+            
+#             session.commit()
+            
+#             return jsonify({
+#                 "success": True,
+#                 "message": message,
+#                 "candidate": {
+#                     "name": candidate.name,
+#                     "email": candidate.email,
+#                     "exam_percentage": exam_percentage,
+#                     "final_status": candidate.final_status,
+#                     "interview_scheduled": candidate.interview_scheduled
+#                 }
+#             }), 200
+            
+#         finally:
+#             session.close()
+        
+#     except Exception as e:
+#         logger.error(f"Error in manual_process_candidate: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+
+# @app.route('/api/assessment_automation_settings', methods=['GET', 'POST'])
+# def api_assessment_automation_settings():
+#     """Get or update automation settings for assessment result checking"""
+#     try:
+#         if request.method == 'GET':
+#             # Return current automation settings
+#             return jsonify({
+#                 "success": True,
+#                 "settings": {
+#                     "enabled": os.getenv('AUTOMATION_ENABLED', 'false').lower() == 'true',
+#                     "check_interval": int(os.getenv('AUTOMATION_CHECK_INTERVAL', '30')),
+#                     "auto_process": os.getenv('AUTOMATION_AUTO_PROCESS', 'true').lower() == 'true',
+#                     "max_assessment_age_hours": int(os.getenv('MAX_ASSESSMENT_AGE_HOURS', '72'))
+#                 }
+#             }), 200
+        
+#         elif request.method == 'POST':
+#             data = request.json
+            
+#             # Here you would typically save these settings to a database or config file
+#             # For now, we'll just log them
+#             logger.info(f"Automation settings updated: {data}")
+            
+#             return jsonify({
+#                 "success": True,
+#                 "message": "Automation settings updated successfully",
+#                 "settings": data
+#             }), 200
+            
+#     except Exception as e:
+#         logger.error(f"Error in assessment_automation_settings: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+
+# @app.route('/api/assessment_metrics/<job_id>', methods=['GET'])
+# def api_assessment_metrics(job_id):
+#     """Get detailed assessment metrics for a specific job"""
+#     session = SessionLocal()
+#     try:
+#         candidates = session.query(Candidate).filter_by(job_id=str(job_id)).all()
+        
+#         # Calculate detailed metrics
+#         total_candidates = len(candidates)
+#         assessments_sent = len([c for c in candidates if c.exam_link_sent])
+#         assessments_started = len([c for c in candidates if c.exam_started])
+#         assessments_completed = len([c for c in candidates if c.exam_completed])
+#         assessments_passed = len([c for c in candidates if c.exam_completed and c.exam_percentage >= 70])
+#         assessments_pending = len([c for c in candidates if c.exam_link_sent and not c.exam_completed and not c.link_expired])
+#         assessments_expired = len([c for c in candidates if c.exam_link_sent and not c.exam_completed and c.link_expired])
+        
+#         # Calculate average scores and times
+#         completed_candidates = [c for c in candidates if c.exam_completed and c.exam_percentage is not None]
+#         avg_score = sum(c.exam_percentage for c in completed_candidates) / len(completed_candidates) if completed_candidates else 0
+#         avg_time = sum(c.exam_time_taken or 0 for c in completed_candidates) / len(completed_candidates) if completed_candidates else 0
+        
+#         # Calculate conversion rates
+#         send_to_start_rate = (assessments_started / assessments_sent * 100) if assessments_sent > 0 else 0
+#         start_to_complete_rate = (assessments_completed / assessments_started * 100) if assessments_started > 0 else 0
+#         completion_rate = (assessments_completed / assessments_sent * 100) if assessments_sent > 0 else 0
+#         pass_rate = (assessments_passed / assessments_completed * 100) if assessments_completed > 0 else 0
+        
+#         # Recent activity (last 7 days)
+#         seven_days_ago = datetime.now() - timedelta(days=7)
+#         recent_completed = len([c for c in candidates if c.exam_completed_date and c.exam_completed_date >= seven_days_ago])
+#         recent_started = len([c for c in candidates if c.exam_started_date and c.exam_started_date >= seven_days_ago])
+        
+#         return jsonify({
+#             "success": True,
+#             "metrics": {
+#                 "total_candidates": total_candidates,
+#                 "assessments_sent": assessments_sent,
+#                 "assessments_started": assessments_started,
+#                 "assessments_completed": assessments_completed,
+#                 "assessments_passed": assessments_passed,
+#                 "assessments_pending": assessments_pending,
+#                 "assessments_expired": assessments_expired,
+#                 "avg_score": round(avg_score, 1),
+#                 "avg_time_minutes": round(avg_time, 1),
+#                 "send_to_start_rate": round(send_to_start_rate, 1),
+#                 "start_to_complete_rate": round(start_to_complete_rate, 1),
+#                 "completion_rate": round(completion_rate, 1),
+#                 "pass_rate": round(pass_rate, 1),
+#                 "recent_activity": {
+#                     "completed_last_7_days": recent_completed,
+#                     "started_last_7_days": recent_started
+#                 }
+#             }
+#         }), 200
+        
+#     except Exception as e:
+#         logger.error(f"Error in assessment_metrics: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
+#     finally:
+#         session.close()
+
+
+# def run_scraping_with_monitoring(assessment_name: str):
+#     """Wrapper to run scraping with monitoring and error handling"""
+#     start_time = time.time()
+    
+#     try:
+#         logger.info(f"Starting monitored scraping for assessment: {assessment_name}")
+        
+#         # Import and run the scraping function
+#         try:
+#             from testlify_results_scraper import scrape_assessment_results_by_name
+#         except ImportError as e:
+#             logger.error(f"Failed to import scraper: {e}")
+#             notify_admin(
+#                 "Scraper Import Error",
+#                 f"Could not import results scraper: {str(e)}. Please ensure testlify_results_scraper.py is available."
+#             )
+#             return
+        
+#         # Run the async scraping function
+#         loop = asyncio.new_event_loop()
+#         asyncio.set_event_loop(loop)
+#         try:
+#             results = loop.run_until_complete(scrape_assessment_results_by_name(assessment_name))
+#         finally:
+#             loop.close()
+        
+#         duration = time.time() - start_time
+#         logger.info(f"Scraping completed successfully in {duration:.2f} seconds. Found {len(results)} candidates.")
+        
+#         # Send success notification
+#         notify_admin(
+#             "Assessment Results Scraping Completed",
+#             f"Assessment: {assessment_name}\nCandidates processed: {len(results)}\nDuration: {duration:.2f} seconds"
+#         )
+        
+#     except Exception as e:
+#         duration = time.time() - start_time
+#         error_msg = f"Scraping failed for assessment '{assessment_name}' after {duration:.2f} seconds"
+#         logger.error(error_msg, exc_info=True)
+        
+#         # Send failure notification
+#         notify_admin(
+#             "Assessment Results Scraping Failed",
+#             error_msg,
+#             error_details=traceback.format_exc()
+#         )
+
+
+# def run_bulk_scraping_with_monitoring():
+#     """Wrapper to run bulk scraping with monitoring"""
+#     start_time = time.time()
+    
+#     try:
+#         logger.info("Starting bulk scraping for all pending assessments")
+        
+#         # Import and run the bulk scraping function
+#         try:
+#             from testlify_results_scraper import scrape_all_pending_assessments
+#         except ImportError as e:
+#             logger.error(f"Failed to import scraper: {e}")
+#             notify_admin(
+#                 "Scraper Import Error",
+#                 f"Could not import results scraper: {str(e)}. Please ensure testlify_results_scraper.py is available."
+#             )
+#             return
+        
+#         # Run the async scraping function
+#         loop = asyncio.new_event_loop()
+#         asyncio.set_event_loop(loop)
+#         try:
+#             results_summary = loop.run_until_complete(scrape_all_pending_assessments())
+#         finally:
+#             loop.close()
+        
+#         duration = time.time() - start_time
+#         total_candidates = sum(results_summary.values()) if isinstance(results_summary, dict) else 0
+        
+#         logger.info(f"Bulk scraping completed in {duration:.2f} seconds. Processed {len(results_summary)} assessments, {total_candidates} candidates.")
+        
+#         # Send success notification
+#         if isinstance(results_summary, dict):
+#             summary_text = "\n".join([f"- {assessment}: {count} candidates" for assessment, count in results_summary.items()])
+#         else:
+#             summary_text = f"Processed {total_candidates} total candidates"
+            
+#         notify_admin(
+#             "Bulk Assessment Results Scraping Completed",
+#             f"Assessments processed: {len(results_summary) if isinstance(results_summary, dict) else 'Unknown'}\nTotal candidates: {total_candidates}\nDuration: {duration:.2f} seconds\n\nBreakdown:\n{summary_text}"
+#         )
+        
+#     except Exception as e:
+#         duration = time.time() - start_time
+#         error_msg = f"Bulk scraping failed after {duration:.2f} seconds"
+#         logger.error(error_msg, exc_info=True)
+        
+#         # Send failure notification
+#         notify_admin(
+#             "Bulk Assessment Results Scraping Failed",
+#             error_msg,
+#             error_details=traceback.format_exc()
+#         )
+
+
+# @app.route('/api/scraping_status', methods=['GET'])
+# def api_scraping_status():
+#     """Get status of running scraping operations"""
+#     try:
+#         # Get active scraping threads
+#         active_threads = []
+#         for thread in threading.enumerate():
+#             if thread.name.startswith(('scraping_', 'bulk_scraping_')):
+#                 thread_info = {
+#                     "name": thread.name,
+#                     "is_alive": thread.is_alive(),
+#                     "daemon": thread.daemon
+#                 }
+#                 active_threads.append(thread_info)
+        
+#         return jsonify({
+#             "success": True,
+#             "active_operations": len(active_threads),
+#             "operations": active_threads
+#         }), 200
+        
+#     except Exception as e:
+#         logger.error(f"Error in scraping_status: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+
+# # Add this scheduled task to run periodically
+# @app.route('/api/scheduled_results_check', methods=['POST'])
+# def api_scheduled_results_check():
+#     """Endpoint for scheduled checking of results (can be called by cron job)"""
+#     try:
+#         # Run bulk scraping
+#         scraping_thread = threading.Thread(
+#             target=lambda: run_bulk_scraping_with_monitoring(),
+#             daemon=True,
+#             name=f"scheduled_scraping_{int(time.time())}"
+#         )
+#         scraping_thread.start()
+        
+#         return jsonify({
+#             "success": True,
+#             "message": "Scheduled results check started"
+#         }), 200
+        
+#     except Exception as e:
+#         logger.error(f"Error in scheduled_results_check: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+
+# # Webhook endpoint to handle Testlify notifications (if they support webhooks)
+# @app.route('/api/webhook/testlify_results', methods=['POST'])
+# def testlify_results_webhook():
+#     """Webhook endpoint for real-time Testlify result notifications"""
+#     try:
+#         # Verify webhook signature if Testlify provides one
+#         signature = request.headers.get('X-Testlify-Signature')
+        
+#         data = request.json
+#         logger.info(f"Received Testlify results webhook: {data}")
+        
+#         # Process the webhook data
+#         event_type = data.get('event_type')
+#         candidate_email = data.get('candidate_email')
+#         assessment_name = data.get('assessment_name')
+        
+#         if event_type == 'assessment_completed' and candidate_email:
+#             # Trigger scraping for this specific assessment
+#             scraping_thread = threading.Thread(
+#                 target=lambda: run_scraping_with_monitoring(assessment_name or "Unknown Assessment"),
+#                 daemon=True,
+#                 name=f"webhook_scraping_{int(time.time())}"
+#             )
+#             scraping_thread.start()
+            
+#             logger.info(f"Triggered scraping due to webhook for {candidate_email}")
+        
+#         return jsonify({"success": True, "message": "Webhook processed"}), 200
+        
+#     except Exception as e:
+#         logger.error(f"Error processing Testlify webhook: {e}", exc_info=True)
+#         return jsonify({"error": "Webhook processing failed"}), 500
+# @app.route('/health', methods=['GET'])
+# def health_check():
+#     """Enhanced health check endpoint"""
+#     health_status = {
+#         "status": "healthy",
+#         "timestamp": datetime.now().isoformat(),
+#         "version": "2.0.0",
+#         "checks": {}
+#     }
+    
+#     # Check database
+#     try:
+#         session = SessionLocal()
+#         session.execute("SELECT 1")
+#         session.close()
+#         health_status["checks"]["database"] = "healthy"
+#     except Exception as e:
+#         health_status["checks"]["database"] = f"unhealthy: {str(e)}"
+#         health_status["status"] = "degraded"
+    
+#     # Check external services
+#     try:
+#         # Quick check if BambooHR is accessible
+#         API_KEY = os.getenv("BAMBOOHR_API_KEY")
+#         if API_KEY:
+#             health_status["checks"]["bamboohr"] = "configured"
+#         else:
+#             health_status["checks"]["bamboohr"] = "not configured"
+#     except:
+#         health_status["checks"]["bamboohr"] = "unknown"
+    
+#     return jsonify(health_status), 200 if health_status["status"] == "healthy" else 503
+
+# # Error handlers
+# @app.errorhandler(404)
+# def not_found(error):
+#     return jsonify({"error": "Endpoint not found"}), 404
+
+# @app.errorhandler(500)
+# def internal_error(error):
+#     logger.error(f"Internal server error: {error}")
+#     return jsonify({"error": "Internal server error"}), 500
+
+# @app.errorhandler(429)
+# def rate_limit_exceeded(error):
+#     return jsonify({"error": "Rate limit exceeded. Please try again later."}), 429
+
+# # # Startup tasks
+# # @app.before_first_request
+# # def startup_tasks():
+# #     """Run startup tasks"""
+# #     try:
+# #         validate_environment()
+# #         logger.info("TalentFlow AI Backend started successfully")
+# #     except Exception as e:
+# #         logger.error(f"Startup failed: {e}")
+# #         raise
+# with app.app_context():
+#     try:
+#         validate_environment()
+#         logger.info("TalentFlow AI Backend started successfully")
+#     except Exception as e:
+#         logger.error(f"Startup failed: {e}")
+#         print(f"❌ Startup failed: {e}")
+#         print("Please check your environment variables in .env file")
+#         sys.exit(1)
+# if __name__ == "__main__":
+#     print("🚀 Starting TalentFlow AI Backend (Production Mode)...")
+#     print("📍 Server running at http://127.0.0.1:5000")
+#     print("📍 Logging to: logs/talentflow.log")
+    
+#     # In production, use a proper WSGI server like Gunicorn
+#     if os.getenv('FLASK_ENV') == 'production':
+#         print("⚠️  Warning: Use a production WSGI server like Gunicorn in production!")
+    
+#     app.run(
+#         host='0.0.0.0',
+#         port=5000,
+#         debug=os.getenv('FLASK_ENV') == 'development',
+#         use_reloader=False
+#     )
+# backend.py - Production Ready Version with Fixed CORS
