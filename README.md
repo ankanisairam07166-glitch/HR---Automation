@@ -7,8 +7,8 @@ The back, hr-frontend files are original which are final versions.
 
 ##  Project Structure
 
-'''
-hr-automation-system/           # (your project root)
+-'''
+-hr-automation-system/           # (your project root)
 │
 ├── .gitignore                  # Git ignore rules
 ├── README.md                   # Project overview & setup guide
@@ -28,7 +28,7 @@ hr-automation-system/           # (your project root)
 │   ├── logs/
 │   └── [other required .json, .html, .png]
 │
-├── hr-frontend/                # ✅ Final frontend (React + Tailwind)
+├── hr-frontend/                #  Final frontend (React + Tailwind)
 │   ├── public/
 │   ├── src/
 │   │   ├── components/
