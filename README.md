@@ -5,16 +5,16 @@ This repository contains all project phases for the HR Automation System, includ
 The back, hr-frontend files are original which are final versions. 
 
 
-## 📁 Project Structure
+##  Project Structure
 
-
+'''
 hr-automation-system/           # (your project root)
 │
 ├── .gitignore                  # Git ignore rules
 ├── README.md                   # Project overview & setup guide
 ├── requirements.txt            # Python dependencies (for back/)
 │
-├── back/                       # ✅ Final backend
+├── back/                       #  Final backend
 │   ├── backend.py
 │   ├── db.py
 │   ├── scraper.py
@@ -37,7 +37,7 @@ hr-automation-system/           # (your project root)
 │   ├── package.json
 │   ├── tailwind.config.js
 │   └── postcss.config.js
-
+'''
 # HR Automation System
 
 This repository contains the **finalized backend and frontend** of the HR Automation System – designed for resume parsing, candidate evaluation, automation with Testlify and BambooHR, and a modern UI dashboard.
