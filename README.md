@@ -7,6 +7,7 @@ The back, hr-frontend files are original which are final versions.
 
 ## 📁 Project Structure
 
+
 hr-automation-system/           # (your project root)
 │
 ├── .gitignore                  # Git ignore rules
