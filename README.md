@@ -7,36 +7,35 @@ The back, hr-frontend files are original which are final versions.
 
 ##  Project Structure
 
--'''
--hr-automation-system/           # (your project root)
+'''
+hr-automation-system/ # (your project root)
+├── .gitignore # Git ignore rules
+├── README.md # Project overview & setup guide
+├── requirements.txt # Python dependencies (for back/)
 │
-├── .gitignore                  # Git ignore rules
-├── README.md                   # Project overview & setup guide
-├── requirements.txt            # Python dependencies (for back/)
+├── back/ # Final backend
+│ ├── backend.py
+│ ├── db.py
+│ ├── scraper.py
+│ ├── diagnosis_tool.py
+│ ├── testlify-integration.py
+│ ├── postman_python_script.py
+│ ├── email_util.py
+│ ├── tasks.py
+│ ├── assessment_links/
+│ ├── resumes/
+│ ├── logs/
+│ └── [other required .json, .html, .png]
 │
-├── back/                       #  Final backend
-│   ├── backend.py
-│   ├── db.py
-│   ├── scraper.py
-│   ├── diagnosis_tool.py
-│   ├── testlify-integration.py
-│   ├── postman_python_script.py
-│   ├── email_util.py
-│   ├── tasks.py
-│   ├── assessment_links/
-│   ├── resumes/
-│   ├── logs/
-│   └── [other required .json, .html, .png]
-│
-├── hr-frontend/                #  Final frontend (React + Tailwind)
-│   ├── public/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── context/
-│   │   └── services/
-│   ├── package.json
-│   ├── tailwind.config.js
-│   └── postcss.config.js
+├── hr-frontend/ # Final frontend (React + Tailwind)
+│ ├── public/
+│ ├── src/
+│ │ ├── components/
+│ │ ├── context/
+│ │ └── services/
+│ ├── package.json
+│ ├── tailwind.config.js
+│ └── postcss.config.js
 '''
 # HR Automation System
 
