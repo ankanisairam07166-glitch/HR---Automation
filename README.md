@@ -69,3 +69,4 @@ Backend: Python, Automation Scripts, Testlify API, BambooHR
 Frontend: React, TailwindCSS
 
 Tools: Email handling, Resume parsing, Job assessment logic
+"# HR-Automaticn"  "# HR-Automaticn" 
