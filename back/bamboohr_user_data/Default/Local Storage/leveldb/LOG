@@ -1,0 +1,5 @@
+2025/07/28-16:35:50.664 5654 Creating DB D:\projects-2\Phase1-3 - Copy (2)\back\bamboohr_user_data\Default\Local Storage\leveldb since it was missing.
+2025/07/28-16:35:51.020 5654 Reusing MANIFEST D:\projects-2\Phase1-3 - Copy (2)\back\bamboohr_user_data\Default\Local Storage\leveldb/MANIFEST-000001
+2025/07/28-16:36:51.057 5a64 Level-0 table #5: started
+2025/07/28-16:36:51.079 5a64 Level-0 table #5: 343703 bytes OK
+2025/07/28-16:36:51.082 5a64 Delete type=0 #3

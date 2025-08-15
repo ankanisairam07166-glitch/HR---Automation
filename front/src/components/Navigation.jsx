@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { User } from 'lucide-react';
+import { User, FileText } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
@@ -34,6 +34,12 @@ const Navigation = () => {
               className={location.pathname === '/assessments' ? "text-blue-600 font-medium" : "text-gray-500 hover:text-gray-900"}
             >
               Assessments
+            </Link>
+            <Link 
+              to="/interview-results" 
+              className={location.pathname === '/interview-results' ? "text-blue-600 font-medium" : "text-gray-500 hover:text-gray-900"}
+            >
+              Interview Results
             </Link>
           </nav>
         </div>

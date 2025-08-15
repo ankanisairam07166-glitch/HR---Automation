@@ -6,6 +6,7 @@ import SchedulerInterface from './components/SchedulerInterface';
 import AssessmentInterface from './components/AssessmentInterface';
 import InterviewSelection from './components/InterviewSelection';
 import { AppProvider } from './context/AppContext';
+import InterviewResults from './components/InterviewResults';
 import './App.css';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
             <Route path="/scheduler" element={<SchedulerInterface />} />
             <Route path="/assessments" element={<AssessmentInterface />} />
             <Route path="/interview/:candidateId" element={<InterviewSelection />} />
+            <Route path="/interview-results" element={<InterviewResults />} />
           </Routes>
         </div>
       </Router>

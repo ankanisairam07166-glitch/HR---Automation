@@ -225,107 +225,124 @@ def send_assessment_reminder(candidate, hours_remaining: int = 24) -> bool:
         logger.error(f"Failed to send reminder email to {candidate.email}: {e}")
         return False
 
-def send_interview_link_email(candidate) -> Optional[str]:
+def send_interview_link_email(candidate=None, candidate_email=None, candidate_name=None, 
+                             interview_link=None, interview_date=None, time_slot=None, 
+                             position=None) -> Optional[str]:
     """Send interview scheduling link to candidate"""
     try:
         config = EmailConfig()
         
-        # Generate a Google Meet link (in production, integrate with Google Calendar API)
-        meeting_link = candidate.interview_link or "https://meet.google.com/abc-defg-hij"
-        interview_date = candidate.interview_date or datetime.now()
+        # Support both calling methods
+        if candidate:
+            # Called with candidate object (legacy support)
+            candidate_email = candidate.email
+            candidate_name = candidate.name
+            interview_link = candidate.interview_link
+            interview_date = candidate.interview_date or datetime.now()
+            position = candidate.job_title
+            time_slot = getattr(candidate, 'interview_time_slot', 'TBD')
+        else:
+            # Called with individual parameters (new method)
+            if not all([candidate_email, candidate_name, interview_link, position]):
+                raise ValueError("Missing required parameters")
         
-        subject = f"Interview Scheduled - {candidate.job_title} at {config.company_name}"
+        # Format the interview date nicely
+        if isinstance(interview_date, str):
+            interview_date = datetime.fromisoformat(interview_date.replace('Z', '+00:00'))
+        formatted_date = interview_date.strftime("%A, %B %d, %Y")
+        
+        subject = f"Your AI Interview Invitation - {position}"
         
         html_body = f"""
         <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #2563eb;">Interview Confirmation</h2>
+                    <h2 style="color: #2563eb;">AI Interview Invitation</h2>
                     
-                    <p>Dear {candidate.name},</p>
+                    <p>Dear {candidate_name},</p>
                     
-                    <p>Congratulations! Based on your excellent performance in the assessment, we're excited to invite you for an interview for the <strong>{candidate.job_title}</strong> position at {config.company_name}.</p>
+                    <p>Congratulations! You have been selected for an AI-powered interview for the position of <strong>{position}</strong>.</p>
                     
-                    <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                        <h3 style="margin-top: 0; color: #1f2937;">Interview Details</h3>
-                        <p><strong>Date & Time:</strong> {interview_date.strftime('%B %d, %Y at %I:%M %p')}</p>
-                        <p><strong>Duration:</strong> 60 minutes</p>
-                        <p><strong>Format:</strong> Video Interview (Google Meet)</p>
-                        <p><strong>Meeting Link:</strong> <a href="{meeting_link}" style="color: #2563eb;">{meeting_link}</a></p>
+                    <div style="background-color: #f0f9ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0;">
+                        <h3 style="margin-top: 0; color: #1e40af;">Interview Details:</h3>
+                        <p><strong>Date:</strong> {formatted_date}<br>
+                        <strong>Time:</strong> {time_slot or 'Flexible - Access anytime'}<br>
+                        <strong>Format:</strong> AI-Powered Video Interview</p>
                     </div>
                     
-                    <h3>What to Expect</h3>
+                    <div style="background-color: #e0f2fe; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+                        <p style="margin-bottom: 15px;"><strong>Click the button below to access your interview:</strong></p>
+                        <a href="{interview_link}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">Start AI Interview</a>
+                        <p style="margin-top: 15px; font-size: 12px; color: #666;">Or copy this link: {interview_link}</p>
+                    </div>
+                    
+                    <h3 style="color: #1e40af;">Before Your Interview:</h3>
                     <ul>
-                        <li>Technical discussion about your experience and skills</li>
-                        <li>Problem-solving exercises relevant to the role</li>
-                        <li>Discussion about the team and projects</li>
-                        <li>Opportunity for you to ask questions</li>
+                        <li>Ensure you have a stable internet connection</li>
+                        <li>Use a device with a working camera and microphone</li>
+                        <li>Find a quiet, well-lit environment</li>
+                        <li>Have your resume ready for reference</li>
+                        <li>Test your equipment before the scheduled time</li>
                     </ul>
                     
-                    <h3>Preparation Tips</h3>
-                    <ul>
-                        <li>Ensure a stable internet connection</li>
-                        <li>Test your camera and microphone beforehand</li>
-                        <li>Find a quiet, well-lit space</li>
-                        <li>Have a copy of your resume ready</li>
-                        <li>Prepare questions about the role and company</li>
-                    </ul>
+                    <p style="background-color: #fef3c7; padding: 10px; border-radius: 5px;">
+                        <strong>Important:</strong> This interview link is unique to you and will expire after your scheduled interview time. Please do not share it with others.
+                    </p>
                     
-                    <p>If you need to reschedule, please reply to this email at least 24 hours in advance.</p>
+                    <p>If you have any questions or need to reschedule, please contact our HR team immediately.</p>
                     
                     <p>We look forward to speaking with you!</p>
                     
                     <p>Best regards,<br>
-                    {config.company_name} Recruitment Team</p>
-                    
-                    <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-                    <p style="font-size: 12px; color: #6b7280;">
-                        This is an automated message from {config.company_name}. If you have any questions, please reply to this email.
-                    </p>
+                    {config.company_name}<br>
+                    HR Department</p>
                 </div>
             </body>
         </html>
         """
         
         text_body = f"""
-        Dear {candidate.name},
+        Dear {candidate_name},
         
-        Congratulations! Based on your excellent performance in the assessment, we're excited to invite you for an interview for the {candidate.job_title} position at {config.company_name}.
+        Congratulations! You have been selected for an AI-powered interview for the position of {position}.
         
         Interview Details:
-        - Date & Time: {interview_date.strftime('%B %d, %Y at %I:%M %p')}
-        - Duration: 60 minutes
-        - Format: Video Interview (Google Meet)
-        - Meeting Link: {meeting_link}
+        - Date: {formatted_date}
+        - Time: {time_slot or 'Flexible - Access anytime'}
+        - Format: AI-Powered Video Interview
+        - Link: {interview_link}
         
-        What to Expect:
-        - Technical discussion about your experience and skills
-        - Problem-solving exercises relevant to the role
-        - Discussion about the team and projects
-        - Opportunity for you to ask questions
+        Before Your Interview:
+        - Ensure you have a stable internet connection
+        - Use a device with a working camera and microphone
+        - Find a quiet, well-lit environment
+        - Have your resume ready for reference
+        - Test your equipment before the scheduled time
         
-        Preparation Tips:
-        - Ensure a stable internet connection
-        - Test your camera and microphone beforehand
-        - Find a quiet, well-lit space
-        - Have a copy of your resume ready
-        - Prepare questions about the role and company
-        
-        If you need to reschedule, please reply to this email at least 24 hours in advance.
+        Important: This interview link is unique to you. Please do not share it with others.
         
         We look forward to speaking with you!
         
         Best regards,
-        {config.company_name} Recruitment Team
+        {config.company_name}
+        HR Department
         """
         
-        success = send_email(candidate.email, subject, html_body, text_body)
-        return meeting_link if success else None
+        success = send_email(candidate_email, subject, html_body, text_body)
+        
+        # Return the link if called with candidate object (legacy compatibility)
+        if candidate and success:
+            return interview_link
+        
+        # For new method, just return success status
+        return success
         
     except Exception as e:
-        logger.error(f"Failed to send interview email to {candidate.email}: {e}")
-        return None
-
+        logger.error(f"Failed to send interview invitation email: {e}")
+        if candidate:
+            return None  # Legacy compatibility
+        raise  # New method raises exception
+    
 def send_interview_confirmation_email(candidate, interview_datetime: datetime, meeting_link: str) -> bool:
     """Send interview confirmation email"""
     try:

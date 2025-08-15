@@ -844,10 +844,16 @@ const useJobs = () => {
       const response = await fetch(`${BACKEND_URL}/api/jobs`, {
         headers: { 'Cache-Control': 'max-age=300' }
       });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch jobs: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       if (Array.isArray(data)) {
         setJobs(data);
+        console.log('Jobs loaded:', data.length); // Debug log
         return data;
       } else {
         setJobs([]);
@@ -868,7 +874,6 @@ const useJobs = () => {
 
   return { jobs, loading, refetch: fetchJobs };
 };
-
 // Custom hook for pipeline status management
 const usePipelineStatus = (selectedJob) => {
   const [pipelineStatus, setPipelineStatus] = useState({});

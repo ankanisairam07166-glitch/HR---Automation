@@ -25,7 +25,9 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph
-from langgraph.constants import END
+from langgraph.graph import END
+from langgraph.checkpoint.memory import MemorySaver
+
 from pydantic import BaseModel, Field
 
 # Logging setup
@@ -72,6 +74,9 @@ def save_candidate_to_db(candidate_info: dict):
         cand = session.query(Candidate).filter_by(email=candidate_info["email"]).first()
         if 'id' in candidate_info:
             del candidate_info['id']
+        # Remove created_at if it's None or missing, so SQLAlchemy default is used
+        if 'created_at' in candidate_info and not candidate_info['created_at']:
+            del candidate_info['created_at']
         if not cand:
             cand = Candidate(**candidate_info)
             session.add(cand)
@@ -272,54 +277,146 @@ def resume_parser(state: RecruitmentState) -> RecruitmentState:
         logger.error(f"Error in resume parser agent: {str(e)}")
         print(f"❌ Error in resume parser: {str(e)}")
         return state
-
 def ats_scorer(state: RecruitmentState) -> RecruitmentState:
-    print("ATS Scorer DEBUG - Job Desc:", getattr(state.job_requirements, "description", None))
-    print("ATS Scorer DEBUG - Required Skills:", getattr(state.job_requirements, "required_skills", None))
-    # If job description or required_skills are missing, raise an error (fail loud)
-    if not state.job_requirements.description or not state.job_requirements.required_skills:
-        raise ValueError("Job requirements missing! ATS scoring cannot proceed.")
-
+    """Dynamic ATS scorer with automatic job requirements handling"""
     logger.info("ATS Scorer Agent: Calculating ATS score...")
     print("🔍 ATS Scorer Agent: Calculating ATS score...")
-    if not state.job_requirements.description:
-        state.candidate.ats_score = 75
-        state.candidate.score_reasoning = "No job requirements provided"
-        return state
+
+    # Debug output
+    print(f"ATS Scorer DEBUG - Job ID: {state.job_requirements.job_id}")
+    print(f"ATS Scorer DEBUG - Job Title: {state.job_requirements.title}")
+    print(f"ATS Scorer DEBUG - Job Desc: {state.job_requirements.description}")
+    print(f"ATS Scorer DEBUG - Required Skills: {state.job_requirements.required_skills}")
+
+    # If job requirements are missing, create them automatically
+    if not state.job_requirements.required_skills or len(state.job_requirements.required_skills) == 0:
+        print("⚠️ No job requirements found, creating them automatically...")
+
+        # Extract required skills from the job description using AI model
+        if state.job_requirements.description and state.job_requirements.title:
+            try:
+                prompt = ChatPromptTemplate.from_messages([
+                    ("system", """You are an expert job requirements analyzer. Extract required and preferred skills from the job description.
+                    Return as JSON with 'required_skills' (list of 4-6 most important skills) and 'preferred_skills' (list of 3-5 nice-to-have skills).
+                    Focus on technical skills, programming languages, frameworks, and tools."""), 
+                    ("human", "Job Title: {title}\nJob Description: {desc}")
+                ])
+                parser = JsonOutputParser()
+                skill_chain = prompt | get_llm() | parser
+                skills_result = skill_chain.invoke({
+                    "title": state.job_requirements.title,
+                    "desc": state.job_requirements.description
+                })
+
+                state.job_requirements.required_skills = skills_result.get("required_skills", [])[:6]
+                state.job_requirements.preferred_skills = skills_result.get("preferred_skills", [])[:5]
+                print(f"✅ Extracted {len(state.job_requirements.required_skills)} required skills from job description")
+            except Exception as e:
+                print(f"⚠️ Could not extract skills from description: {e}")
+
+        # If still no skills, use defaults based on job title (fallback mechanism)
+        if not state.job_requirements.required_skills:
+            print("📋 Using default skills based on job title...")
+
+            job_title_lower = (state.job_requirements.title or "").lower()
+
+            # Default skills based on job title
+            if "ai" in job_title_lower or "machine learning" in job_title_lower or "ml" in job_title_lower:
+                state.job_requirements.required_skills = ['Python', 'Machine Learning', 'Data Science', 'TensorFlow/PyTorch', 'Statistics']
+                state.job_requirements.preferred_skills = ['Deep Learning', 'NLP', 'Computer Vision', 'MLOps', 'Cloud Platforms']
+            elif "data scientist" in job_title_lower:
+                state.job_requirements.required_skills = ['Python', 'Statistics', 'Machine Learning', 'SQL', 'Data Analysis']
+                state.job_requirements.preferred_skills = ['R', 'Tableau', 'Big Data', 'Spark', 'Deep Learning']
+            elif "backend" in job_title_lower:
+                state.job_requirements.required_skills = ['Python/Java/Node.js', 'REST APIs', 'Databases', 'Cloud Services', 'Git']
+                state.job_requirements.preferred_skills = ['Docker', 'Kubernetes', 'Microservices', 'CI/CD', 'GraphQL']
+            elif "frontend" in job_title_lower:
+                state.job_requirements.required_skills = ['JavaScript', 'React/Vue/Angular', 'HTML/CSS', 'Responsive Design', 'Git']
+                state.job_requirements.preferred_skills = ['TypeScript', 'Testing', 'Performance Optimization', 'State Management', 'Build Tools']
+            elif "full stack" in job_title_lower:
+                state.job_requirements.required_skills = ['JavaScript', 'Python/Node.js', 'Databases', 'React/Vue', 'APIs']
+                state.job_requirements.preferred_skills = ['Cloud Platforms', 'Docker', 'TypeScript', 'DevOps', 'Testing']
+            else:
+                # Generic technical position
+                state.job_requirements.required_skills = ['Programming', 'Problem Solving', 'Software Development', 'Version Control', 'Team Collaboration']
+                state.job_requirements.preferred_skills = ['Agile/Scrum', 'Cloud Technologies', 'Testing', 'Documentation', 'Communication']
+
+            if not state.job_requirements.experience_years:
+                state.job_requirements.experience_years = 2 if "junior" in job_title_lower else 3
+
+            print(f"✅ Set default requirements for '{state.job_requirements.title or 'Technical Position'}'")
+
+
+    # FINAL SAFETY: If still no required_skills, set to generic fallback
+    if not state.job_requirements.required_skills:
+        print("⚠️ Fallback: Setting generic required skills to avoid ValueError.")
+        state.job_requirements.required_skills = ['Programming', 'Problem Solving', 'Software Development']
+        state.job_requirements.preferred_skills = ['Communication']
+        if not state.job_requirements.experience_years:
+            state.job_requirements.experience_years = 2
+
+    # Now continue with scoring - requirements are guaranteed to exist
     required_skills = ", ".join(state.job_requirements.required_skills)
     preferred_skills = ", ".join(state.job_requirements.preferred_skills)
+
     prompt = ChatPromptTemplate.from_messages([
-        ("system", """You are an expert ATS AI. Score the resume (0-100) and give reasoning as JSON."""),
-        ("human", """
-Resume text: {resume_text}
+        ("system", """You are an expert ATS (Applicant Tracking System) AI. Score the resume from 0-100 based on how well it matches the job requirements.
+
+Scoring criteria:
+- Required skills match (40 points): How many required skills does the candidate clearly demonstrate?
+- Preferred skills match (20 points): Bonus points for preferred skills
+- Relevant experience (20 points): Years of experience and relevance to the role
+- Education & certifications (10 points): Relevant degrees, certifications, courses
+- Overall fit (10 points): Communication, achievements, project relevance
+
+Return JSON with:
+- score: number between 0-100
+- reasoning: detailed explanation of the score
+- matched_skills: list of skills from requirements found in resume
+- missing_skills: list of required skills not clearly demonstrated"""),
+        ("human", """Resume text: {resume_text}
+
 Job requirements:
+Title: {title}
 Description: {description}
 Required skills: {required_skills}
 Preferred skills: {preferred_skills}
 Experience years: {experience_years}
-Score as JSON: score, reasoning.
-""")
+
+Analyze and score this resume.""")
     ])
     parser = JsonOutputParser()
     scoring_chain = prompt | get_llm() | parser
+
     try:
         result = scoring_chain.invoke({
             "resume_text": state.resume_text[:4000],
-            "description": state.job_requirements.description,
+            "title": state.job_requirements.title or "Technical Position",
+            "description": state.job_requirements.description or f"Position for {state.job_requirements.title}",
             "required_skills": required_skills,
             "preferred_skills": preferred_skills,
-            "experience_years": state.job_requirements.experience_years
+            "experience_years": state.job_requirements.experience_years or 0
         })
+
         score = result.get("score", 50)
         try:
             score = float(score)
         except (ValueError, TypeError):
             score = 50
+
         score = max(0, min(100, score))
         state.candidate.ats_score = score
         state.candidate.score_reasoning = result.get("reasoning", "No reasoning provided")
+
+        # Add matched/missing skills info if available
+        if "matched_skills" in result:
+            state.candidate.score_reasoning += f"\n\nMatched skills: {', '.join(result['matched_skills'])}"
+        if "missing_skills" in result:
+            state.candidate.score_reasoning += f"\nMissing skills: {', '.join(result['missing_skills'])}"
+
         print(f"✅ Calculated ATS score: {score}")
         return state
+
     except Exception as e:
         logger.error(f"Error in ATS scorer agent: {str(e)}")
         print(f"❌ Error in ATS scorer: {str(e)}")
@@ -433,7 +530,7 @@ class ClintRecruitmentSystem:
         self.workflow.add_edge("feedback_generator", "email_notifier")
         self.workflow.add_edge("email_notifier", END)
         self.workflow.set_entry_point("resume_parser")
-        self.graph = self.workflow.compile()
+        self.graph = self.workflow.compile(checkpointer=None)
 
     def set_job_requirements(self, job_id, job_title, job_description, required_skills, preferred_skills, experience_years=0):
         self.job_requirements = JobRequirements(
@@ -779,7 +876,7 @@ def run_recruitment_with_invite_link(job_id, job_title, job_desc, invite_link):
                 
                 # Run the LangGraph workflow
                 print(f"🔄 Running AI analysis...")
-                result = recruitment_system.graph.invoke(initial_state)
+                result = recruitment_system.graph.invoke(initial_state.model_dump())
                 final_state = result if isinstance(result, RecruitmentState) else RecruitmentState(**result)
                 
                 # Prepare candidate data

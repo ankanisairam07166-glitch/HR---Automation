@@ -1,1224 +1,5 @@
-# import asyncio
-# import os
-# import re
-# import logging
-# from pathlib import Path
-# from typing import List, Dict, Optional
-# from playwright.async_api import async_playwright, Page, BrowserContext
-# import json
-# from datetime import datetime
-# import sys
-# import time
-# import shutil
-# import requests
+#!/usr/bin/env python3
 
-# # Configuration
-# CONFIG = {
-#     'TIMEOUT': 120_000,
-#     'RETRY_DELAY': 2,
-#     'MAX_RETRIES': 2,
-#     'MIN_PDF_SIZE': 1000,
-#     'HEADLESS': False,
-#     'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-# }
-
-# # Environment variables with fallbacks
-# BAMBOOHR_DOMAIN = os.getenv("BAMBOOHR_DOMAIN", "https://greenoceanpm.bamboohr.com")
-# DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", os.path.abspath("resumes"))
-# LOGIN_URL = BAMBOOHR_DOMAIN + "/login.php"
-
-# # BambooHR Credentials
-# BAMBOOHR_EMAIL = os.getenv("BAMBOOHR_EMAIL", "support@smoothoperations.ai")
-# BAMBOOHR_PASSWORD = os.getenv("BAMBOOHR_PASSWORD", "Password1%")
-
-# # 2FA Webhook Configuration
-# TWOFA_WEBHOOK_URL = "https://n8n.greenoceanpropertymanagement.com/webhook/2f1b815e-31d5-4f0f-b2f6-b07e7637ecf5"
-# TWOFA_API_KEY = "67593101297393632845404167993723"
-
-# # Setup logging
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format='%(asctime)s - %(levelname)s - %(message)s',
-#     handlers=[
-#         logging.FileHandler('bamboohr_scraper.log', encoding='utf-8'),
-#         logging.StreamHandler()
-#     ]
-# )
-# logger = logging.getLogger(__name__)
-
-# # Configure console output for Windows
-# if sys.platform == "win32":
-#     os.environ["PYTHONIOENCODING"] = "utf-8"
-#     if hasattr(sys.stdout, 'reconfigure'):
-#         sys.stdout.reconfigure(encoding='utf-8')
-#     if hasattr(sys.stderr, 'reconfigure'):
-#         sys.stderr.reconfigure(encoding='utf-8')
-
-
-# def get_2fa_code():
-#     """Fetch 2FA code from the webhook endpoint"""
-#     try:
-#         logger.info("Fetching 2FA code from webhook...")
-        
-#         headers = {
-#             "x-api-key": TWOFA_API_KEY
-#         }
-        
-#         response = requests.get(TWOFA_WEBHOOK_URL, headers=headers, timeout=1000)
-        
-#         if response.status_code == 200:
-#             data = response.json()
-#             token = data.get('token')
-#             seconds_remaining = data.get('secondsRemaining')
-            
-#             logger.info(f"✅ Got 2FA code: {token} (valid for {seconds_remaining}s)")
-#             return token
-#         else:
-#             logger.error(f"Failed to get 2FA code. Status: {response.status_code}")
-#             return None
-            
-#     except Exception as e:
-#         logger.error(f"Error fetching 2FA code: {e}")
-#         return None
-
-
-# def get_unique_browser_profile_dir():
-#     """Generate a unique browser profile directory to avoid conflicts."""
-#     base_dir = "./pw_user_data"
-#     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-#     unique_dir = f"{base_dir}_{timestamp}_{os.getpid()}"
-#     return unique_dir
-
-
-# def cleanup_old_browser_profiles():
-#     """Clean up old browser profile directories."""
-#     try:
-#         base_dir = "./pw_user_data"
-#         for item in Path(".").glob("pw_user_data_*"):
-#             if item.is_dir():
-#                 try:
-#                     mtime = item.stat().st_mtime
-#                     if time.time() - mtime > 3600:  # 1 hour
-#                         shutil.rmtree(item)
-#                         logger.info(f"Cleaned up old browser profile: {item}")
-#                 except Exception as e:
-#                     logger.debug(f"Could not clean up {item}: {e}")
-#     except Exception as e:
-#         logger.debug(f"Error during cleanup: {e}")
-
-
-# def sanitize_filename(name: str) -> str:
-#     """Sanitize filename by removing/replacing invalid characters."""
-#     sanitized = re.sub(r'[<>:"/\\|?*]', '_', name)
-#     sanitized = re.sub(r'\s+', '_', sanitized.strip())
-#     return sanitized[:50]
-
-
-# def validate_job_id(job_id) -> bool:
-#     """Validate that job_id is numeric."""
-#     job_id_str = str(job_id) if isinstance(job_id, (int, str)) else ""
-#     return job_id_str.isdigit() and len(job_id_str) > 0
-
-# async def automated_login(page: Page) -> bool:
-#     """Manual login helper: prompts the user to complete BambooHR login and 2FA."""
-#     logger.info("🔑 Starting manual login flow...")
-
-#     # Navigate to BambooHR login page
-#     await page.goto(LOGIN_URL, timeout=CONFIG['TIMEOUT'])
-#     await page.wait_for_load_state("networkidle")
-
-#     # Prompt user to login manually
-#     print("\n⚠️  Please complete the BambooHR login and any 2FA in the browser window.")
-#     input("Once you're on the BambooHR dashboard, press ENTER to continue...")
-
-#     # Wait for page to settle post-login
-#     await page.wait_for_load_state("networkidle")
-#     logger.info("✅ Manual login confirmed; proceeding with subsequent steps.")
-#     return True
-
-        
-#     #     # Verify we're logged in by checking URL or looking for dashboard elements
-#     # current_url = page.url
-#     #     if "home" in current_url or "dashboard" in current_url or "hiring" in current_url:
-#     #         logger.info("✅ Login successful - on dashboard/home page")
-#     #         return True
-        
-#     #     # Also check for typical dashboard elements
-#     #     try:
-#     #         await page.wait_for_selector("a[href*='/hiring']", timeout=50000)
-#     #         logger.info("✅ Login successful - found hiring link")
-#     #         return True
-#     #     except:
-#     #         pass
-        
-#     #     logger.error(f"Login verification failed. Current URL: {current_url}")
-#     #     return False
-        
-#     # except Exception as e:
-#     #     logger.error(f"Error during automated login: {e}")
-#     #     return False
-
-
-# async def get_candidates_for_job(page: Page, job_id: str) -> List[Dict[str, str]]:
-#     """Extract candidate information for a specific job."""
-#     try:
-#         job_url = f"{BAMBOOHR_DOMAIN}/hiring/jobs/{job_id}"
-#         logger.info(f"→ Navigating to job page: {job_url}")
-        
-#         await page.goto(job_url, timeout=CONFIG['TIMEOUT'])
-#         await page.wait_for_load_state("networkidle", timeout=CONFIG['TIMEOUT'])
-#         await asyncio.sleep(4)
-        
-#         try:
-#             await page.wait_for_selector("a[href*='/hiring/candidates/']", timeout=30_0000)
-#         except:
-#             logger.warning("No candidate links found - job may have no applicants")
-#             return []
-        
-#         candidates = []
-#         links = await page.locator("a[href*='/hiring/candidates/']").all()
-        
-#         logger.info(f"Found {len(links)} candidate links")
-        
-#         for link in links:
-#             try:
-#                 href = await link.get_attribute("href")
-#                 name = (await link.inner_text()).strip()
-                
-#                 if not href or not name:
-#                     continue
-                    
-#                 match = re.search(r'/hiring/candidates/(\d+)', href)
-#                 if match:
-#                     candidate_id = match.group(1)
-#                     candidates.append({
-#                         "id": candidate_id, 
-#                         "name": name,
-#                         "url": href
-#                     })
-                    
-#             except Exception as e:
-#                 logger.warning(f"Error processing candidate link: {e}")
-#                 continue
-        
-#         unique_candidates = {c["id"]: c for c in candidates}.values()
-#         candidates = list(unique_candidates)
-        
-#         logger.info(f"Found {len(candidates)} unique candidates")
-#         for candidate in candidates:
-#             logger.info(f"   - {candidate['name']} (ID: {candidate['id']})")
-            
-#         return candidates
-        
-#     except Exception as e:
-#         logger.error(f"Error getting candidates for job {job_id}: {e}")
-#         return []
-
-
-# async def download_resume(context: BrowserContext, page: Page, candidate: Dict[str, str]) -> bool:
-#     """Download resume PDF for a specific candidate."""
-#     try:
-#         candidate_url = f"{BAMBOOHR_DOMAIN}/hiring/candidates/{candidate['id']}?list_type=jobs&ats-info"
-#         logger.info(f"   → Processing {candidate['name']} ({candidate['id']})")
-        
-#         await page.goto(candidate_url, timeout=CONFIG['TIMEOUT'])
-#         await page.wait_for_load_state("networkidle", timeout=CONFIG['TIMEOUT'])
-#         await asyncio.sleep(1)
-        
-#         try:
-#             await page.wait_for_selector("a[href*='/files/download.php?id=']", timeout=15_0000)
-#         except:
-#             logger.warning(f"      ⚠️  No resume download link found for {candidate['name']}")
-#             return False
-        
-#         download_link = page.locator("a[href*='/files/download.php?id=']").first
-#         href = await download_link.get_attribute("href")
-        
-#         if not href:
-#             logger.warning(f"      ⚠️  Download link href is empty for {candidate['name']}")
-#             return False
-        
-#         pdf_url = f"{BAMBOOHR_DOMAIN}{href}" if href.startswith('/') else href
-#         logger.debug(f"      Downloading from: {pdf_url}")
-        
-#         response = await context.request.get(pdf_url)
-        
-#         if not response.ok:
-#             logger.error(f"      ❌ HTTP {response.status} fetching PDF for {candidate['name']}")
-#             return False
-        
-#         content_type = response.headers.get('content-type', '').lower()
-#         if 'pdf' not in content_type and 'application/octet-stream' not in content_type:
-#             logger.warning(f"      ⚠️  Unexpected content type '{content_type}' for {candidate['name']}")
-        
-#         content = await response.body()
-        
-#         if len(content) < CONFIG['MIN_PDF_SIZE']:
-#             logger.warning(f"      ⚠️  Suspiciously small file ({len(content)} bytes) for {candidate['name']}")
-        
-#         safe_name = sanitize_filename(candidate["name"])
-#         timestamp = datetime.now().strftime("%Y%m%d")
-#         filename = f"{safe_name}_{candidate['id']}_{timestamp}.pdf"
-#         output_path = Path(DOWNLOAD_DIR) / filename
-        
-#         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
-#         with open(output_path, "wb") as f:
-#             f.write(content)
-        
-#         logger.info(f"      ✅ Saved {output_path} ({len(content):,} bytes)")
-#         return True
-        
-#     except asyncio.TimeoutError:
-#         logger.error(f"      ❌ Timeout downloading resume for {candidate['name']}")
-#         return False
-#     except Exception as e:
-#         logger.error(f"      ❌ Error downloading resume for {candidate['name']}: {e}")
-#         return False
-
-
-# async def save_candidate_metadata(candidates: List[Dict], job_id: str):
-#     """Save candidate metadata to JSON file."""
-#     try:
-#         metadata = {
-#             "job_id": job_id,
-#             "scraped_at": datetime.now().isoformat(),
-#             "total_candidates": len(candidates),
-#             "candidates": candidates
-#         }
-        
-#         metadata_path = Path(DOWNLOAD_DIR) / f"job_{job_id}_metadata.json"
-#         with open(metadata_path, "w", encoding="utf-8") as f:
-#             json.dump(metadata, f, indent=2, ensure_ascii=False)
-        
-#         logger.info(f"Saved metadata to {metadata_path}")
-        
-#     except Exception as e:
-#         logger.error(f"Error saving metadata: {e}")
-
-
-# async def scrape_job(job_id):
-#     """Main function to scrape resumes for a specific job."""
-#     job_id = str(job_id)
-    
-#     if not validate_job_id(job_id):
-#         logger.error("Invalid job ID. Please provide a numeric job ID.")
-#         raise ValueError("Invalid job ID")
-    
-#     Path(DOWNLOAD_DIR).mkdir(parents=True, exist_ok=True)
-    
-#     logger.info(f"🚀 Starting BambooHR resume scraper for job ID: {job_id}")
-#     logger.info(f"📁 Download directory: {DOWNLOAD_DIR}")
-    
-#     # # Clean up old browser profiles
-#     # cleanup_old_browser_profiles()
-    
-#     # Get unique browser profile directory
-#     browser_profile_dir = "./pw_user_data"
-#     os.makedirs(browser_profile_dir, exist_ok=True)
-    
-#     browser = None
-#     context = None
-    
-#     try:
-#         async with async_playwright() as playwright:
-#             try:
-#                 # Try to launch browser with error handling
-#                 logger.info(f"Launching browser with profile: {browser_profile_dir}")
-                
-#                 # First try with persistent context
-#                 try:
-#                     context = await playwright.chromium.launch_persistent_context(
-#                         user_data_dir=browser_profile_dir,
-#                         headless=CONFIG['HEADLESS'],
-#                         user_agent=CONFIG['USER_AGENT'],
-#                         viewport={'width': 1920, 'height': 1080},
-#                         args=['--no-sandbox', '--disable-setuid-sandbox']
-#                     )
-#                 except Exception as e:
-#                     logger.warning(f"Failed to launch persistent context: {e}")
-#                     logger.info("Falling back to regular browser launch...")
-                    
-#                     # Fallback to regular browser launch
-#                     browser = await playwright.chromium.launch(
-#                         headless=CONFIG['HEADLESS'],
-#                         args=['--no-sandbox', '--disable-setuid-sandbox']
-#                     )
-#                     context = await browser.new_context(
-#                         user_agent=CONFIG['USER_AGENT'],
-#                         viewport={'width': 1920, 'height': 1080}
-#                     )
-                
-#                 page = await context.new_page()
-                
-#                 # Perform automated login
-#                 login_success = await automated_login(page)
-                
-#                 if not login_success:
-#                     logger.error("Automated login failed!")
-#                     raise Exception("Login failed")
-                
-#                 # Get candidates for the job
-#                 candidates = await get_candidates_for_job(page, job_id)
-                
-#                 if not candidates:
-#                     logger.warning("No candidates found for this job ID")
-#                     return
-                
-#                 # Save candidate metadata
-#                 await save_candidate_metadata(candidates, job_id)
-                
-#                 # Download resumes
-#                 logger.info(f"Starting download of {len(candidates)} resumes...")
-#                 failed_candidates = []
-#                 successful_downloads = 0
-                
-#                 for i, candidate in enumerate(candidates, 1):
-#                     logger.info(f"[{i}/{len(candidates)}] Processing {candidate['name']}")
-                    
-#                     success = await download_resume(context, page, candidate)
-#                     if success:
-#                         successful_downloads += 1
-#                     else:
-#                         failed_candidates.append(candidate)
-                    
-#                     if i < len(candidates):
-#                         await asyncio.sleep(CONFIG['RETRY_DELAY'])
-                
-#                 # Retry failed downloads
-#                 if failed_candidates and CONFIG['MAX_RETRIES'] > 0:
-#                     logger.info(f"Retrying {len(failed_candidates)} failed downloads...")
-#                     still_failed = []
-                    
-#                     for candidate in failed_candidates:
-#                         logger.info(f"Retrying {candidate['name']}")
-#                         success = await download_resume(context, page, candidate)
-#                         if success:
-#                             successful_downloads += 1
-#                         else:
-#                             still_failed.append(candidate)
-                        
-#                         await asyncio.sleep(CONFIG['RETRY_DELAY'])
-                    
-#                     failed_candidates = still_failed
-                
-#                 # Final summary
-#                 logger.info("\n" + "="*50)
-#                 logger.info("SCRAPING SUMMARY")
-#                 logger.info("="*50)
-#                 logger.info(f"Job ID: {job_id}")
-#                 logger.info(f"Total candidates: {len(candidates)}")
-#                 logger.info(f"Successful downloads: {successful_downloads}")
-#                 logger.info(f"Failed downloads: {len(failed_candidates)}")
-                
-#                 if failed_candidates:
-#                     logger.warning("\nFailed downloads:")
-#                     for candidate in failed_candidates:
-#                         logger.warning(f"   - {candidate['name']} (ID: {candidate['id']})")
-#                 else:
-#                     logger.info("\nAll resumes downloaded successfully!")
-                
-#                 logger.info(f"Files saved to: {DOWNLOAD_DIR}")
-                
-#             except Exception as e:
-#                 logger.error(f"Error during scraping: {e}")
-#                 raise
-#             finally:
-#                 # Cleanup
-#                 try:
-#                     if context:
-#                         await context.close()
-#                     if browser:
-#                         await browser.close()
-#                     logger.info("Browser closed")
-                    
-#                     # Try to remove the temporary browser profile
-#                     if os.path.exists(browser_profile_dir):
-#                         try:
-#                             shutil.rmtree(browser_profile_dir)
-#                             logger.info(f"Cleaned up browser profile: {browser_profile_dir}")
-#                         except:
-#                             pass
-#                 except Exception as e:
-#                     logger.debug(f"Error during cleanup: {e}")
-                    
-#     except Exception as e:
-#         logger.error(f"Fatal error: {e}")
-#         raise
-
-
-# def main():
-#     """Entry point for the script."""
-#     print("BambooHR Resume Scraper with Automated Login")
-#     print("=" * 50)
-    
-#     try:
-#         job_id = input("Enter job ID to scrape: ").strip()
-        
-#         if not job_id:
-#             print("No job ID provided")
-#             return
-        
-#         if not validate_job_id(job_id):
-#             print("Invalid job ID. Please provide a numeric value.")
-#             return
-        
-#         asyncio.run(scrape_job(job_id))
-        
-#     except KeyboardInterrupt:
-#         logger.info("\nScraping interrupted by user")
-#     except Exception as e:
-#         logger.error(f"Error in main: {e}")
-
-
-# if __name__ == "__main__":
-#     main()
-# import asyncio
-# import os
-# import re
-# import logging
-# from pathlib import Path
-# from typing import List, Dict, Optional
-# from playwright.async_api import async_playwright, Page, BrowserContext
-# import json
-# from datetime import datetime
-# import sys
-# import time
-# import shutil
-# import requests
-
-# # Configuration
-# CONFIG = {
-#     'TIMEOUT': 120_000,
-#     'RETRY_DELAY': 2,
-#     'MAX_RETRIES': 2,
-#     'MIN_PDF_SIZE': 1000,
-#     'HEADLESS': False,
-#     'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-# }
-
-# # Environment variables with fallbacks
-# BAMBOOHR_DOMAIN = os.getenv("BAMBOOHR_DOMAIN", "https://greenoceanpm.bamboohr.com")
-# DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", os.path.abspath("resumes"))
-# LOGIN_URL = BAMBOOHR_DOMAIN + "/login.php"
-
-# # BambooHR Credentials
-# BAMBOOHR_EMAIL = os.getenv("BAMBOOHR_EMAIL", "support@smoothoperations.ai")
-# BAMBOOHR_PASSWORD = os.getenv("BAMBOOHR_PASSWORD", "Password1%")
-
-# # Browser profile directory for session persistence
-# BROWSER_PROFILE_DIR = "./bamboohr_user_data"
-
-# # Setup logging
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format='%(asctime)s - %(levelname)s - %(message)s',
-#     handlers=[
-#         logging.FileHandler('bamboohr_scraper.log', encoding='utf-8'),
-#         logging.StreamHandler()
-#     ]
-# )
-# logger = logging.getLogger(__name__)
-
-# # Configure console output for Windows
-# if sys.platform == "win32":
-#     os.environ["PYTHONIOENCODING"] = "utf-8"
-#     if hasattr(sys.stdout, 'reconfigure'):
-#         sys.stdout.reconfigure(encoding='utf-8')
-#     if hasattr(sys.stderr, 'reconfigure'):
-#         sys.stderr.reconfigure(encoding='utf-8')
-
-# def sanitize_filename(name: str) -> str:
-#     """Sanitize filename by removing/replacing invalid characters."""
-#     sanitized = re.sub(r'[<>:"/\\|?*]', '_', name)
-#     sanitized = re.sub(r'\s+', '_', sanitized.strip())
-#     return sanitized[:50]
-
-# def validate_job_id(job_id) -> bool:
-#     """Validate that job_id is numeric."""
-#     job_id_str = str(job_id) if isinstance(job_id, (int, str)) else ""
-#     return job_id_str.isdigit() and len(job_id_str) > 0
-
-# async def check_if_logged_in(page: Page) -> bool:
-#     """Check if already logged in to BambooHR"""
-#     try:
-#         logger.info("Checking if already logged in...")
-        
-#         # Try to navigate to a protected page to test login status
-#         await page.goto(f"{BAMBOOHR_DOMAIN}/home", wait_until="networkidle", timeout=50000)
-#         await asyncio.sleep(2)
-        
-#         current_url = page.url.lower()
-        
-#         # Check if we're on a protected page (not redirected to login)
-#         if any(indicator in current_url for indicator in ['home', 'dashboard', 'hiring', 'employees']):
-#             logger.info("✅ Already logged in to BambooHR!")
-#             return True
-        
-#         # Check for navigation elements that indicate we're logged in
-#         try:
-#             await page.wait_for_selector("a[href*='/hiring'], a[href*='/employees'], .navigation", timeout=1500000)
-#             logger.info("✅ Found navigation elements - already logged in!")
-#             return True
-#         except:
-#             pass
-        
-#         logger.info("Not logged in - will need manual login")
-#         return False
-        
-#     except Exception as e:
-#         logger.debug(f"Login check failed: {e}")
-#         return False
-
-# async def manual_login_to_bamboohr(page: Page) -> bool:
-#     """Manual login helper: prompts the user to complete BambooHR login and 2FA."""
-#     logger.info("🔑 Starting manual BambooHR login flow...")
-
-#     try:
-#         # Navigate to BambooHR login page
-#         await page.goto(LOGIN_URL, timeout=CONFIG['TIMEOUT'])
-#         await page.wait_for_load_state("networkidle")
-#         await asyncio.sleep(2)
-
-#         # Take a screenshot to help user see the page
-#         await page.screenshot(path="bamboohr_login_page.png")
-#         logger.info("Screenshot saved: bamboohr_login_page.png")
-
-#         # Prompt user to login manually
-#         print("\n" + "="*60)
-#         print("🔐 BAMBOOHR MANUAL LOGIN REQUIRED")
-#         print("="*60)
-#         print("Please complete the BambooHR login in the browser window:")
-#         print("1. Enter your email and password")
-#         print("2. Complete any 2FA if required")
-#         print("3. Wait until you see the BambooHR dashboard/home page")
-#         print("4. Then come back here and press ENTER")
-#         print("="*60)
-        
-#         input("Press ENTER after you're successfully logged in to BambooHR: ")
-
-#         # Wait for page to settle post-login
-#         await page.wait_for_load_state("networkidle")
-#         await asyncio.sleep(3)
-        
-#         # Verify login was successful
-#         if await check_if_logged_in(page):
-#             logger.info("✅ Manual login confirmed and session saved!")
-#             print("✅ Login successful! Your session has been saved for future use.")
-#             return True
-#         else:
-#             logger.error("❌ Login verification failed")
-#             print("❌ Login verification failed. Please try again.")
-#             return False
-
-#     except Exception as e:
-#         logger.error(f"Error during manual login: {e}")
-#         return False
-# # Fix for browser window collapsing issue in scraper.py
-
-# # Replace the browser launch section in your scraper.py with this:
-
-# async def scrape_job(job_id):
-#     """Main function to scrape resumes for a specific job with session persistence."""
-#     job_id = str(job_id)
-    
-#     if not validate_job_id(job_id):
-#         logger.error("Invalid job ID. Please provide a numeric job ID.")
-#         raise ValueError("Invalid job ID")
-    
-#     Path(DOWNLOAD_DIR).mkdir(parents=True, exist_ok=True)
-#     os.makedirs(BROWSER_PROFILE_DIR, exist_ok=True)
-    
-#     logger.info(f"🚀 Starting BambooHR resume scraper for job ID: {job_id}")
-#     logger.info(f"📁 Download directory: {DOWNLOAD_DIR}")
-#     logger.info(f"🔐 Browser profile: {BROWSER_PROFILE_DIR}")
-    
-#     context = None
-#     browser = None
-    
-#     try:
-#         async with async_playwright() as playwright:
-#             try:
-#                 # Enhanced browser launch with window management
-#                 logger.info(f"Launching browser with persistent session...")
-                
-#                 # Check if headless mode is preferred from environment
-#                 headless_mode = os.getenv('PW_HEADLESS', 'False').lower() == 'true'
-                
-#                 context = await playwright.chromium.launch_persistent_context(
-#                     user_data_dir=BROWSER_PROFILE_DIR,
-#                     headless=headless_mode,
-#                     user_agent=CONFIG['USER_AGENT'],
-#                     viewport={'width': 1920, 'height': 1080},
-#                     args=[
-#                         '--no-sandbox', 
-#                         '--disable-setuid-sandbox',
-#                         '--disable-dev-shm-usage',
-#                         '--disable-gpu',
-#                         '--no-first-run',
-#                         '--disable-background-timer-throttling',
-#                         '--disable-backgrounding-occluded-windows',
-#                         '--disable-renderer-backgrounding',
-#                         '--start-maximized',  # Start maximized
-#                         '--disable-features=TranslateUI',
-#                         '--disable-ipc-flooding-protection',
-#                         '--window-position=0,0',  # Position at top-left
-#                         '--window-size=1920,1080'  # Set explicit window size
-#                     ]
-#                 )
-                
-#                 page = context.pages[0] if context.pages else await context.new_page()
-                
-#                 # Bring window to front and maximize
-#                 try:
-#                     await page.bring_to_front()
-#                     await page.set_viewport_size({'width': 1920, 'height': 1080})
-                    
-#                     # Use JavaScript to ensure window stays focused
-#                     await page.evaluate("""
-#                         () => {
-#                             window.focus();
-#                             // Prevent window from losing focus
-#                             window.addEventListener('blur', () => {
-#                                 setTimeout(() => window.focus(), 100);
-#                             });
-#                         }
-#                     """)
-                    
-#                     logger.info("✅ Browser window focused and maximized")
-#                 except Exception as e:
-#                     logger.debug(f"Window management warning: {e}")
-                
-#                 # Add a small delay to let window settle
-#                 await asyncio.sleep(2)
-                
-#                 # Check if already logged in
-#                 if await check_if_logged_in(page):
-#                     logger.info("🎉 Using saved session - no login required!")
-#                 else:
-#                     # Perform manual login
-#                     login_success = await manual_login_to_bamboohr(page)
-                    
-#                     if not login_success:
-#                         logger.error("BambooHR login failed!")
-#                         raise Exception("Login failed")
-                
-#                 # Get candidates for the job
-#                 candidates = await get_candidates_for_job(page, job_id)
-                
-#                 if not candidates:
-#                     logger.warning("No candidates found for this job ID")
-#                     await save_candidate_metadata([], job_id)
-#                     return
-                
-#                 # Save candidate metadata
-#                 await save_candidate_metadata(candidates, job_id)
-                
-#                 # Download resumes
-#                 logger.info(f"Starting download of {len(candidates)} resumes...")
-#                 failed_candidates = []
-#                 successful_downloads = 0
-                
-#                 for i, candidate in enumerate(candidates, 1):
-#                     logger.info(f"[{i}/{len(candidates)}] Processing {candidate['name']}")
-                    
-#                     # Keep window active during processing
-#                     try:
-#                         await page.bring_to_front()
-#                     except:
-#                         pass
-                    
-#                     success = await download_resume(context, page, candidate)
-#                     if success:
-#                         successful_downloads += 1
-#                     else:
-#                         failed_candidates.append(candidate)
-                    
-#                     if i < len(candidates):
-#                         await asyncio.sleep(CONFIG['RETRY_DELAY'])
-                
-#                 # Retry failed downloads
-#                 if failed_candidates and CONFIG['MAX_RETRIES'] > 0:
-#                     logger.info(f"Retrying {len(failed_candidates)} failed downloads...")
-#                     still_failed = []
-                    
-#                     for candidate in failed_candidates:
-#                         logger.info(f"Retrying {candidate['name']}")
-                        
-#                         # Keep window active during retry
-#                         try:
-#                             await page.bring_to_front()
-#                         except:
-#                             pass
-                            
-#                         success = await download_resume(context, page, candidate)
-#                         if success:
-#                             successful_downloads += 1
-#                         else:
-#                             still_failed.append(candidate)
-                        
-#                         await asyncio.sleep(CONFIG['RETRY_DELAY'])
-                    
-#                     failed_candidates = still_failed
-                
-#                 # Final summary
-#                 logger.info("\n" + "="*60)
-#                 logger.info("SCRAPING SUMMARY")
-#                 logger.info("="*60)
-#                 logger.info(f"Job ID: {job_id}")
-#                 logger.info(f"Total candidates: {len(candidates)}")
-#                 logger.info(f"Successful downloads: {successful_downloads}")
-#                 logger.info(f"Failed downloads: {len(failed_candidates)}")
-                
-#                 if len(candidates) > 0:
-#                     logger.info(f"Success rate: {(successful_downloads/len(candidates)*100):.1f}%")
-                
-#                 if failed_candidates:
-#                     logger.warning("\nFailed downloads:")
-#                     for candidate in failed_candidates:
-#                         logger.warning(f"   - {candidate['name']} (ID: {candidate['id']})")
-#                 else:
-#                     logger.info("\n🎉 All resumes downloaded successfully!")
-                
-#                 logger.info(f"Files saved to: {DOWNLOAD_DIR}")
-#                 logger.info(f"Session saved to: {BROWSER_PROFILE_DIR}")
-#                 logger.info("="*60)
-                
-#             except Exception as e:
-#                 logger.error(f"Error during scraping: {e}")
-#                 raise
-#             finally:
-#                 # Keep session by not closing context abruptly
-#                 try:
-#                     if context:
-#                         # Add a small delay before closing to ensure session is saved
-#                         await asyncio.sleep(2)
-#                         await context.close()
-#                     logger.info("Browser session saved for future use")
-#                 except Exception as e:
-#                     logger.debug(f"Error during cleanup: {e}")
-                    
-#     except Exception as e:
-#         logger.error(f"Fatal error: {e}")
-#         raise
-
-
-# # Additional helper function to add to your scraper.py:
-
-# async def keep_window_active(page: Page):
-#     """Keep the browser window active and prevent it from minimizing"""
-#     try:
-#         await page.bring_to_front()
-#         await page.evaluate("""
-#             () => {
-#                 window.focus();
-#                 // Scroll slightly to keep page active
-#                 window.scrollBy(0, 1);
-#                 window.scrollBy(0, -1);
-#             }
-#         """)
-#     except Exception as e:
-#         logger.debug(f"Window activation warning: {e}")
-
-
-# # Update your get_candidates_for_job function:
-
-# async def get_candidates_for_job(page: Page, job_id: str) -> List[Dict[str, str]]:
-#     """Extract candidate information for a specific job."""
-#     try:
-#         job_url = f"{BAMBOOHR_DOMAIN}/hiring/jobs/{job_id}"
-#         logger.info(f"→ Navigating to job page: {job_url}")
-        
-#         # Keep window active
-#         await keep_window_active(page)
-        
-#         await page.goto(job_url, timeout=CONFIG['TIMEOUT'])
-#         await page.wait_for_load_state("networkidle", timeout=CONFIG['TIMEOUT'])
-        
-#         # Keep window active after navigation
-#         await keep_window_active(page)
-#         await asyncio.sleep(4)
-        
-#         try:
-#             await page.wait_for_selector("a[href*='/hiring/candidates/']", timeout=30000)
-#         except:
-#             logger.warning("No candidate links found - job may have no applicants")
-#             return []
-        
-#         # Keep window active before processing
-#         await keep_window_active(page)
-        
-#         candidates = []
-#         links = await page.locator("a[href*='/hiring/candidates/']").all()
-        
-#         logger.info(f"Found {len(links)} candidate links")
-        
-#         for link in links:
-#             try:
-#                 href = await link.get_attribute("href")
-#                 name = (await link.inner_text()).strip()
-                
-#                 if not href or not name:
-#                     continue
-                    
-#                 match = re.search(r'/hiring/candidates/(\d+)', href)
-#                 if match:
-#                     candidate_id = match.group(1)
-#                     candidates.append({
-#                         "id": candidate_id, 
-#                         "name": name,
-#                         "url": href
-#                     })
-                    
-#             except Exception as e:
-#                 logger.warning(f"Error processing candidate link: {e}")
-#                 continue
-        
-#         unique_candidates = {c["id"]: c for c in candidates}.values()
-#         candidates = list(unique_candidates)
-        
-#         logger.info(f"Found {len(candidates)} unique candidates")
-#         for candidate in candidates:
-#             logger.info(f"   - {candidate['name']} (ID: {candidate['id']})")
-            
-#         return candidates
-        
-#     except Exception as e:
-#         logger.error(f"Error getting candidates for job {job_id}: {e}")
-#         return []
-
-
-# # Environment variable option - Add to your .env file:
-# # PW_HEADLESS=False  # Set to True to run in headless mode (no window issues)
-# # async def get_candidates_for_job(page: Page, job_id: str) -> List[Dict[str, str]]:
-# #     """Extract candidate information for a specific job."""
-# #     try:
-# #         job_url = f"{BAMBOOHR_DOMAIN}/hiring/jobs/{job_id}"
-# #         logger.info(f"→ Navigating to job page: {job_url}")
-        
-# #         await page.goto(job_url, timeout=CONFIG['TIMEOUT'])
-# #         await page.wait_for_load_state("networkidle", timeout=CONFIG['TIMEOUT'])
-# #         await asyncio.sleep(4)
-        
-# #         try:
-# #             await page.wait_for_selector("a[href*='/hiring/candidates/']", timeout=300000)
-# #         except:
-# #             logger.warning("No candidate links found - job may have no applicants")
-# #             return []
-        
-# #         candidates = []
-# #         links = await page.locator("a[href*='/hiring/candidates/']").all()
-        
-# #         logger.info(f"Found {len(links)} candidate links")
-        
-# #         for link in links:
-# #             try:
-# #                 href = await link.get_attribute("href")
-# #                 name = (await link.inner_text()).strip()
-                
-# #                 if not href or not name:
-# #                     continue
-                    
-# #                 match = re.search(r'/hiring/candidates/(\d+)', href)
-# #                 if match:
-# #                     candidate_id = match.group(1)
-# #                     candidates.append({
-# #                         "id": candidate_id, 
-# #                         "name": name,
-# #                         "url": href
-# #                     })
-                    
-# #             except Exception as e:
-# #                 logger.warning(f"Error processing candidate link: {e}")
-# #                 continue
-        
-# #         unique_candidates = {c["id"]: c for c in candidates}.values()
-# #         candidates = list(unique_candidates)
-        
-# #         logger.info(f"Found {len(candidates)} unique candidates")
-# #         for candidate in candidates:
-# #             logger.info(f"   - {candidate['name']} (ID: {candidate['id']})")
-            
-# #         return candidates
-        
-# #     except Exception as e:
-# #         logger.error(f"Error getting candidates for job {job_id}: {e}")
-# #         return []
-
-# async def download_resume(context: BrowserContext, page: Page, candidate: Dict[str, str]) -> bool:
-#     """Download resume PDF for a specific candidate."""
-#     try:
-#         candidate_url = f"{BAMBOOHR_DOMAIN}/hiring/candidates/{candidate['id']}?list_type=jobs&ats-info"
-#         logger.info(f"   → Processing {candidate['name']} ({candidate['id']})")
-        
-#         await page.goto(candidate_url, timeout=CONFIG['TIMEOUT'])
-#         await page.wait_for_load_state("networkidle", timeout=CONFIG['TIMEOUT'])
-#         await asyncio.sleep(1)
-        
-#         try:
-#             await page.wait_for_selector("a[href*='/files/download.php?id=']", timeout=1500000)
-#         except:
-#             logger.warning(f"      ⚠️  No resume download link found for {candidate['name']}")
-#             return False
-        
-#         download_link = page.locator("a[href*='/files/download.php?id=']").first
-#         href = await download_link.get_attribute("href")
-        
-#         if not href:
-#             logger.warning(f"      ⚠️  Download link href is empty for {candidate['name']}")
-#             return False
-        
-#         pdf_url = f"{BAMBOOHR_DOMAIN}{href}" if href.startswith('/') else href
-#         logger.debug(f"      Downloading from: {pdf_url}")
-        
-#         response = await context.request.get(pdf_url)
-        
-#         if not response.ok:
-#             logger.error(f"      ❌ HTTP {response.status} fetching PDF for {candidate['name']}")
-#             return False
-        
-#         content_type = response.headers.get('content-type', '').lower()
-#         if 'pdf' not in content_type and 'application/octet-stream' not in content_type:
-#             logger.warning(f"      ⚠️  Unexpected content type '{content_type}' for {candidate['name']}")
-        
-#         content = await response.body()
-        
-#         if len(content) < CONFIG['MIN_PDF_SIZE']:
-#             logger.warning(f"      ⚠️  Suspiciously small file ({len(content)} bytes) for {candidate['name']}")
-        
-#         safe_name = sanitize_filename(candidate["name"])
-#         timestamp = datetime.now().strftime("%Y%m%d")
-#         filename = f"{safe_name}_{candidate['id']}_{timestamp}.pdf"
-#         output_path = Path(DOWNLOAD_DIR) / filename
-        
-#         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
-#         with open(output_path, "wb") as f:
-#             f.write(content)
-        
-#         logger.info(f"      ✅ Saved {output_path} ({len(content):,} bytes)")
-#         return True
-        
-#     except asyncio.TimeoutError:
-#         logger.error(f"      ❌ Timeout downloading resume for {candidate['name']}")
-#         return False
-#     except Exception as e:
-#         logger.error(f"      ❌ Error downloading resume for {candidate['name']}: {e}")
-#         return False
-
-# async def save_candidate_metadata(candidates: List[Dict], job_id: str):
-#     """Save candidate metadata to JSON file."""
-#     try:
-#         metadata = {
-#             "job_id": job_id,
-#             "scraped_at": datetime.now().isoformat(),
-#             "total_candidates": len(candidates),
-#             "candidates": candidates,
-#             "scraper_version": "2.0.0_with_session_persistence"
-#         }
-        
-#         metadata_path = Path(DOWNLOAD_DIR) / f"job_{job_id}_metadata.json"
-#         with open(metadata_path, "w", encoding="utf-8") as f:
-#             json.dump(metadata, f, indent=2, ensure_ascii=False)
-        
-#         logger.info(f"Saved metadata to {metadata_path}")
-        
-#     except Exception as e:
-#         logger.error(f"Error saving metadata: {e}")
-
-# async def scrape_job(job_id):
-#     """Main function to scrape resumes for a specific job with session persistence."""
-#     job_id = str(job_id)
-    
-#     if not validate_job_id(job_id):
-#         logger.error("Invalid job ID. Please provide a numeric job ID.")
-#         raise ValueError("Invalid job ID")
-    
-#     Path(DOWNLOAD_DIR).mkdir(parents=True, exist_ok=True)
-#     os.makedirs(BROWSER_PROFILE_DIR, exist_ok=True)
-    
-#     logger.info(f"🚀 Starting BambooHR resume scraper for job ID: {job_id}")
-#     logger.info(f"📁 Download directory: {DOWNLOAD_DIR}")
-#     logger.info(f"🔐 Browser profile: {BROWSER_PROFILE_DIR}")
-    
-#     context = None
-#     browser = None
-    
-#     try:
-#         async with async_playwright() as playwright:
-#             try:
-#                 # Launch browser with persistent context for session saving
-#                 logger.info(f"Launching browser with persistent session...")
-                
-#                 context = await playwright.chromium.launch_persistent_context(
-#                     user_data_dir=BROWSER_PROFILE_DIR,
-#                     headless=CONFIG['HEADLESS'],
-#                     user_agent=CONFIG['USER_AGENT'],
-#                     viewport={'width': 1920, 'height': 1080},
-#                     args=[
-#                         '--no-sandbox', 
-#                         '--disable-setuid-sandbox',
-#                         '--disable-dev-shm-usage'
-#                     ]
-#                 )
-                
-#                 page = context.pages[0] if context.pages else await context.new_page()
-                
-#                 # Check if already logged in
-#                 if await check_if_logged_in(page):
-#                     logger.info("🎉 Using saved session - no login required!")
-#                 else:
-#                     # Perform manual login
-#                     login_success = await manual_login_to_bamboohr(page)
-                    
-#                     if not login_success:
-#                         logger.error("BambooHR login failed!")
-#                         raise Exception("Login failed")
-                
-#                 # Get candidates for the job
-#                 candidates = await get_candidates_for_job(page, job_id)
-                
-#                 if not candidates:
-#                     logger.warning("No candidates found for this job ID")
-#                     await save_candidate_metadata([], job_id)
-#                     return
-                
-#                 # Save candidate metadata
-#                 await save_candidate_metadata(candidates, job_id)
-                
-#                 # Download resumes
-#                 logger.info(f"Starting download of {len(candidates)} resumes...")
-#                 failed_candidates = []
-#                 successful_downloads = 0
-                
-#                 for i, candidate in enumerate(candidates, 1):
-#                     logger.info(f"[{i}/{len(candidates)}] Processing {candidate['name']}")
-                    
-#                     success = await download_resume(context, page, candidate)
-#                     if success:
-#                         successful_downloads += 1
-#                     else:
-#                         failed_candidates.append(candidate)
-                    
-#                     if i < len(candidates):
-#                         await asyncio.sleep(CONFIG['RETRY_DELAY'])
-                
-#                 # Retry failed downloads
-#                 if failed_candidates and CONFIG['MAX_RETRIES'] > 0:
-#                     logger.info(f"Retrying {len(failed_candidates)} failed downloads...")
-#                     still_failed = []
-                    
-#                     for candidate in failed_candidates:
-#                         logger.info(f"Retrying {candidate['name']}")
-#                         success = await download_resume(context, page, candidate)
-#                         if success:
-#                             successful_downloads += 1
-#                         else:
-#                             still_failed.append(candidate)
-                        
-#                         await asyncio.sleep(CONFIG['RETRY_DELAY'])
-                    
-#                     failed_candidates = still_failed
-                
-#                 # Final summary
-#                 logger.info("\n" + "="*60)
-#                 logger.info("SCRAPING SUMMARY")
-#                 logger.info("="*60)
-#                 logger.info(f"Job ID: {job_id}")
-#                 logger.info(f"Total candidates: {len(candidates)}")
-#                 logger.info(f"Successful downloads: {successful_downloads}")
-#                 logger.info(f"Failed downloads: {len(failed_candidates)}")
-#                 logger.info(f"Success rate: {(successful_downloads/len(candidates)*100):.1f}%")
-                
-#                 if failed_candidates:
-#                     logger.warning("\nFailed downloads:")
-#                     for candidate in failed_candidates:
-#                         logger.warning(f"   - {candidate['name']} (ID: {candidate['id']})")
-#                 else:
-#                     logger.info("\n🎉 All resumes downloaded successfully!")
-                
-#                 logger.info(f"Files saved to: {DOWNLOAD_DIR}")
-#                 logger.info(f"Session saved to: {BROWSER_PROFILE_DIR}")
-#                 logger.info("="*60)
-                
-#             except Exception as e:
-#                 logger.error(f"Error during scraping: {e}")
-#                 raise
-#             finally:
-#                 # Keep session by not closing context abruptly
-#                 try:
-#                     if context:
-#                         await context.close()
-#                     logger.info("Browser session saved for future use")
-#                 except Exception as e:
-#                     logger.debug(f"Error during cleanup: {e}")
-                    
-#     except Exception as e:
-#         logger.error(f"Fatal error: {e}")
-#         raise
-
-# def clear_saved_session():
-#     """Clear the saved browser session"""
-#     try:
-#         if os.path.exists(BROWSER_PROFILE_DIR):
-#             shutil.rmtree(BROWSER_PROFILE_DIR)
-#             logger.info(f"✅ Cleared saved session: {BROWSER_PROFILE_DIR}")
-#             print(f"✅ Cleared saved session. Next login will require manual authentication.")
-#         else:
-#             logger.info("No saved session found to clear")
-#             print("No saved session found to clear.")
-#     except Exception as e:
-#         logger.error(f"Error clearing session: {e}")
-#         print(f"Error clearing session: {e}")
-
-# def main():
-#     """Entry point for the script."""
-#     print("🔐 BambooHR Resume Scraper with Session Persistence")
-#     print("=" * 60)
-#     print("Features:")
-#     print("✅ Manual login (you login once, session is saved)")
-#     print("✅ Session persistence (no repeated logins)")
-#     print("✅ Automatic resume downloading")
-#     print("=" * 60)
-    
-#     try:
-#         print("\nOptions:")
-#         print("1. Scrape job resumes (normal mode)")
-#         print("2. Clear saved session and start fresh")
-        
-#         choice = input("\nEnter choice (1 or 2): ").strip()
-        
-#         if choice == "2":
-#             clear_saved_session()
-#             return
-        
-#         job_id = input("Enter job ID to scrape: ").strip()
-        
-#         if not job_id:
-#             print("No job ID provided")
-#             return
-        
-#         if not validate_job_id(job_id):
-#             print("Invalid job ID. Please provide a numeric value.")
-#             return
-        
-#         asyncio.run(scrape_job(job_id))
-        
-#         print("\n" + "="*60)
-#         print("✅ SCRAPING COMPLETED")
-#         print("🔐 Your login session has been saved!")
-#         print("💡 Next time you run this, login won't be required.")
-#         print(f"📁 Session location: {BROWSER_PROFILE_DIR}")
-#         print("🗑️  To clear session: Run this script and choose option 2")
-#         print("="*60)
-        
-#     except KeyboardInterrupt:
-#         logger.info("\nScraping interrupted by user")
-#     except Exception as e:
-#         logger.error(f"Error in main: {e}")
-
-# if __name__ == "__main__":
-#     main()
 import asyncio
 import os
 import re
@@ -1229,35 +10,35 @@ from playwright.async_api import async_playwright, Page, BrowserContext
 import json
 from datetime import datetime
 import sys
-import time
-import shutil
-import requests
+import httpx
 
-# Configuration
+print("🚀 BambooHR Resume Scraper starting...")
+
+# Configuration - OPTIMIZED TIMEOUTS
 CONFIG = {
-    'TIMEOUT': 100_000,
-    'RETRY_DELAY': 2,
-    'MAX_RETRIES': 2,
+    'TIMEOUT': 30000,      # 30 seconds for navigation
+    'RETRY_DELAY': 1.0,    # 1 second between retries
+    'MAX_RETRIES': 3,      # Retry navigation up to 3 times
     'MIN_PDF_SIZE': 1000,
-    'HEADLESS': False,
-    'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    'HEADLESS': False,     # Set to True for production
+    'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
 
-# Environment variables with fallbacks
-BAMBOOHR_DOMAIN = os.getenv("BAMBOOHR_DOMAIN", "https://greenoceanpm.bamboohr.com")
-DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", os.path.abspath("resumes"))
-LOGIN_URL = BAMBOOHR_DOMAIN + "/login.php"
+# BambooHR Credentials and API
+BAMBOOHR_EMAIL = "support@smoothoperations.ai"
+BAMBOOHR_PASSWORD = "SmoothOperations1%"
+TOFA_ENDPOINT = "https://n8n.greenoceanpropertymanagement.com/webhook/2f1b815e-31d5-4f0f-b2f6-b07e7637ecf5"
+TOFA_API_KEY = "67593101297393632845404167993723"
 
-# BambooHR Credentials
-BAMBOOHR_EMAIL = os.getenv("BAMBOOHR_EMAIL", "support@smoothoperations.ai")
-BAMBOOHR_PASSWORD = os.getenv("BAMBOOHR_PASSWORD", "Password1%")
-
-# Browser profile directory for session persistence
-BROWSER_PROFILE_DIR = "./bamboohr_user_data"
+# Primary domain
+BAMBOOHR_DOMAIN = "https://greenoceanpm.bamboohr.com"
+DOWNLOAD_DIR = os.path.abspath("resumes")
 
 # Setup logging
+# Set to DEBUG for more detailed output during troubleshooting
+DEBUG_MODE = True  # Set to False for production
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG if DEBUG_MODE else logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler('bamboohr_scraper.log', encoding='utf-8'),
@@ -1266,263 +47,988 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Configure console output for Windows
-if sys.platform == "win32":
-    os.environ["PYTHONIOENCODING"] = "utf-8"
-    if hasattr(sys.stdout, 'reconfigure'):
-        sys.stdout.reconfigure(encoding='utf-8')
-    if hasattr(sys.stderr, 'reconfigure'):
-        sys.stderr.reconfigure(encoding='utf-8')
-async def wait_for_login(page: Page) -> bool:
-    """Wait for user to complete login and return success status."""
-    try:
-        logger.info("→ Please complete login and 2FA in the browser...")
-        
-        # Simple non-blocking wait - this is the key difference!
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, input, "   👉 Press ENTER after login & 2FA completion: ")
-        
-        await page.wait_for_load_state("networkidle", timeout=10_000)
-        
-        current_url = page.url
-        if "login" in current_url.lower():
-            logger.warning("Still on login page - login may have failed")
-            return False
-            
-        logger.info(f"Login appears successful")
-        return True
-        
-    except Exception as e:
-        logger.error(f"Login verification failed: {e}")
-        return False
-
-def sanitize_filename(name: str) -> str:
-    """Sanitize filename by removing/replacing invalid characters."""
-    if not name:
-        return "unknown"
-    sanitized = re.sub(r'[<>:"/\\|?*]', '_', name)
-    sanitized = re.sub(r'\s+', '_', sanitized.strip())
-    return sanitized[:50]
-
 def validate_job_id(job_id) -> bool:
     """Validate that job_id is numeric."""
     job_id_str = str(job_id) if isinstance(job_id, (int, str)) else ""
     return job_id_str.isdigit() and len(job_id_str) > 0
 
-async def check_if_logged_in(page: Page) -> bool:
-    """Check if already logged in to BambooHR"""
+def sanitize_filename(name: str) -> str:
+    """Sanitize filename by removing/replacing invalid characters."""
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', name)
+    sanitized = re.sub(r'\s+', '_', sanitized.strip())
+    return sanitized[:50]
+
+async def get_2fa_token() -> Optional[str]:
+    """Get 2FA token from API."""
     try:
-        logger.info("Checking if already logged in...")
+        logger.info("🔑 Fetching 2FA token...")
         
-        # Try to navigate to a protected page to test login status
-        await page.goto(f"{BAMBOOHR_DOMAIN}/home", wait_until="networkidle", timeout=300000)
-        await asyncio.sleep(2)
+        headers = {
+            "x-api-key": TOFA_API_KEY,
+            "Content-Type": "application/json"
+        }
         
-        current_url = page.url.lower()
-        
-        # Check if we're on a protected page (not redirected to login)
-        if any(indicator in current_url for indicator in ['home', 'dashboard', 'hiring', 'employees']):
-            logger.info("✅ Already logged in to BambooHR!")
-            return True
-        
-        # Check for navigation elements that indicate we're logged in
-        try:
-            await page.wait_for_selector("a[href*='/hiring'], a[href*='/employees'], .navigation", timeout=5000)
-            logger.info("✅ Found navigation elements - already logged in!")
-            return True
-        except:
-            pass
-        
-        logger.info("Not logged in - will need manual login")
-        return False
-        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(TOFA_ENDPOINT, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                token = data.get("token")
+                
+                if token:
+                    logger.info(f"✅ Got 2FA token: {token}")
+                    return token
+                else:
+                    logger.error("❌ No token in API response")
+                    return None
+            else:
+                logger.error(f"❌ 2FA API failed: HTTP {response.status_code}")
+                return None
+                
     except Exception as e:
-        logger.debug(f"Login check failed: {e}")
-        return False
+        logger.error(f"❌ Error fetching 2FA token: {e}")
+        return None
 
-async def manual_login_to_bamboohr(page: Page) -> bool:
-    """Manual login helper: prompts the user to complete BambooHR login and 2FA."""
-    logger.info("🔑 Starting manual BambooHR login flow...")
+async def safe_goto(page: Page, url: str, wait_until: str = "domcontentloaded", max_retries: int = 3) -> bool:
+    """Safely navigate to a URL with retries and better error handling."""
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Navigating to {url} (attempt {attempt + 1}/{max_retries})")
+            
+            # Use less strict wait condition
+            response = await page.goto(url, wait_until=wait_until, timeout=CONFIG['TIMEOUT'])
+            
+            # Check if navigation was successful
+            if response:
+                status = response.status
+                if status >= 200 and status < 400:
+                    logger.info(f"✅ Successfully navigated to {url}")
+                    return True
+                else:
+                    logger.warning(f"HTTP {status} when navigating to {url}")
+            
+            # Wait for page to stabilize
+            await page.wait_for_load_state("domcontentloaded", timeout=5000)
+            
+            # Check if we're on the expected page
+            current_url = page.url
+            if url in current_url or current_url.startswith(url):
+                return True
+                
+        except Exception as e:
+            logger.warning(f"Navigation attempt {attempt + 1} failed: {str(e)}")
+            
+            if attempt < max_retries - 1:
+                # Wait before retry
+                await page.wait_for_timeout(int(CONFIG['RETRY_DELAY'] * 1000))
+                
+                # Check if we're already on the page we want
+                current_url = page.url
+                if url in current_url or current_url.startswith(url):
+                    logger.info(f"Already on target page: {current_url}")
+                    return True
+            else:
+                logger.error(f"Failed to navigate to {url} after {max_retries} attempts")
+                return False
+    
+    return False
 
+async def auto_login(page: Page, domain: str) -> bool:
+    """Automatic login with 2FA support - OPTIMIZED."""
     try:
-        # Navigate to BambooHR login page
-        await page.goto(LOGIN_URL, timeout=CONFIG['TIMEOUT'])
-        await page.wait_for_load_state("networkidle")
-        await asyncio.sleep(2)
-
-        # Take a screenshot to help user see the page
-        await page.screenshot(path="bamboohr_login_page.png")
-        logger.info("Screenshot saved: bamboohr_login_page.png")
-
-        # Prompt user to login manually
-        print("\n" + "="*60)
-        print("🔐 BAMBOOHR MANUAL LOGIN REQUIRED")
-        print("="*60)
-        print("Please complete the BambooHR login in the browser window:")
-        print("1. Enter your email and password")
-        print("2. Complete any 2FA if required")
-        print("3. Wait until you see the BambooHR dashboard/home page")
-        print("4. Then come back here and press ENTER")
-        print("="*60)
+        logger.info("🔐 Starting automatic login...")
         
-        input("Press ENTER after you're successfully logged in to BambooHR: ")
-
-        # Wait for page to settle post-login
-        await page.wait_for_load_state("networkidle")
-        await asyncio.sleep(3)
+        # Navigate to login page
+        login_url = f"{domain}/login.php"
+        if not await safe_goto(page, login_url, "domcontentloaded"):
+            return False
         
-        # Verify login was successful
-        if await check_if_logged_in(page):
-            logger.info("✅ Manual login confirmed and session saved!")
-            print("✅ Login successful! Your session has been saved for future use.")
+        # Check if already logged in
+        await page.wait_for_load_state("networkidle", timeout=5000)
+        if "login" not in page.url.lower():
+            logger.info("✅ Already logged in!")
+            return True
+        
+        # Click email login option if available
+        try:
+            await page.click("text=Log in with Email and Password", timeout=2000)
+            await page.wait_for_timeout(500)
+        except:
+            pass  # Form might already be visible
+        
+        # Fill credentials
+        logger.info("→ Filling credentials...")
+        
+        # Wait for and fill email field
+        await page.wait_for_selector("input#lemail", timeout=5000)
+        await page.fill("input#lemail", BAMBOOHR_EMAIL)
+        
+        # Fill password
+        await page.fill("input[type='password']", BAMBOOHR_PASSWORD)
+        
+        # Submit form
+        await page.keyboard.press("Enter")
+        logger.info("✅ Login form submitted")
+        
+        # Wait for navigation or 2FA
+        try:
+            # Wait for either successful login or 2FA page
+            await page.wait_for_url("**/multi_factor_authentication**", timeout=10000)
+            logger.info("🔐 2FA page detected")
+            
+            # Wait a bit for page to fully load
+            await page.wait_for_timeout(1000)
+            
+            # Get and submit 2FA token
+            token = await get_2fa_token()
+            if not token:
+                logger.error("❌ Failed to get 2FA token")
+                return False
+            
+            # Try multiple selectors for 2FA input
+            input_selectors = [
+                "input[name='code']",
+                "input[type='text']:visible",
+                "input[placeholder*='code' i]",
+                "input[placeholder*='verify' i]",
+                "input#code",
+                "input.mfa-code-input"
+            ]
+            
+            input_found = False
+            for selector in input_selectors:
+                try:
+                    if await page.locator(selector).count() > 0:
+                        logger.info(f"Found 2FA input with selector: {selector}")
+                        await page.fill(selector, token)
+                        input_found = True
+                        break
+                except:
+                    continue
+            
+            if not input_found:
+                logger.error("❌ Could not find 2FA input field")
+                return False
+            
+            # Submit 2FA
+            try:
+                submit_button = page.locator("button[type='submit']:visible").first
+                if await submit_button.count() > 0:
+                    await submit_button.click()
+                else:
+                    await page.keyboard.press("Enter")
+            except:
+                await page.keyboard.press("Enter")
+            
+            logger.info("✅ 2FA submitted")
+            
+            # Wait for navigation with multiple checks
+            for i in range(5):
+                await page.wait_for_timeout(1000)
+                current_url = page.url.lower()
+                
+                # Check if we've moved past 2FA
+                if "multi_factor_authentication" not in current_url and "login" not in current_url:
+                    logger.info(f"✅ Moved past 2FA! Current URL: {page.url}")
+                    break
+                
+                # Check for trust device page
+                if "trusted_browser" in current_url or "trust" in current_url:
+                    logger.info("📱 Trust device page detected")
+                    await handle_trust_device(page)
+                    break
+            
+        except Exception as e:
+            # No 2FA required or already passed
+            logger.info(f"→ No 2FA required or checking login status...")
+            await page.wait_for_load_state("networkidle", timeout=5000)
+        
+        # Final verification
+        await page.wait_for_timeout(2000)
+        final_url = page.url.lower()
+        
+        # More lenient success check
+        login_successful = (
+            "login" not in final_url and 
+            "multi_factor_authentication" not in final_url and
+            domain.lower() in final_url
+        )
+        
+        if login_successful:
+            logger.info(f"🎉 Login successful! Current URL: {page.url}")
             return True
         else:
-            logger.error("❌ Login verification failed")
-            print("❌ Login verification failed. Please try again.")
+            logger.error(f"❌ Login failed. Current URL: {page.url}")
             return False
-
+            
     except Exception as e:
-        logger.error(f"Error during manual login: {e}")
+        logger.error(f"❌ Login error: {e}")
         return False
 
-async def keep_window_active(page: Page):
-    """Keep the browser window active and prevent it from minimizing"""
+async def handle_trust_device(page: Page) -> bool:
+    """Handle trust device page."""
     try:
-        await page.bring_to_front()
-        await page.evaluate("""
-            () => {
-                window.focus();
-                // Scroll slightly to keep page active
-                window.scrollBy(0, 1);
-                window.scrollBy(0, -1);
-            }
-        """)
+        logger.info("📱 Handling trust device page...")
+        
+        # Try to click "Trust this device" or similar
+        trust_selectors = [
+            "button:has-text('Trust')",
+            "button:has-text('Yes')",
+            "button:has-text('Continue')",
+            "input[type='submit'][value*='Trust' i]",
+            "button[type='submit']",
+            "a:has-text('Continue')"
+        ]
+        
+        for trust_selector in trust_selectors:
+            try:
+                if await page.locator(trust_selector).count() > 0:
+                    await page.click(trust_selector, timeout=5000)
+                    logger.info(f"✅ Clicked trust device button: {trust_selector}")
+                    
+                    # Wait for navigation
+                    await page.wait_for_timeout(2000)
+                    
+                    # Check if we've moved past trust page
+                    current_url = page.url.lower()
+                    if "trust" not in current_url and "trusted_browser" not in current_url:
+                        return True
+                    
+                    break
+            except Exception as e:
+                logger.debug(f"Failed to click {trust_selector}: {e}")
+                continue
+        
+        return True
+        
     except Exception as e:
-        logger.debug(f"Window activation warning: {e}")
+        logger.error(f"Error handling trust device page: {e}")
+        return False
 
 async def get_candidates_for_job(page: Page, job_id: str) -> List[Dict[str, str]]:
-    """Extract candidate information for a specific job."""
+    """Extract candidate information for a specific job with better error handling."""
     try:
         job_url = f"{BAMBOOHR_DOMAIN}/hiring/jobs/{job_id}"
         logger.info(f"→ Navigating to job page: {job_url}")
         
-        # Keep window active
-        await keep_window_active(page)
-        
-        await page.goto(job_url, timeout=CONFIG['TIMEOUT'])
-        await page.wait_for_load_state("networkidle", timeout=CONFIG['TIMEOUT'])
-        
-        # Keep window active after navigation
-        await keep_window_active(page)
-        await asyncio.sleep(4)
-        
-        try:
-            await page.wait_for_selector("a[href*='/hiring/candidates/']", timeout=30_000)
-        except:
-            logger.warning("No candidate links found - job may have no applicants")
+        # Navigate with retry logic
+        if not await safe_goto(page, job_url, "domcontentloaded"):
+            logger.error(f"Failed to navigate to job page")
             return []
         
-        # Keep window active before processing
-        await keep_window_active(page)
+        # Wait for page to stabilize and any dynamic content to load
+        logger.info("→ Waiting for dynamic content to load...")
+        await page.wait_for_timeout(3000)
         
-        candidates = []
-        links = await page.locator("a[href*='/hiring/candidates/']").all()
+        # Wait for network to be idle (no requests for 500ms)
+        try:
+            await page.wait_for_load_state("networkidle", timeout=5000)
+        except:
+            logger.debug("Network idle timeout, continuing...")
         
-        logger.info(f"Found {len(links)} candidate links")
+        # Try waiting for specific elements that might indicate the page is loaded
+        try:
+            await page.wait_for_selector("table, .candidate, #candidateList, [data-testid*='candidate']", timeout=5000)
+        except:
+            logger.info("No immediate candidate elements found, continuing...")
         
-        for link in links:
+        # Debug: Log page info
+        page_content = await page.content()
+        current_url = page.url
+        page_title = await page.title()
+        
+        logger.info(f"Page title: {page_title}")
+        logger.info(f"Current URL: {current_url}")
+        
+        # Check various error conditions
+        if current_url.endswith("/hiring/jobs") or current_url.endswith("/hiring"):
+            logger.error(f"❌ Redirected to jobs list instead of specific job")
+            await page.screenshot(path=f"job_{job_id}_redirect.png")
+            return []
+        
+        # Only check for explicit "not found" messages
+        if "job opening not found" in page_content.lower() or "this job is no longer available" in page_content.lower():
+            logger.error(f"❌ Job {job_id} not found or no longer available")
+            return []
+        
+        if "access denied" in page_content.lower() or "unauthorized" in page_content.lower():
+            logger.error(f"❌ Access denied to job {job_id}")
+            return []
+        
+        # Look for and click on tabs that might show candidates
+        logger.info("→ Looking for candidate tabs or filters...")
+        tab_clicked = False
+        tab_selectors = [
+            # Common tab patterns
+            "button:has-text('Candidates')",
+            "a:has-text('Candidates')",
+            "[role='tab']:has-text('Candidates')",
+            "li:has-text('Candidates')",
+            # Status tabs
+            "button:has-text('Active')",
+            "button:has-text('All')",
+            "[role='tab']:has-text('Active')",
+            "[role='tab']:has-text('All')",
+            # Other possible tabs
+            "button:has-text('Applications')",
+            "a:has-text('Applications')",
+            ".tab:has-text('Candidates')",
+            ".nav-link:has-text('Candidates')",
+            # Generic tab patterns
+            "[role='tab']",
+            ".tab",
+            ".nav-tab"
+        ]
+        
+        for tab_selector in tab_selectors:
             try:
-                href = await link.get_attribute("href")
-                name = (await link.inner_text()).strip()
-                
-                if not href or not name:
-                    continue
-                    
-                match = re.search(r'/hiring/candidates/(\d+)', href)
-                if match:
-                    candidate_id = match.group(1)
-                    candidates.append({
-                        "id": candidate_id, 
-                        "name": name,
-                        "url": href
-                    })
-                    
+                tab_elements = await page.locator(tab_selector).all()
+                if tab_elements:
+                    logger.info(f"Found {len(tab_elements)} elements matching: {tab_selector}")
+                    # Click the first matching tab
+                    await tab_elements[0].click()
+                    logger.info(f"✅ Clicked tab: {tab_selector}")
+                    tab_clicked = True
+                    await page.wait_for_timeout(2000)  # Wait for content to load
+                    break
             except Exception as e:
-                logger.warning(f"Error processing candidate link: {e}")
+                logger.debug(f"Failed to click {tab_selector}: {e}")
                 continue
         
+        if not tab_clicked:
+            logger.info("No candidate tabs found to click")
+        
+        # Debug: Log all links on the page
+        all_links = await page.locator("a").all()
+        logger.info(f"Total links on page: {len(all_links)}")
+        
+        # Log first 10 links that might be candidates
+        logger.info("→ Analyzing page links...")
+        candidate_patterns = 0
+        for i, link in enumerate(all_links[:30]):  # Check first 30 links
+            try:
+                href = await link.get_attribute("href") or ""
+                text = (await link.inner_text()).strip() or ""
+                
+                if "candidate" in href.lower() or ("/hiring/" in href and len(text) > 2 and not any(x in text.lower() for x in ['job', 'post', 'create', 'new'])):
+                    logger.debug(f"Potential candidate link: {text[:50]} -> {href}")
+                    candidate_patterns += 1
+            except:
+                continue
+        
+        logger.info(f"Found {candidate_patterns} potential candidate-related links")
+        
+        # Try multiple strategies to find candidates
+        candidates = []
+        
+        # Expanded candidate selectors
+        candidate_selectors = [
+            # Direct candidate links
+            "a[href*='/hiring/candidates/']",
+            "a[href*='candidates'][href*='?']",
+            ".candidate-link",
+            "tr[data-candidate-id] a",
+            "div.candidate-name a",
+            "[class*='candidate'] a[href*='candidates']",
+            # BambooHR specific selectors
+            "table.candidateTable a",
+            ".candidate-row a",
+            "[data-testid='candidate-link']",
+            ".applicant-name a",
+            "td.name a",
+            # Table-based selectors
+            "table a[href*='candidates']",
+            "tbody a[href*='candidates']",
+            "tr td:first-child a",
+            "tr td:nth-child(2) a",
+            # More generic patterns
+            ".list-item a",
+            ".person-name a",
+            "[class*='applicant'] a",
+            "[class*='name'] a[href*='/hiring/']",
+            # Data attribute patterns
+            "[data-candidate] a",
+            "[data-applicant] a",
+            # Grid/card patterns
+            ".candidate-card a",
+            ".applicant-card a",
+            ".grid-item a[href*='candidates']"
+        ]
+        
+        logger.info("→ Searching for candidates with multiple strategies...")
+        
+        for selector in candidate_selectors:
+            try:
+                count = await page.locator(selector).count()
+                if count > 0:
+                    logger.info(f"Found {count} elements with selector: {selector}")
+                    links = await page.locator(selector).all()
+                    
+                    for link in links:
+                        try:
+                            href = await link.get_attribute("href")
+                            name = (await link.inner_text()).strip()
+                            
+                            if href and name and len(name) > 1:
+                                # More flexible pattern matching
+                                match = re.search(r'/hiring/candidates/(\d+)', href)
+                                if not match:
+                                    # Try alternative patterns
+                                    match = re.search(r'/candidates/(\d+)', href)
+                                
+                                if match:
+                                    candidate_id = match.group(1)
+                                    full_url = f"{BAMBOOHR_DOMAIN}{href}" if not href.startswith("http") else href
+                                    
+                                    # Avoid duplicates
+                                    if not any(c['id'] == candidate_id for c in candidates):
+                                        candidates.append({
+                                            "id": candidate_id,
+                                            "name": name,
+                                            "url": full_url
+                                        })
+                        except:
+                            continue
+                    
+                    if candidates:
+                        break
+            except:
+                continue
+        
+        # If still no candidates, try a more aggressive search
+        if not candidates:
+            logger.info("→ Trying broader search for any hiring-related links...")
+            
+            all_hiring_links = await page.locator("a[href*='/hiring/']").all()
+            logger.info(f"Found {len(all_hiring_links)} hiring-related links")
+            
+            for link in all_hiring_links[:50]:  # Check first 50
+                try:
+                    href = await link.get_attribute("href") or ""
+                    text = (await link.inner_text()).strip() or ""
+                    
+                    # Skip non-candidate links
+                    skip_patterns = ['jobs', 'create', 'new', 'settings', 'reports', 'dashboard']
+                    if any(pattern in href.lower() for pattern in skip_patterns):
+                        continue
+                    
+                    # Look for numeric IDs in the URL
+                    id_match = re.search(r'/hiring/[^/]+/(\d+)', href)
+                    if id_match and text and len(text) > 2:
+                        candidate_id = id_match.group(1)
+                        full_url = f"{BAMBOOHR_DOMAIN}{href}" if not href.startswith("http") else href
+                        
+                        if not any(c['id'] == candidate_id for c in candidates):
+                            logger.debug(f"Found potential candidate: {text} (ID: {candidate_id})")
+                            candidates.append({
+                                "id": candidate_id,
+                                "name": text,
+                                "url": full_url
+                            })
+                except:
+                    continue
+        
+        # Check for iframes - BambooHR might load content in iframes
+        iframes = await page.locator("iframe").count()
+        if iframes > 0:
+            logger.info(f"→ Found {iframes} iframe(s) on page, checking for candidate content...")
+            
+            for i in range(iframes):
+                try:
+                    frame = page.frame_locator(f"iframe").nth(i)
+                    
+                    # Try to find candidates within the iframe
+                    for selector in candidate_selectors[:5]:  # Try first 5 selectors
+                        try:
+                            frame_links = await frame.locator(selector).all()
+                            if frame_links:
+                                logger.info(f"Found {len(frame_links)} potential candidates in iframe {i}")
+                                
+                                for link in frame_links:
+                                    try:
+                                        href = await link.get_attribute("href")
+                                        name = (await link.inner_text()).strip()
+                                        
+                                        if href and name and len(name) > 1:
+                                            match = re.search(r'/hiring/candidates/(\d+)', href)
+                                            if match:
+                                                candidate_id = match.group(1)
+                                                full_url = f"{BAMBOOHR_DOMAIN}{href}" if not href.startswith("http") else href
+                                                
+                                                if not any(c['id'] == candidate_id for c in candidates):
+                                                    candidates.append({
+                                                        "id": candidate_id,
+                                                        "name": name,
+                                                        "url": full_url
+                                                    })
+                                    except:
+                                        continue
+                        except:
+                            continue
+                except Exception as e:
+                    logger.debug(f"Error checking iframe {i}: {e}")
+        
+        # Remove duplicates
         unique_candidates = {c["id"]: c for c in candidates}.values()
         candidates = list(unique_candidates)
         
-        logger.info(f"Found {len(candidates)} unique candidates")
-        for candidate in candidates:
-            logger.info(f"   - {candidate['name']} (ID: {candidate['id']})")
+        if candidates:
+            logger.info(f"✅ Found {len(candidates)} unique candidates for job {job_id}")
+            for i, candidate in enumerate(candidates[:5], 1):
+                logger.info(f"   {i}. {candidate['name']} (ID: {candidate['id']})")
+            if len(candidates) > 5:
+                logger.info(f"   ... and {len(candidates) - 5} more")
+        else:
+            logger.warning(f"⚠️ No candidates found for job {job_id}")
             
+            # Enhanced debugging
+            logger.info("Debugging information:")
+            
+            # Check for any tables
+            tables = await page.locator("table").count()
+            logger.info(f"  - Tables on page: {tables}")
+            
+            # Check for iframes
+            iframes = await page.locator("iframe").count()
+            logger.info(f"  - Iframes on page: {iframes}")
+            
+            # Look for any text that might indicate no candidates
+            no_results_patterns = ["no candidates", "no applicants", "no applications", "0 results", "empty"]
+            for pattern in no_results_patterns:
+                if pattern in page_content.lower():
+                    logger.info(f"  - Found '{pattern}' in page content - job might have no applicants")
+                    break
+            
+            # Try to find any section that might contain candidates
+            logger.info("→ Looking for candidate sections in page...")
+            section_selectors = [
+                "section", "div[class*='candidate']", "div[class*='applicant']",
+                "div[id*='candidate']", "div[id*='applicant']", "main", "article"
+            ]
+            
+            for selector in section_selectors:
+                sections = await page.locator(selector).all()
+                if sections:
+                    logger.debug(f"Found {len(sections)} {selector} elements")
+                    for i, section in enumerate(sections[:3]):  # Check first 3
+                        try:
+                            text = await section.inner_text()
+                            if any(word in text.lower() for word in ['candidate', 'applicant', 'application']):
+                                logger.info(f"  - Found potential candidate section in {selector}[{i}]")
+                                logger.debug(f"    Content preview: {text[:200]}...")
+                        except:
+                            pass
+            
+            # Save full page screenshot and HTML for debugging
+            await page.screenshot(path=f"job_{job_id}_no_candidates.png", full_page=True)
+            
+            # Save page HTML for debugging
+            with open(f"job_{job_id}_page.html", "w", encoding="utf-8") as f:
+                f.write(page_content)
+            logger.info(f"  - Saved page HTML to job_{job_id}_page.html for debugging")
+        
         return candidates
         
     except Exception as e:
         logger.error(f"Error getting candidates for job {job_id}: {e}")
+        await page.screenshot(path=f"job_{job_id}_error.png")
         return []
 
-async def download_resume(context: BrowserContext, page: Page, candidate: Dict[str, str]) -> bool:
+async def download_resume(context: BrowserContext, page: Page, candidate: Dict[str, str], job_id: str, is_first: bool = False) -> bool:
     """Download resume PDF for a specific candidate."""
     try:
-        candidate_url = f"{BAMBOOHR_DOMAIN}/hiring/candidates/{candidate['id']}?list_type=jobs&ats-info"
         logger.info(f"   → Processing {candidate['name']} ({candidate['id']})")
         
-        await page.goto(candidate_url, timeout=CONFIG['TIMEOUT'])
-        await page.wait_for_load_state("networkidle", timeout=CONFIG['TIMEOUT'])
-        await asyncio.sleep(1)
-        
-        try:
-            await page.wait_for_selector("a[href*='/files/download.php?id=']", timeout=15_000)
-        except:
-            logger.warning(f"      ⚠️  No resume download link found for {candidate['name']}")
+        # Navigate to candidate page with retry
+        if not await safe_goto(page, candidate['url'], "domcontentloaded"):
+            logger.error(f"Failed to navigate to candidate page")
             return False
+            
+        await page.wait_for_timeout(2000)  # Give more time for page to load
         
-        download_link = page.locator("a[href*='/files/download.php?id=']").first
-        href = await download_link.get_attribute("href")
+        # Wait for any dynamic content
+        try:
+            await page.wait_for_load_state("networkidle", timeout=3000)
+        except:
+            pass
+        
+        # Check if we need to click any tabs first
+        logger.debug("      Checking for tabs that might contain resume...")
+        tab_selectors = [
+            "a[role='tab']:has-text('Resume')",
+            "a[role='tab']:has-text('Documents')",
+            "a[role='tab']:has-text('Attachments')",
+            "button[role='tab']:has-text('Resume')",
+            "button[role='tab']:has-text('Documents')",
+            ".nav-tab:has-text('Resume')",
+            ".nav-link:has-text('Documents')",
+            "[data-tab*='resume']",
+            "[data-tab*='document']",
+            "[data-tab*='attachment']"
+        ]
+        
+        tab_clicked = False
+        for tab_selector in tab_selectors:
+            try:
+                if await page.locator(tab_selector).count() > 0:
+                    logger.debug(f"      Found tab: {tab_selector}")
+                    await page.click(tab_selector)
+                    tab_clicked = True
+                    await page.wait_for_timeout(1000)  # Wait for tab content to load
+                    break
+            except:
+                continue
+        
+        if tab_clicked:
+            logger.debug("      Clicked a tab, waiting for content...")
+        
+        # Debug: Log all links on the page
+        if DEBUG_MODE:
+            all_links = await page.locator("a").all()
+            logger.debug(f"Total links on candidate page: {len(all_links)}")
+            
+            # Look for potential download links
+            download_keywords = ['download', 'resume', 'pdf', 'file', 'attachment', 'document', 'cv']
+            potential_downloads = 0
+            
+            for link in all_links[:30]:  # Check first 30 links
+                try:
+                    href = await link.get_attribute("href") or ""
+                    text = (await link.inner_text()).strip().lower() or ""
+                    title = await link.get_attribute("title") or ""
+                    
+                    if any(keyword in href.lower() + text + title.lower() for keyword in download_keywords):
+                        logger.debug(f"Potential download link: text='{text[:50]}', href='{href}'")
+                        potential_downloads += 1
+                except:
+                    continue
+            
+            logger.debug(f"Found {potential_downloads} potential download links")
+            
+            # Save first candidate's HTML for debugging
+            if is_first:  # Only for first candidate
+                page_content = await page.content()
+                debug_file = f"candidate_{candidate['id']}_page.html"
+                with open(debug_file, "w", encoding="utf-8") as f:
+                    f.write(page_content)
+                logger.info(f"      📄 Saved candidate page HTML to {debug_file} for debugging")
+        
+        # Expanded selectors for download link
+        download_selectors = [
+            # Direct file download patterns
+            "a[href*='/files/download']",
+            "a[href*='download.php']",
+            "a[href*='/download/']",
+            "a[href*='getfile']",
+            "a[href*='attachment']",
+            
+            # Resume-specific patterns
+            "a[href*='resume']",
+            "a[href*='cv']",
+            "a[href*='.pdf']",
+            
+            # Text-based selectors
+            "a:has-text('Resume')",
+            "a:has-text('Download')",
+            "a:has-text('CV')",
+            "a:has-text('View')",
+            "a:has-text('Open')",
+            
+            # Button patterns
+            "button:has-text('Download')",
+            "button:has-text('Resume')",
+            "button:has-text('View')",
+            
+            # Icon-based patterns (download icons)
+            "a[class*='download']",
+            "button[class*='download']",
+            "a[title*='Download']",
+            "a[title*='Resume']",
+            
+            # BambooHR specific patterns
+            ".resume-link",
+            ".attachment-link",
+            ".document-link",
+            "[data-testid*='resume']",
+            "[data-testid*='download']",
+            
+            # Table cell patterns (resume might be in a table)
+            "td a[href*='download']",
+            "td a[href*='pdf']",
+            
+            # Icon + text combinations
+            "a:has(i[class*='download'])",
+            "a:has(svg[class*='download'])",
+            "a:has(span:has-text('Resume'))",
+            
+            # Generic file patterns
+            "a[href*='fileId']",
+            "a[href*='documentId']",
+            "a[href*='attachmentId']",
+            
+            # Attachments section patterns
+            ".attachments a",
+            ".attachment-list a",
+            "#attachments a",
+            "[class*='attachment'] a",
+            
+            # Look for elements with class/id containing resume/attachment words
+            ".resume", "#resume",
+            ".attachment", "#attachment",
+            ".document", "#document",
+            "[class*='resume-download']",
+            "[id*='resume-download']"
+        ]
+        
+        download_link = None
+        href = None
+        found_selector = None
+        
+        logger.debug("      Searching for download link...")
+        
+        for selector in download_selectors:
+            try:
+                count = await page.locator(selector).count()
+                if count > 0:
+                    logger.debug(f"      Found {count} elements with selector: {selector}")
+                    
+                    # Try each matching element
+                    for i in range(min(count, 3)):  # Check up to 3 matches
+                        element = page.locator(selector).nth(i)
+                        element_href = await element.get_attribute("href")
+                        element_text = await element.inner_text() or ""
+                        
+                        if element_href:
+                            logger.debug(f"        Element {i}: href='{element_href}', text='{element_text[:30]}'")
+                            
+                            # Check if this looks like a resume/file download
+                            if any(pattern in element_href.lower() for pattern in ['pdf', 'download', 'file', 'resume', 'attachment']):
+                                download_link = element
+                                href = element_href
+                                found_selector = selector
+                                break
+                    
+                    if href:
+                        break
+            except Exception as e:
+                logger.debug(f"      Error checking selector {selector}: {e}")
+                continue
+        
+        # If still no download link found, try clicking elements that might trigger download
+        if not href:
+            logger.debug("      No direct download link found, trying clickable elements...")
+            
+            # Look for clickable elements that might trigger download
+            click_selectors = [
+                "button:has-text('View Resume')",
+                "button:has-text('Download Resume')",
+                "a:has-text('View Resume')",
+                "a:has-text('Download Resume')",
+                "[onclick*='download']",
+                "[onclick*='resume']"
+            ]
+            
+            for selector in click_selectors:
+                try:
+                    if await page.locator(selector).count() > 0:
+                        logger.debug(f"      Found clickable element: {selector}")
+                        
+                        # Set up download listener
+                        download_promise = page.wait_for_event("download", timeout=5000)
+                        
+                        # Click the element
+                        await page.click(selector)
+                        
+                        # Wait for download to start
+                        try:
+                            download = await download_promise
+                            
+                            # Save the downloaded file
+                            safe_name = sanitize_filename(candidate["name"])
+                            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                            filename = f"job_{job_id}_{candidate['id']}_{safe_name}_{timestamp}.pdf"
+                            output_path = Path(DOWNLOAD_DIR) / filename
+                            
+                            await download.save_as(output_path)
+                            logger.info(f"      ✅ Downloaded via click: {filename}")
+                            return True
+                            
+                        except asyncio.TimeoutError:
+                            logger.debug(f"      No download triggered by {selector}")
+                            continue
+                except:
+                    continue
+        
+        # Check for iframes that might contain the resume
+        if not href:
+            logger.debug("      Checking for iframes...")
+            iframes = await page.locator("iframe").count()
+            if iframes > 0:
+                logger.debug(f"      Found {iframes} iframe(s), checking for resume content...")
+                
+                for i in range(iframes):
+                    try:
+                        frame = page.frame_locator("iframe").nth(i)
+                        
+                        # Try to find download links within the iframe
+                        for selector in download_selectors[:10]:  # Try first 10 selectors
+                            try:
+                                frame_elements = await frame.locator(selector).count()
+                                if frame_elements > 0:
+                                    logger.debug(f"      Found {frame_elements} elements in iframe {i} with selector: {selector}")
+                                    
+                                    # Get the first element
+                                    element = frame.locator(selector).first
+                                    element_href = await element.get_attribute("href")
+                                    
+                                    if element_href:
+                                        href = element_href
+                                        found_selector = f"iframe[{i}] -> {selector}"
+                                        logger.info(f"      Found download link in iframe!")
+                                        break
+                            except:
+                                continue
+                        
+                        if href:
+                            break
+                            
+                    except Exception as e:
+                        logger.debug(f"      Error checking iframe {i}: {e}")
+        
+        # If still no download link found, try JavaScript-based approaches
+        if not href:
+            logger.debug("      Trying JavaScript-based download detection...")
+            
+            # Check for any data attributes that might contain file info
+            try:
+                # Look for elements with data attributes
+                elements_with_data = await page.locator("[data-file-id], [data-document-id], [data-attachment-id], [data-resume-id]").all()
+                if elements_with_data:
+                    logger.debug(f"      Found {len(elements_with_data)} elements with data attributes")
+                    
+                # Try to find download functionality via JavaScript
+                js_download_check = """
+                    // Look for any download-related functions or data
+                    const downloadElements = [];
+                    
+                    // Check all links
+                    document.querySelectorAll('a').forEach(link => {
+                        const href = link.href || '';
+                        const onclick = link.onclick ? link.onclick.toString() : '';
+                        const text = link.textContent || '';
+                        
+                        if (href.includes('download') || href.includes('file') || href.includes('pdf') ||
+                            onclick.includes('download') || onclick.includes('file') ||
+                            text.toLowerCase().includes('resume') || text.toLowerCase().includes('download')) {
+                            downloadElements.push({
+                                href: href,
+                                text: text.trim(),
+                                onclick: onclick.substring(0, 100)
+                            });
+                        }
+                    });
+                    
+                    return downloadElements;
+                """
+                
+                js_results = await page.evaluate(js_download_check)
+                if js_results:
+                    logger.debug(f"      JavaScript found {len(js_results)} potential download elements")
+                    for result in js_results[:5]:
+                        logger.debug(f"        JS element: {result}")
+                        
+            except Exception as e:
+                logger.debug(f"      JavaScript inspection error: {e}")
         
         if not href:
-            logger.warning(f"      ⚠️  Download link href is empty for {candidate['name']}")
+            logger.warning(f"      ⚠️  No resume download link found for {candidate['name']}")
+            
+            # Take screenshot of candidate page for debugging
+            if DEBUG_MODE:
+                screenshot_path = f"candidate_{candidate['id']}_no_resume.png"
+                await page.screenshot(path=screenshot_path, full_page=True)
+                logger.info(f"      📸 Screenshot saved to {screenshot_path}")
+            
             return False
         
-        pdf_url = f"{BAMBOOHR_DOMAIN}{href}" if href.startswith('/') else href
-        logger.debug(f"      Downloading from: {pdf_url}")
+        logger.info(f"      Found download link with selector: {found_selector}")
         
-        response = await context.request.get(pdf_url)
+        # Construct full PDF URL
+        pdf_url = f"{BAMBOOHR_DOMAIN}{href}" if href.startswith('/') else href
+        logger.info(f"      Downloading from: {pdf_url}")
+        
+        # Download the file
+        headers = {
+            "User-Agent": CONFIG['USER_AGENT'],
+            "Referer": page.url,
+            "Accept": "application/pdf,application/octet-stream,*/*"
+        }
+        response = await context.request.get(pdf_url, headers=headers, timeout=CONFIG['TIMEOUT'])
         
         if not response.ok:
             logger.error(f"      ❌ HTTP {response.status} fetching PDF for {candidate['name']}")
-            return False
+            
+            # Try alternative download method
+            logger.info("      Trying alternative download via browser...")
+            try:
+                # Set up download listener
+                download_promise = page.wait_for_event("download", timeout=5000)
+                
+                # Navigate to download URL
+                await page.goto(pdf_url)
+                
+                # Wait for download
+                download = await download_promise
+                
+                # Save the downloaded file
+                safe_name = sanitize_filename(candidate["name"])
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"job_{job_id}_{candidate['id']}_{safe_name}_{timestamp}.pdf"
+                output_path = Path(DOWNLOAD_DIR) / filename
+                
+                await download.save_as(output_path)
+                logger.info(f"      ✅ Downloaded via navigation: {filename}")
+                return True
+                
+            except Exception as e:
+                logger.error(f"      Alternative download failed: {e}")
+                return False
         
-        content_type = response.headers.get('content-type', '').lower()
-        if 'pdf' not in content_type and 'application/octet-stream' not in content_type:
-            logger.warning(f"      ⚠️  Unexpected content type '{content_type}' for {candidate['name']}")
-        
+        # Get file content
         content = await response.body()
         
+        # Validate file size
         if len(content) < CONFIG['MIN_PDF_SIZE']:
-            logger.warning(f"      ⚠️  Suspiciously small file ({len(content)} bytes) for {candidate['name']}")
+            logger.warning(f"      ⚠️  Small file ({len(content)} bytes) for {candidate['name']}")
         
+        # Create filename
         safe_name = sanitize_filename(candidate["name"])
-        timestamp = datetime.now().strftime("%Y%m%d")
-        filename = f"{safe_name}_{candidate['id']}_{timestamp}.pdf"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"job_{job_id}_{candidate['id']}_{safe_name}_{timestamp}.pdf"
         output_path = Path(DOWNLOAD_DIR) / filename
         
+        # Ensure directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
+        # Write file
         with open(output_path, "wb") as f:
             f.write(content)
         
-        logger.info(f"      ✅ Saved {output_path} ({len(content):,} bytes)")
+        logger.info(f"      ✅ Saved {filename} ({len(content):,} bytes)")
         return True
         
-    except asyncio.TimeoutError:
-        logger.error(f"      ❌ Timeout downloading resume for {candidate['name']}")
-        return False
     except Exception as e:
         logger.error(f"      ❌ Error downloading resume for {candidate['name']}: {e}")
+        
+        # Take screenshot on error
+        if DEBUG_MODE:
+            try:
+                screenshot_path = f"candidate_{candidate['id']}_error.png"
+                await page.screenshot(path=screenshot_path)
+                logger.info(f"      📸 Error screenshot saved to {screenshot_path}")
+            except:
+                pass
+        
         return False
 
 async def save_candidate_metadata(candidates: List[Dict], job_id: str):
@@ -1532,279 +1038,257 @@ async def save_candidate_metadata(candidates: List[Dict], job_id: str):
             "job_id": job_id,
             "scraped_at": datetime.now().isoformat(),
             "total_candidates": len(candidates),
-            "candidates": candidates,
-            "scraper_version": "2.0.0_with_session_persistence"
+            "candidates": candidates
         }
         
         metadata_path = Path(DOWNLOAD_DIR) / f"job_{job_id}_metadata.json"
         with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
         
-        logger.info(f"Saved metadata to {metadata_path}")
+        logger.info(f"📄 Saved metadata to {metadata_path}")
         
     except Exception as e:
         logger.error(f"Error saving metadata: {e}")
 
-async def scrape_job(job_id):
-    """Main function to scrape resumes for a specific job with session persistence."""
-    job_id = str(job_id)
-    
+async def scrape_job(job_id: str, use_manual_login: bool = False):
+    """Main function to scrape resumes for a specific job."""
     if not validate_job_id(job_id):
-        logger.error("Invalid job ID. Please provide a numeric job ID.")
-        raise ValueError("Invalid job ID")
+        logger.error("❌ Invalid job ID")
+        return
     
     Path(DOWNLOAD_DIR).mkdir(parents=True, exist_ok=True)
-    os.makedirs(BROWSER_PROFILE_DIR, exist_ok=True)
     
-    logger.info(f"🚀 Starting BambooHR resume scraper for job ID: {job_id}")
+    logger.info(f"🚀 Starting scrape for job ID: {job_id}")
     logger.info(f"📁 Download directory: {DOWNLOAD_DIR}")
-    logger.info(f"🔐 Browser profile: {BROWSER_PROFILE_DIR}")
+    logger.info(f"🐛 Debug mode: {'ON' if DEBUG_MODE else 'OFF'}")
     
-    context = None
-    browser = None
-    
-    try:
-        async with async_playwright() as playwright:
-            try:
-                # Enhanced browser launch with window management
-                logger.info(f"Launching browser with persistent session...")
+    async with async_playwright() as playwright:
+        try:
+            # Launch browser
+            browser = await playwright.chromium.launch(
+                headless=CONFIG['HEADLESS'],
+                args=['--no-sandbox', '--disable-setuid-sandbox']
+            )
+            
+            # Create context
+            context = await browser.new_context(
+                user_agent=CONFIG['USER_AGENT'],
+                viewport={'width': 1920, 'height': 1080},
+                accept_downloads=True
+            )
+            
+            page = await context.new_page()
+            
+            # Enable console logging for debugging
+            page.on("console", lambda msg: logger.debug(f"Browser console: {msg.text}"))
+            
+            # Login (automatic or manual)
+            if use_manual_login:
+                logger.info("🔐 Manual login mode")
+                login_url = f"{BAMBOOHR_DOMAIN}/login.php"
+                await page.goto(login_url, wait_until="domcontentloaded")
+                logger.info("→ Please complete login and 2FA in the browser...")
+                input("   👉 Press ENTER after login completion: ")
+                login_success = True
+            else:
+                # Automatic login
+                login_success = await auto_login(page, BAMBOOHR_DOMAIN)
                 
-                # Check if headless mode is preferred from environment
-                headless_mode = os.getenv('PW_HEADLESS', 'False').lower() == 'true'
-                try:
-                    context = await playwright.chromium.launch_persistent_context(
-                        user_data_dir=BROWSER_PROFILE_DIR,
-                        headless=headless_mode,
-                        user_agent=CONFIG['USER_AGENT'],
-                        viewport={'width': 1920, 'height': 1080},
-                        args=[
-                            '--no-sandbox', 
-                            '--disable-setuid-sandbox',
-                            # '--disable-dev-shm-usage',
-                            # '--disable-gpu',
-                            # '--no-first-run',
-                            # '--disable-background-timer-throttling',
-                            # '--disable-backgrounding-occluded-windows',
-                            # '--disable-renderer-backgrounding',
-                            # '--start-maximized',  # Start maximized
-                            # '--disable-features=TranslateUI',
-                            # '--disable-ipc-flooding-protection',
-                            # '--window-position=0,0',  # Position at top-left
-                            # '--window-size=1920,1080'  # Set explicit window size
-                        ]
-                    )
-                except Exception as e:
-                    logger.warning(f"Failed to launch persistent context: {e}")
-                    # Fallback to regular browser launch
-                    browser = await playwright.chromium.launch(
-                        headless=CONFIG['HEADLESS'],
-                        args=['--no-sandbox', '--disable-setuid-sandbox']
-                    )
-                    context = await browser.new_context(
-                        user_agent=CONFIG['USER_AGENT'],
-                        viewport={'width': 1920, 'height': 1080}
-                    )
-
-                page = context.pages[0] if context.pages else await context.new_page()
-                logger.info(f"Navigating to login page: {LOGIN_URL}")
-                await page.goto(LOGIN_URL, timeout=CONFIG['TIMEOUT'])   
-                login_success = await wait_for_login(page)
-                if not login_success:
-                    logger.error("Login failed or was not completed properly")
-                    raise Exception("Login failed")
-                # Bring window to front and maximize
-                try:
-                    await page.bring_to_front()
-                    await page.set_viewport_size({'width': 1920, 'height': 1080})
-                    
-                    # Use JavaScript to ensure window stays focused
-                    await page.evaluate("""
-                        () => {
-                            window.focus();
-                            // Prevent window from losing focus
-                            window.addEventListener('blur', () => {
-                                setTimeout(() => window.focus(), 100);
-                            });
-                        }
-                    """)
-                    
-                    logger.info("✅ Browser window focused and maximized")
-                except Exception as e:
-                    logger.debug(f"Window management warning: {e}")
-                
-                # Add a small delay to let window settle
-                await asyncio.sleep(2)
-                
-                # Check if already logged in
-                if await check_if_logged_in(page):
-                    logger.info("🎉 Using saved session - no login required!")
+            if not login_success:
+                logger.error("❌ Login failed")
+                # Offer manual login as fallback
+                retry = input("\n🔄 Would you like to try manual login? (y/n): ").lower()
+                if retry == 'y':
+                    logger.info("🔐 Switching to manual login...")
+                    login_url = f"{BAMBOOHR_DOMAIN}/login.php"
+                    await page.goto(login_url, wait_until="domcontentloaded")
+                    logger.info("→ Please complete login and 2FA in the browser...")
+                    input("   👉 Press ENTER after login completion: ")
+                    login_success = True
                 else:
-                    # Perform manual login
-                    login_success = await manual_login_to_bamboohr(page)
-                    
-                    if not login_success:
-                        logger.error("BambooHR login failed!")
-                        raise Exception("Login failed")
+                    return
+            
+            # Handle trust device page if needed
+            current_url = page.url.lower()
+            if "trusted_browser" in current_url or "trust" in current_url:
+                await handle_trust_device(page)
+            
+            # IMPORTANT: Wait after login/trust handling before navigation
+            logger.info("→ Waiting for session to stabilize...")
+            await page.wait_for_timeout(3000)  # Give the session time to fully establish
+            
+            # Try to go to home page first (helps establish session)
+            logger.info("→ Navigating to home page first...")
+            if await safe_goto(page, f"{BAMBOOHR_DOMAIN}/home", "domcontentloaded"):
+                await page.wait_for_timeout(1000)
+            
+            # Now navigate to hiring section
+            logger.info("→ Navigating to hiring section...")
+            if not await safe_goto(page, f"{BAMBOOHR_DOMAIN}/hiring", "domcontentloaded"):
+                logger.error("Failed to navigate to hiring section")
+                # Try direct navigation to job page as fallback
+                logger.info("→ Trying direct navigation to job page...")
+            
+            # Get candidates
+            candidates = await get_candidates_for_job(page, job_id)
+            
+            if not candidates:
+                logger.warning("⚠️ No candidates found for this job ID")
+                logger.info(f"Final URL: {page.url}")
+                logger.info("Check the screenshot 'job_XX_no_candidates.png' to see what page was loaded")
                 
-                # Get candidates for the job
-                candidates = await get_candidates_for_job(page, job_id)
+                # Offer manual inspection
+                if not CONFIG['HEADLESS']:
+                    manual_check = input("\n🔍 Would you like to manually inspect the page? (y/n): ").lower()
+                    if manual_check == 'y':
+                        logger.info("→ Browser is open. Please check if you can see candidates on the page.")
+                        logger.info("   - Try clicking on any tabs or filters")
+                        logger.info("   - Look for 'Candidates', 'Applications', or 'Active' tabs")
+                        input("   👉 Press ENTER when ready to continue (or Ctrl+C to exit): ")
+                        
+                        # Try searching for candidates again
+                        logger.info("→ Retrying candidate search...")
+                        candidates = await get_candidates_for_job(page, job_id)
+                        
+                        if candidates:
+                            logger.info(f"✅ Found {len(candidates)} candidates after manual intervention!")
+                        else:
+                            logger.info("Still no candidates found. The job might have no applicants.")
                 
                 if not candidates:
-                    logger.warning("No candidates found for this job ID")
-                    await save_candidate_metadata([], job_id)
                     return
+            
+            # Save metadata
+            await save_candidate_metadata(candidates, job_id)
+            
+            # Download resumes
+            logger.info(f"📥 Starting download of {len(candidates)} resumes...")
+            successful_downloads = 0
+            failed_downloads = []
+            
+            for i, candidate in enumerate(candidates, 1):
+                logger.info(f"\n[{i}/{len(candidates)}] Processing {candidate['name']}")
                 
-                # Save candidate metadata
-                await save_candidate_metadata(candidates, job_id)
-                
-                # Download resumes
-                logger.info(f"Starting download of {len(candidates)} resumes...")
-                failed_candidates = []
-                successful_downloads = 0
-                
-                for i, candidate in enumerate(candidates, 1):
-                    logger.info(f"[{i}/{len(candidates)}] Processing {candidate['name']}")
-                    
-                    # Keep window active during processing
-                    try:
-                        await page.bring_to_front()
-                    except:
-                        pass
-                    
-                    success = await download_resume(context, page, candidate)
-                    if success:
-                        successful_downloads += 1
-                    else:
-                        failed_candidates.append(candidate)
-                    
-                    if i < len(candidates):
-                        await asyncio.sleep(CONFIG['RETRY_DELAY'])
-                
-                # Retry failed downloads
-                if failed_candidates and CONFIG['MAX_RETRIES'] > 0:
-                    logger.info(f"Retrying {len(failed_candidates)} failed downloads...")
-                    still_failed = []
-                    
-                    for candidate in failed_candidates:
-                        logger.info(f"Retrying {candidate['name']}")
-                        
-                        # Keep window active during retry
-                        try:
-                            await page.bring_to_front()
-                        except:
-                            pass
-                            
-                        success = await download_resume(context, page, candidate)
-                        if success:
-                            successful_downloads += 1
-                        else:
-                            still_failed.append(candidate)
-                        
-                        await asyncio.sleep(CONFIG['RETRY_DELAY'])
-                    
-                    failed_candidates = still_failed
-                
-                # Final summary
-                logger.info("\n" + "="*60)
-                logger.info("SCRAPING SUMMARY")
-                logger.info("="*60)
-                logger.info(f"Job ID: {job_id}")
-                logger.info(f"Total candidates: {len(candidates)}")
-                logger.info(f"Successful downloads: {successful_downloads}")
-                logger.info(f"Failed downloads: {len(failed_candidates)}")
-                
-                if len(candidates) > 0:
-                    logger.info(f"Success rate: {(successful_downloads/len(candidates)*100):.1f}%")
-                
-                if failed_candidates:
-                    logger.warning("\nFailed downloads:")
-                    for candidate in failed_candidates:
-                        logger.warning(f"   - {candidate['name']} (ID: {candidate['id']})")
+                success = await download_resume(context, page, candidate, job_id, is_first=(i==1))
+                if success:
+                    successful_downloads += 1
                 else:
-                    logger.info("\n🎉 All resumes downloaded successfully!")
+                    failed_downloads.append(candidate)
                 
-                logger.info(f"Files saved to: {DOWNLOAD_DIR}")
-                logger.info(f"Session saved to: {BROWSER_PROFILE_DIR}")
-                logger.info("="*60)
+                # Small delay between downloads
+                if i < len(candidates):
+                    await page.wait_for_timeout(int(CONFIG['RETRY_DELAY'] * 1000))
+            
+            # Summary
+            logger.info("\n" + "="*50)
+            logger.info("📊 SCRAPING SUMMARY")
+            logger.info("="*50)
+            logger.info(f"Job ID: {job_id}")
+            logger.info(f"Total candidates: {len(candidates)}")
+            logger.info(f"✅ Successful downloads: {successful_downloads}")
+            logger.info(f"❌ Failed downloads: {len(failed_downloads)}")
+            
+            if failed_downloads:
+                logger.warning("\nFailed downloads:")
+                for candidate in failed_downloads[:10]:  # Show first 10
+                    logger.warning(f"   - {candidate['name']} (ID: {candidate['id']})")
+                if len(failed_downloads) > 10:
+                    logger.warning(f"   ... and {len(failed_downloads) - 10} more")
                 
-            except Exception as e:
-                logger.error(f"Error during scraping: {e}")
-                raise
-            finally:
-                # Keep session by not closing context abruptly
-                try:
-                    if context:
-                        # Add a small delay before closing to ensure session is saved
-                        await asyncio.sleep(2)
-                        await context.close()
-                    logger.info("Browser session saved for future use")
-                except Exception as e:
-                    logger.debug(f"Error during cleanup: {e}")
-                    
-    except Exception as e:
-        logger.error(f"Fatal error: {e}")
-        raise
-
-def clear_saved_session():
-    """Clear the saved browser session"""
-    try:
-        if os.path.exists(BROWSER_PROFILE_DIR):
-            shutil.rmtree(BROWSER_PROFILE_DIR)
-            logger.info(f"✅ Cleared saved session: {BROWSER_PROFILE_DIR}")
-            print(f"✅ Cleared saved session. Next login will require manual authentication.")
-        else:
-            logger.info("No saved session found to clear")
-            print("No saved session found to clear.")
-    except Exception as e:
-        logger.error(f"Error clearing session: {e}")
-        print(f"Error clearing session: {e}")
+                # If all downloads failed, offer manual inspection
+                if successful_downloads == 0 and not CONFIG['HEADLESS']:
+                    logger.info("\n⚠️  All downloads failed. This might be a selector issue.")
+                    inspect = input("\n🔍 Would you like to manually inspect a candidate page? (y/n): ").lower()
+                    if inspect == 'y':
+                        # Navigate to first candidate
+                        first_candidate = candidates[0]
+                        logger.info(f"→ Navigating to {first_candidate['name']}'s page...")
+                        await page.goto(first_candidate['url'])
+                        
+                        logger.info("\n📋 Please check the page for:")
+                        logger.info("   - Any 'Download', 'Resume', 'View', or 'PDF' links/buttons")
+                        logger.info("   - File attachments section")
+                        logger.info("   - Document tabs or sections")
+                        logger.info("   - Right-click on any resume link and check the URL")
+                        
+                        input("\n👉 Press ENTER when you've identified how to download resumes: ")
+                        
+                        # Ask for selector hint
+                        hint = input("\n💡 If you found a pattern, describe it (or press ENTER to skip): ").strip()
+                        if hint:
+                            logger.info(f"User hint: {hint}")
+                            logger.info("Please update the download_selectors in the script with this information.")
+            
+            logger.info(f"\n📁 Files saved to: {DOWNLOAD_DIR}")
+            
+            # If in debug mode and downloads failed, remind about HTML files
+            if DEBUG_MODE and failed_downloads:
+                logger.info("\n🐛 Debug files created:")
+                logger.info(f"   - candidate_{candidates[0]['id']}_page.html (first candidate's page)")
+                logger.info("   - job_XX_no_candidates.png (if no candidates found)")
+                logger.info("   - candidate_XX_no_resume.png (for failed downloads)")
+                logger.info("\nAnalyze these files to identify the correct selectors.")
+            
+        except Exception as e:
+            logger.error(f"Fatal error during scraping: {e}")
+            # Take a screenshot for debugging
+            try:
+                await page.screenshot(path=f"job_{job_id}_fatal_error.png", full_page=True)
+                logger.info(f"Screenshot saved: job_{job_id}_fatal_error.png")
+            except:
+                pass
+            raise
+        finally:
+            try:
+                await browser.close()
+                logger.info("Browser closed")
+            except:
+                pass
 
 def main():
     """Entry point for the script."""
-    print("🔐 BambooHR Resume Scraper with Session Persistence")
-    print("=" * 60)
-    print("Features:")
-    print("✅ Manual login (you login once, session is saved)")
-    print("✅ Session persistence (no repeated logins)")
-    print("✅ Automatic resume downloading")
-    print("✅ Browser window management")
-    print("=" * 60)
+    print("\n🤖 BambooHR Resume Scraper - ADVANCED DOWNLOAD DEBUG VERSION")
+    print("=" * 50)
+    print("✨ Features:")
+    print("   - Enhanced resume download detection")
+    print("   - 40+ different download selectors")
+    print("   - Tab clicking for hidden content")
+    print("   - Iframe support for embedded content")
+    print("   - JavaScript-based download detection")
+    print("   - Alternative download methods")
+    print("   - HTML export for first candidate")
+    print("   - Manual inspection mode for debugging")
+    print("   - Screenshots on failures")
+    print("=" * 50)
     
     try:
-        print("\nOptions:")
-        print("1. Scrape job resumes (normal mode)")
-        print("2. Clear saved session and start fresh")
-        
-        choice = input("\nEnter choice (1 or 2): ").strip()
-        
-        if choice == "2":
-            clear_saved_session()
-            return
-        
-        job_id = input("Enter job ID to scrape: ").strip()
+        job_id = input("\nEnter job ID to scrape: ").strip()
         
         if not job_id:
-            print("No job ID provided")
+            print("❌ No job ID provided")
             return
         
         if not validate_job_id(job_id):
-            print("Invalid job ID. Please provide a numeric value.")
+            print("❌ Invalid job ID. Please provide a numeric value.")
             return
         
-        asyncio.run(scrape_job(job_id))
+        # Ask for login preference
+        login_mode = input("\nLogin mode:\n1. Automatic (with 2FA)\n2. Manual\nChoose (1 or 2): ").strip()
+        use_manual = login_mode == "2"
         
-        print("\n" + "="*60)
-        print("✅ SCRAPING COMPLETED")
-        print("🔐 Your login session has been saved!")
-        print("💡 Next time you run this, login won't be required.")
-        print(f"📁 Session location: {BROWSER_PROFILE_DIR}")
-        print("🗑️  To clear session: Run this script and choose option 2")
-        print("="*60)
+        start_time = datetime.now()
+        print(f"\n🚀 Starting scrape for job ID: {job_id}")
+        
+        asyncio.run(scrape_job(job_id, use_manual_login=use_manual))
+        
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds()
+        print(f"\n⏱️ Completed in {duration:.1f} seconds")
         
     except KeyboardInterrupt:
-        logger.info("\nScraping interrupted by user")
+        print("\n⚠️ Scraping interrupted by user")
     except Exception as e:
-        logger.error(f"Error in main: {e}")
+        print(f"❌ Error: {e}")
 
 if __name__ == "__main__":
     main()

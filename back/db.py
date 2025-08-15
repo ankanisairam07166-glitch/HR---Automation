@@ -108,6 +108,91 @@ class Candidate(Base):
     source = Column(String(100))  # LinkedIn/Indeed/Referral etc
     recruiter_notes = Column(Text)
     tags = Column(Text)  # JSON array of tags
+
+    # In the Candidate class, add these new columns:
+
+    # Interview Automation Fields
+    interview_kb_id = Column(String(200))  # HeyGen Knowledge Base ID
+    interview_token = Column(String(200), unique=True)  # Unique interview token
+    interview_created_at = Column(DateTime)  # When interview was created
+    interview_expires_at = Column(DateTime)  # When interview link expires
+    interview_started_at = Column(DateTime)  # When candidate started interview
+    interview_completed_at = Column(DateTime)  # When candidate completed interview
+    interview_transcript = Column(Text)  # Interview conversation transcript
+    interview_recording_url = Column(String(500))  # Video recording URL if available
+    interview_ai_summary = Column(Text)  # AI-generated summary of interview
+    interview_ai_score = Column(Float)  # AI assessment score (0-100)
+
+    # Interview Recording and Session Management (NEW)
+    interview_session_id = Column(String(200))  # Unique session identifier
+    interview_recording_file = Column(String(500))  # Local recording file path
+    interview_recording_duration = Column(Integer)  # Duration in seconds
+    interview_recording_size = Column(Integer)  # File size in bytes
+    interview_recording_format = Column(String(50))  # mp4, webm, etc.
+    interview_recording_quality = Column(String(50))  # HD, SD, etc.
+    
+    # Interview Questions and Answers (NEW)
+    interview_questions_asked = Column(Text)  # JSON array of questions asked by avatar
+    interview_answers_given = Column(Text)  # JSON array of candidate answers
+    interview_question_timestamps = Column(Text)  # JSON array of question timestamps
+    interview_answer_timestamps = Column(Text)  # JSON array of answer timestamps
+    interview_total_questions = Column(Integer, default=0)  # Total questions asked
+    interview_answered_questions = Column(Integer, default=0)  # Questions answered
+    
+    # Interview AI Analysis (NEW)
+    interview_ai_questions_analysis = Column(Text)  # AI analysis of each question/answer
+    interview_ai_overall_feedback = Column(Text)  # Overall AI feedback
+    interview_ai_technical_score = Column(Float)  # Technical skills score (0-100)
+    interview_ai_communication_score = Column(Float)  # Communication score (0-100)
+    interview_ai_problem_solving_score = Column(Float)  # Problem solving score (0-100)
+    interview_ai_cultural_fit_score = Column(Float)  # Cultural fit score (0-100)
+    
+    # Interview Session Details (NEW)
+    interview_browser_info = Column(String(500))  # Browser and device info
+    interview_network_quality = Column(String(100))  # Network quality during interview
+    interview_technical_issues = Column(Text)  # Any technical issues encountered
+    interview_session_logs = Column(Text)  # Detailed session logs
+    interview_avatar_used = Column(String(100))  # Which avatar was used
+    interview_avatar_settings = Column(Text)  # Avatar configuration used
+    
+    # Interview Status Tracking (NEW)
+    interview_recording_status = Column(String(50))  # not_started/recording/completed/failed
+    interview_processing_status = Column(String(50))  # pending/processing/completed/failed
+    interview_ai_analysis_status = Column(String(50))  # pending/processing/completed/failed
+    interview_final_status = Column(String(50))  # passed/failed/needs_review
+
+
+    # In your Candidate class in db.py, add these columns if missing:
+    interview_token = Column(String(255), unique=True, nullable=True)
+    interview_time_slot = Column(String(100), nullable=True)
+    interview_email_sent = Column(Boolean, default=False)
+    interview_email_sent_date = Column(DateTime, nullable=True)
+    interview_email_attempts = Column(Integer, default=0)
+
+# Also add this migration function to your db.py file:
+
+def add_interview_automation_fields():
+    """Add interview automation fields to existing database"""
+    migrations = [
+        ('candidates', 'interview_kb_id', 'VARCHAR(200)'),
+        ('candidates', 'interview_token', 'VARCHAR(200)'),
+        ('candidates', 'interview_created_at', 'DATETIME'),
+        ('candidates', 'interview_expires_at', 'DATETIME'),
+        ('candidates', 'interview_started_at', 'DATETIME'),
+        ('candidates', 'interview_completed_at', 'DATETIME'),
+        ('candidates', 'interview_transcript', 'TEXT'),
+        ('candidates', 'interview_recording_url', 'VARCHAR(500)'),
+        ('candidates', 'interview_ai_summary', 'TEXT'),
+        ('candidates', 'interview_ai_score', 'FLOAT'),
+    ]
+    
+    for table, column, col_type in migrations:
+        try:
+            add_column_if_not_exists(table, column, col_type)
+        except Exception as e:
+            logger.warning(f"Migration for {table}.{column} failed: {e}")
+    
+    logger.info("Interview automation fields added successfully")
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.now, nullable=False)
@@ -190,8 +275,8 @@ def get_database_url():
     
     if db_url:
         # Handle Heroku-style postgres:// URLs
-        if db_url.startswith('postgres://'):
-            db_url = db_url.replace('postgres://', 'postgresql://', 1)
+        # if db_url.startswith('postgres://'):
+            # db_url = db_url.replace('postgres://', 'postgresql://', 1)
         return db_url
     
     # Default to SQLite for development
@@ -289,6 +374,25 @@ def run_migrations():
             ('candidates', 'tags', 'TEXT'),
             ('candidates', 'created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP'),
             ('candidates', 'updated_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP'),
+
+            # ADD THESE MISSING INTERVIEW COLUMNS:
+            ('candidates', 'knowledge_base_id', 'VARCHAR(200)'),
+            ('candidates', 'interview_kb_id', 'VARCHAR(200)'),
+            ('candidates', 'interview_token', 'VARCHAR(200)'),
+            ('candidates', 'interview_created_at', 'DATETIME'),
+            ('candidates', 'interview_expires_at', 'DATETIME'),
+            ('candidates', 'interview_started_at', 'DATETIME'),
+            ('candidates', 'interview_completed_at', 'DATETIME'),
+            ('candidates', 'interview_transcript', 'TEXT'),
+            ('candidates', 'interview_recording_url', 'VARCHAR(500)'),
+            ('candidates', 'interview_ai_summary', 'TEXT'),
+            ('candidates', 'interview_ai_score', 'FLOAT'),
+            ('candidates', 'interview_time_slot', 'VARCHAR(100)'),
+            ('candidates', 'interview_email_sent', 'BOOLEAN DEFAULT FALSE'),
+            ('candidates', 'interview_email_sent_date', 'DATETIME'),
+            ('candidates', 'interview_email_attempts', 'INTEGER DEFAULT 0'),
+            ('candidates', 'company_name', 'VARCHAR(200)'),
+            ('candidates', 'job_description', 'TEXT'),
         ]
         
         for table, column, col_type in migrations:

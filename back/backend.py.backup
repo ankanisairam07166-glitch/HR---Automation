@@ -1,0 +1,4439 @@
+from flask import Flask, request, jsonify, redirect, render_template_string, send_from_directory
+from flask_cors import CORS
+from datetime import datetime, timedelta
+from db import Candidate, SessionLocal
+import threading
+import asyncio
+import time
+import traceback
+import os
+import json
+from sqlalchemy import func, and_
+import requests
+import logging
+from logging.handlers import RotatingFileHandler
+from functools import wraps
+from tenacity import retry, stop_after_attempt, wait_exponential
+import sys
+from flask_caching import Cache
+import redis
+from concurrent.futures import ThreadPoolExecutor
+import uuid
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from interview_automation import start_interview_automation, stop_interview_automation
+
+# Import your existing modules
+try:
+    from scraper import scrape_job
+    from latest import create_programming_assessment
+    from test_link import get_invite_link
+    from clint_recruitment_system import run_recruitment_with_invite_link
+    from email_util import send_assessment_email, send_assessment_reminder, send_interview_confirmation_email, send_interview_link_email, send_rejection_email
+except ImportError as e:
+    logging.error(f"Critical module import failed: {e}")
+    raise
+
+# Add after existing imports
+try:
+    from testlify_results_scraper import scrape_all_pending_assessments, scrape_assessment_results_by_name
+except ImportError as e:
+    logging.warning(f"Testlify scraper not available: {e}")
+
+# Setup proper logging
+def setup_logging():
+    """Configure logging for production"""
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+    
+    # Create formatter
+    formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    )
+    
+    # File handler
+    file_handler = RotatingFileHandler(
+        'logs/talentflow.log',
+        maxBytes=10485760,  # 10MB
+        backupCount=10,
+        encoding='utf-8'
+    )
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.INFO)
+    
+    # Console handler  
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    console_handler.setFormatter(formatter)
+    
+    # Configure root logger
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    
+    # Clear existing handlers
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+    
+    # Add our handlers
+    logger.addHandler(file_handler)
+    
+    # Only add console handler in development
+    if os.getenv('FLASK_ENV') == 'development':
+        logger.addHandler(console_handler)
+    
+    return logger
+
+logger = setup_logging()
+
+# Configuration from environment
+ASSESSMENT_CONFIG = {
+    'EXPIRY_HOURS': int(os.getenv('ASSESSMENT_EXPIRY_HOURS', '48')),
+    'REMINDER_HOURS': int(os.getenv('ASSESSMENT_REMINDER_HOURS', '24')),
+    'INTERVIEW_DELAY_DAYS': int(os.getenv('INTERVIEW_DELAY_DAYS', '3')),
+    'ATS_THRESHOLD': float(os.getenv('ATS_THRESHOLD', '70')),
+    'MAX_RETRIES': int(os.getenv('MAX_RETRIES', '3')),
+    'RETRY_DELAY': int(os.getenv('RETRY_DELAY', '2'))
+}
+
+# Create Flask app
+app = Flask(__name__)
+
+# Setup caching
+cache_config = {
+    'CACHE_TYPE': 'simple',  # Use Redis in production
+    'CACHE_DEFAULT_TIMEOUT': 300  # 5 minutes
+}
+
+if os.getenv('REDIS_URL'):
+    cache_config = {
+        'CACHE_TYPE': 'redis',
+        'CACHE_REDIS_URL': os.getenv('REDIS_URL'),
+        'CACHE_DEFAULT_TIMEOUT': 300
+    }
+
+cache = Cache(app, config=cache_config)
+
+# Enhanced CORS Configuration
+CORS(app, 
+     origins=["http://localhost:3000", "http://127.0.0.1:3000", "https://yourfrontenddomain.com","http://127.0.0.1:3001"],
+     allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Cache-Control","X-Api-Key"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     supports_credentials=True,
+     expose_headers=["Content-Type", "Authorization"]),
+
+# NEXTJS_URL = os.getenv('NEXTJS_URL', 'http://localhost:3001')
+HEYGEN_API_URL = "https://api.heygen.com/v1/your-avatar-endpoint"  # Change this!
+
+HEYGEN_API_KEY = os.getenv('HEYGEN_API_KEY', '')
+# Thread pool for background tasks
+executor = ThreadPoolExecutor(max_workers=4)
+
+# Pipeline status tracking
+pipeline_status = {}
+pipeline_lock = threading.Lock()
+
+# Performance monitoring
+request_metrics = {
+    'total_requests': 0,
+    'avg_response_time': 0,
+    'slow_requests': 0
+}
+
+
+#  Admin notification function
+def notify_admin(subject, message, error_details=None):
+    """Send critical notifications to admin"""
+    try:
+        admin_email = os.getenv('ADMIN_EMAIL')
+        if not admin_email:
+            logger.warning("ADMIN_EMAIL not set, skipping notification")
+            return
+        
+        from email_util import send_email
+        
+        body_html = f"""
+        <html>
+            <body>
+                <h2>TalentFlow AI Alert: {subject}</h2>
+                <p>{message}</p>
+                {f'<pre>{error_details}</pre>' if error_details else ''}
+                <p>Time: {datetime.now().isoformat()}</p>
+            </body>
+        </html>
+        """
+        
+        send_email(admin_email, f"[TalentFlow Alert] {subject}", body_html)
+        
+    except Exception as e:
+        logger.error(f"Failed to send admin notification: {e}")
+
+# Add request timing middleware
+@app.before_request
+def before_request():
+    request.start_time = time.time()
+    request_metrics['total_requests'] += 1
+
+@app.after_request
+def after_request(response):
+    if hasattr(request, 'start_time'):
+        duration = time.time() - request.start_time
+        
+        # Update metrics
+        if request_metrics['avg_response_time'] == 0:
+            request_metrics['avg_response_time'] = duration
+        else:
+            request_metrics['avg_response_time'] = (request_metrics['avg_response_time'] + duration) / 2
+        
+        if duration > 5.0:  # Slow request threshold
+            request_metrics['slow_requests'] += 1
+            logger.warning(f"Slow request: {request.method} {request.path} took {duration:.2f}s")
+        
+        # Add performance headers
+        response.headers['X-Response-Time'] = f"{duration:.3f}s"
+        response.headers['X-Request-ID'] = getattr(request, 'request_id', 'unknown')
+    
+    return response
+
+# Add request logging for debugging
+@app.before_request
+def log_request_info():
+    """Log incoming requests for debugging"""
+    request.request_id = str(uuid.uuid4())[:8]
+    if request.endpoint and (request.endpoint.startswith('api_') or 'api' in request.path):
+        logger.info(f"🌐 [{request.request_id}] {request.method} {request.path} from {request.remote_addr}")
+        if request.method == 'OPTIONS':
+            logger.info(f"🔧 [{request.request_id}] CORS preflight for {request.path}")
+
+# Rate limiting decorator with better performance
+def rate_limit(max_calls=10, time_window=60):
+    """Enhanced rate limiting decorator with memory optimization"""
+    calls = {}
+    cleanup_counter = 0
+    
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            nonlocal cleanup_counter
+            
+            # Skip rate limiting for OPTIONS requests (CORS preflight)
+            if request.method == 'OPTIONS':
+                return func(*args, **kwargs)
+            
+            now = time.time()
+            key = request.remote_addr
+            
+            # Periodic cleanup to prevent memory leaks
+            cleanup_counter += 1
+            if cleanup_counter % 100 == 0:
+                cutoff = now - time_window * 2
+                for ip in list(calls.keys()):
+                    calls[ip] = [call_time for call_time in calls.get(ip, []) if call_time > cutoff]
+                    if not calls[ip]:
+                        del calls[ip]
+            
+            if key not in calls:
+                calls[key] = []
+            
+            # Remove old calls
+            calls[key] = [call_time for call_time in calls[key] if now - call_time < time_window]
+            
+            if len(calls[key]) >= max_calls:
+                logger.warning(f"Rate limit exceeded for {key}")
+                return jsonify({"error": "Rate limit exceeded"}), 429
+            
+            calls[key].append(now)
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+# Pipeline management functions
+def update_pipeline_status(job_id, status, message, progress=None):
+    """Thread-safe pipeline status updates"""
+    with pipeline_lock:
+        pipeline_status[str(job_id)] = {
+            'status': status,
+            'message': message,
+            'progress': progress,
+            'timestamp': datetime.now().isoformat(),
+            'job_id': str(job_id)
+        }
+    logger.info(f"Pipeline {job_id}: {status} - {message}")
+
+def get_pipeline_status(job_id=None):
+    """Get pipeline status (thread-safe)"""
+    with pipeline_lock:
+        if job_id:
+            return pipeline_status.get(str(job_id))
+        return dict(pipeline_status)
+
+# Optimized data fetching with caching
+@cache.memoize(timeout=300)
+def get_cached_jobs():
+    """Cached job fetching"""
+    try:
+        API_KEY = os.getenv("BAMBOOHR_API_KEY")
+        SUBDOMAIN = os.getenv("BAMBOOHR_SUBDOMAIN")
+        
+        if not API_KEY or not SUBDOMAIN:
+            raise ValueError("BambooHR credentials not configured")
+            
+        auth = (API_KEY, "x")
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
+        url = f"https://api.bamboohr.com/api/gateway.php/{SUBDOMAIN}/v1/applicant_tracking/jobs/"
+        
+        resp = requests.get(url, auth=auth, headers=headers, timeout=10)
+        resp.raise_for_status()
+        
+        jobs = resp.json()
+        open_jobs = []
+        
+        session = SessionLocal()
+        try:
+            for job in jobs:
+                if job.get("status", {}).get("label", "").lower() == "open":
+                    # Get candidate count for this job
+                    candidate_count = session.query(Candidate).filter_by(job_id=str(job["id"])).count()
+                    
+                    open_jobs.append({
+                        "id": job["id"],
+                        "title": job.get("title", {}).get("label", ""),
+                        "location": job.get("location", {}).get("label", ""),
+                        "department": job.get("department", {}).get("label", ""),
+                        "postingUrl": job.get("postingUrl", ""),
+                        "applications": candidate_count,
+                        "status": "Active",
+                        "description": job.get("description", "")
+                    })
+        finally:
+            session.close()
+        
+        return open_jobs
+        
+    except Exception as e:
+        logger.error(f"BambooHR API error: {e}")
+        # Fallback to database
+        return get_jobs_from_database()
+
+def get_jobs_from_database():
+    """Fallback job fetching from database"""
+    session = SessionLocal()
+    try:
+        jobs_data = session.query(
+            Candidate.job_id,
+            Candidate.job_title,
+            func.count(Candidate.id).label('applications')
+        ).filter(
+            Candidate.job_id.isnot(None),
+            Candidate.job_title.isnot(None)
+        ).group_by(
+            Candidate.job_id, 
+            Candidate.job_title
+        ).all()
+        
+        jobs = []
+        for job_id, job_title, app_count in jobs_data:
+            jobs.append({
+                'id': str(job_id),
+                'title': job_title,
+                'department': 'Engineering',
+                'location': 'Remote',
+                'applications': app_count,
+                'status': 'Active',
+                'description': f'Job description for {job_title}',
+                'postingUrl': ''
+            })
+        
+        return jobs
+    finally:
+        session.close()
+
+@cache.memoize(timeout=180)  # 3 minutes cache
+def get_cached_candidates(job_id=None, status_filter=None):
+    """Cached candidate fetching with optimized queries"""
+    session = SessionLocal()
+    try:
+        query = session.query(Candidate)
+        
+        if job_id:
+            query = query.filter_by(job_id=str(job_id))
+        
+        if status_filter:
+            query = query.filter_by(status=status_filter)
+        
+        # Optimize query - only get needed fields for list view
+        candidates = query.all()
+        
+        result = []
+        for c in candidates:
+            try:
+                # Calculate time remaining for assessment
+                time_remaining = None
+                link_expired = False
+                
+                if c.exam_link_sent_date and not c.exam_completed:
+                    deadline = c.exam_link_sent_date + timedelta(hours=ASSESSMENT_CONFIG['EXPIRY_HOURS'])
+                    if datetime.now() < deadline:
+                        time_remaining = (deadline - datetime.now()).total_seconds() / 3600
+                    else:
+                        link_expired = True
+                
+                candidate_data = {
+                    "id": c.id,
+                    "name": c.name or "Unknown",
+                    "email": c.email or "",
+                    "job_id": c.job_id,
+                    "job_title": c.job_title or "Unknown Position",
+                    "status": c.status,
+                    "ats_score": float(c.ats_score) if c.ats_score else 0.0,
+                    "linkedin": c.linkedin,
+                    "github": c.github,
+                    "phone": getattr(c, 'phone', None),
+                    "resume_path": c.resume_path,
+                    "processed_date": c.processed_date.isoformat() if c.processed_date else None,
+                    "score_reasoning": c.score_reasoning,
+                    
+                    # Assessment fields
+                    "assessment_invite_link": c.assessment_invite_link,
+                    "exam_link_sent": bool(c.exam_link_sent),
+                    "exam_link_sent_date": c.exam_link_sent_date.isoformat() if c.exam_link_sent_date else None,
+                    "exam_completed": bool(c.exam_completed),
+                    "exam_completed_date": c.exam_completed_date.isoformat() if c.exam_completed_date else None,
+                    "link_expired": link_expired,
+                    "time_remaining_hours": time_remaining,
+                    
+                    # Exam results
+                    "exam_percentage": float(c.exam_percentage) if c.exam_percentage else None,
+                    
+                    # Interview fields
+                    "interview_scheduled": bool(c.interview_scheduled),
+                    "interview_date": c.interview_date.isoformat() if c.interview_date else None,
+                    "interview_link": c.interview_link,
+                    
+                    # Status fields
+                    "final_status": c.final_status,
+                }
+                
+                result.append(candidate_data)
+                
+            except Exception as e:
+                logger.error(f"Error processing candidate {c.id}: {e}")
+                continue
+        
+        return result
+    finally:
+        session.close()
+
+@app.route('/', methods=['GET'])
+def home():
+    """Enhanced root endpoint with comprehensive API information"""
+    try:
+        # Get system statistics
+        session = SessionLocal()
+        try:
+            stats = {
+                "total_candidates": session.query(Candidate).count(),
+                "total_jobs": session.query(Candidate.job_id).distinct().count(),
+                "shortlisted_candidates": session.query(Candidate).filter_by(status='Shortlisted').count(),
+                "completed_assessments": session.query(Candidate).filter_by(exam_completed=True).count(),
+                "scheduled_interviews": session.query(Candidate).filter_by(interview_scheduled=True).count(),
+            }
+        except Exception:
+            stats = {"error": "Could not fetch statistics"}
+        finally:
+            session.close()
+        
+        # Check system health
+        system_health = {
+            "database": "healthy",
+            "cache": "healthy",
+            "interview_automation": "running" if hasattr(app, 'interview_automation') else "stopped"
+        }
+        
+        # API documentation with examples
+        api_docs = {
+            "endpoints": {
+                "GET /api/jobs": {
+                    "description": "Get all job postings",
+                    "example": f"{request.host_url}api/jobs"
+                },
+                "GET /api/candidates": {
+                    "description": "Get candidates (filterable by job_id, status)",
+                    "example": f"{request.host_url}api/candidates?job_id=123&status=Shortlisted"
+                },
+                "POST /api/run_full_pipeline": {
+                    "description": "Start recruitment pipeline for a job",
+                    "example_payload": {
+                        "job_id": "123",
+                        "job_title": "Software Engineer",
+                        "job_desc": "Job description here"
+                    }
+                },
+                "GET /api/pipeline_status/<job_id>": {
+                    "description": "Check pipeline status for specific job",
+                    "example": f"{request.host_url}api/pipeline_status/123"
+                }
+            }
+        }
+        
+        return jsonify({
+            "message": "🚀 TalentFlow AI Backend API",
+            "tagline": "Intelligent Recruitment Automation Platform",
+            "version": "2.1.0",
+            "status": "operational",
+            "timestamp": datetime.now().isoformat(),
+            "uptime": "System started successfully",
+            
+            # System Statistics
+            "statistics": stats,
+            "system_health": system_health,
+            
+            # Quick Links
+            "quick_links": {
+                "health_check": f"{request.host_url}health",
+                "api_documentation": f"{request.host_url}api/routes",
+                "frontend_dashboard": "http://localhost:3000"
+            },
+            
+            # API Information
+            "api_info": api_docs,
+            
+            # Contact & Support
+            "support": {
+                "company": os.getenv('COMPANY_NAME', 'TalentFlow AI'),
+                "admin_email": os.getenv('ADMIN_EMAIL', 'admin@talentflow.ai'),
+                "documentation": "https://docs.talentflow.ai"
+            },
+            
+            # Features Highlight
+            "features": [
+                "🤖 AI-Powered Resume Screening",
+                "📝 Automated Assessment Creation", 
+                "📧 Smart Email Automation",
+                "📊 Real-time Analytics Dashboard",
+                "🎥 AI Avatar Interviews",
+                "⚡ Pipeline Automation"
+            ]
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error in enhanced home route: {e}")
+        return jsonify({
+            "message": "🚀 TalentFlow AI Backend API",
+            "version": "2.1.0",
+            "status": "running",
+            "error": "Partial system information available",
+            "basic_endpoints": ["/api/jobs", "/api/candidates", "/health"]
+        }), 200
+
+# Enhanced API endpoints
+@app.route('/api/jobs', methods=['GET', 'OPTIONS'])
+@rate_limit(max_calls=30, time_window=60)
+def api_jobs():
+    """Enhanced API endpoint to get jobs with caching"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        jobs = get_cached_jobs()
+        return jsonify(jobs), 200
+    except Exception as e:
+        logger.error(f"Error in api_jobs: {e}", exc_info=True)
+        return jsonify({"error": "Failed to fetch jobs", "message": str(e)}), 500
+
+@app.route('/api/candidates', methods=['GET', 'OPTIONS'])
+@rate_limit(max_calls=60, time_window=60)
+def api_candidates():
+    """Enhanced API endpoint to get candidates with caching"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        job_id = request.args.get('job_id')
+        status_filter = request.args.get('status')
+        
+        candidates = get_cached_candidates(job_id, status_filter)
+        return jsonify(candidates), 200
+        
+    except Exception as e:
+        logger.error(f"Error in api_candidates: {e}", exc_info=True)
+        return jsonify({"error": "Failed to fetch candidates", "message": str(e)}), 500
+
+@app.route('/api/run_full_pipeline', methods=['POST', 'OPTIONS'])
+@rate_limit(max_calls=5, time_window=300)
+def api_run_full_pipeline():
+    """Enhanced pipeline API with status tracking"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        job_id = data.get('job_id')
+        job_title = data.get('job_title')
+        job_desc = data.get('job_desc', "")
+        
+        logger.info(f"[{request.request_id}] Pipeline request: job_id={job_id}, job_title={job_title}")
+        
+        if not job_id or not job_title:
+            return jsonify({"success": False, "message": "job_id and job_title are required"}), 400
+        
+        # Check if pipeline is already running for this job
+        current_status = get_pipeline_status(job_id)
+        if current_status and current_status.get('status') == 'running':
+            return jsonify({
+                "success": False,
+                "message": f"Pipeline already running for {job_title}",
+                "status": current_status
+            }), 409
+        
+        # # Update status to starting
+        # update_pipeline_status(job_id, 'starting', f'Initializing pipeline for {job_title}', 0)
+        
+# Update status to starting
+        update_pipeline_status(job_id, 'starting', f'Initializing pipeline for {job_title}', 0)
+        
+        # Start the pipeline in background thread
+        future = executor.submit(run_pipeline_with_monitoring, job_id, job_title, job_desc)
+        
+        # Store future for tracking
+        with pipeline_lock:
+            pipeline_status[str(job_id)]['future'] = future
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Pipeline started for {job_title}",
+            "job_id": job_id,
+            "estimated_time": "5-10 minutes",
+            "status_endpoint": f"/api/pipeline_status/{job_id}"
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error in run_full_pipeline: {e}", exc_info=True)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/pipeline_status', methods=['GET', 'OPTIONS'])
+@app.route('/api/pipeline_status/<job_id>', methods=['GET', 'OPTIONS'])
+def api_pipeline_status(job_id=None):
+    """Get pipeline status for specific job or all jobs"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        if job_id:
+            status = get_pipeline_status(job_id)
+            if not status:
+                return jsonify({"success": False, "message": "Pipeline not found"}), 404
+            
+            # Clean up the status (remove future object for JSON serialization)
+            clean_status = {k: v for k, v in status.items() if k != 'future'}
+            return jsonify({"success": True, "status": clean_status}), 200
+        else:
+            all_status = get_pipeline_status()
+            # Clean up all statuses
+            clean_statuses = {k: {sk: sv for sk, sv in v.items() if sk != 'future'} 
+                            for k, v in all_status.items()}
+            return jsonify({"success": True, "pipelines": clean_statuses}), 200
+            
+    except Exception as e:
+        logger.error(f"Error in pipeline_status: {e}", exc_info=True)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+def run_pipeline_with_monitoring(job_id, job_title, job_desc):
+    """Enhanced pipeline runner with detailed progress tracking"""
+    start_time = time.time()
+    
+    try:
+        logger.info(f"Starting monitored pipeline for job_id={job_id}")
+        update_pipeline_status(job_id, 'running', 'Pipeline started', 10)
+        
+        # Clear relevant caches
+        cache.delete_memoized(get_cached_candidates)
+        cache.delete_memoized(get_cached_jobs)
+        
+        full_recruitment_pipeline(job_id, job_title, job_desc)
+        
+        duration = time.time() - start_time
+        update_pipeline_status(job_id, 'completed', f'Pipeline completed successfully in {duration:.1f}s', 100)
+        logger.info(f"Pipeline completed successfully in {duration:.2f} seconds")
+        
+    except Exception as e:
+        duration = time.time() - start_time
+        error_msg = f"Pipeline failed after {duration:.2f} seconds: {str(e)}"
+        update_pipeline_status(job_id, 'error', error_msg, None)
+        logger.error(error_msg, exc_info=True)
+
+def full_recruitment_pipeline(job_id, job_title, job_desc):
+    """Enhanced recruitment pipeline with progress tracking"""
+    try:
+        logger.info(f"Starting full recruitment pipeline for job_id={job_id}, job_title={job_title}")
+        
+        # STEP 1: Scraping (20% progress)
+        try:
+            update_pipeline_status(job_id, 'running', 'Scraping resumes...', 20)
+            logger.info(f"STEP 1: Scraping resumes for job_id={job_id}")
+            asyncio.run(scrape_job(job_id))
+            logger.info("✅ Scraping completed successfully")
+        except Exception as e:
+            logger.error(f"Scraping failed: {str(e)}", exc_info=True)
+            # Continue with next step even if scraping fails
+        
+        # STEP 2: Create assessment (40% progress)
+        try:
+            update_pipeline_status(job_id, 'running', 'Creating programming assessment...', 40)
+            logger.info(f"STEP 2: Creating assessment for '{job_title}' in Testlify")
+            create_programming_assessment(job_title, job_desc)
+            logger.info("✅ Assessment created successfully")
+        except Exception as e:
+            logger.error(f"Assessment creation failed: {str(e)}", exc_info=True)
+        
+        # STEP 3: Get invite link (60% progress)
+        invite_link = None
+        try:
+            update_pipeline_status(job_id, 'running', 'Extracting assessment invite link...', 60)
+            logger.info(f"STEP 3: Extracting invite link for '{job_title}' from Testlify")
+            invite_link = get_invite_link(job_title)
+            if invite_link:
+                logger.info(f"✅ Got invite link: {invite_link}")
+        except Exception as e:
+            logger.error(f"Invite link extraction failed: {str(e)}", exc_info=True)
+        
+        if not invite_link:
+            invite_link = f"https://candidate.testlify.com/assessment/{job_id}"
+            logger.warning(f"Using fallback invite link: {invite_link}")
+        
+        # STEP 4: Run AI screening (80% progress)
+        try:
+            update_pipeline_status(job_id, 'running', 'Running AI-powered screening...', 80)
+            logger.info("STEP 4: Running AI-powered screening...")
+            run_recruitment_with_invite_link(
+                job_id=job_id, 
+                job_title=job_title, 
+                job_desc=job_desc, 
+                invite_link=invite_link
+            )
+            logger.info("✅ AI screening completed successfully")
+        except Exception as e:
+            logger.error(f"AI screening failed: {str(e)}", exc_info=True)
+            raise  # This is critical, so we raise
+        
+        # Final step: Clear caches
+        cache.delete_memoized(get_cached_candidates)
+        cache.delete_memoized(get_cached_jobs)
+        
+        logger.info("🚀 Recruitment pipeline finished successfully")
+            
+    except Exception as e:
+        logger.error(f"Fatal pipeline error: {e}", exc_info=True)
+        raise
+
+@app.route('/api/recruitment-stats', methods=['GET', 'OPTIONS'])
+@rate_limit(max_calls=20, time_window=60)
+@cache.memoize(timeout=600)  # 10 minute cache
+def api_recruitment_stats():
+    """Cached recruitment statistics"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    session = SessionLocal()
+    try:
+        stats = []
+        current_date = datetime.now()
+        
+        # Get last 6 months of data efficiently
+        for i in range(6):
+            try:
+                month_date = current_date - timedelta(days=30*i)
+                month_name = month_date.strftime('%b')
+                
+                # Calculate month boundaries
+                month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                if month_start.month == 12:
+                    month_end = month_start.replace(year=month_start.year + 1, month=1, day=1) - timedelta(seconds=1)
+                else:
+                    month_end = month_start.replace(month=month_start.month + 1, day=1) - timedelta(seconds=1)
+                
+                # Single query for all stats
+                applications = session.query(func.count(Candidate.id)).filter(
+                    and_(
+                        Candidate.processed_date >= month_start,
+                        Candidate.processed_date <= month_end
+                    )
+                ).scalar() or 0
+                
+                interviews = session.query(func.count(Candidate.id)).filter(
+                    and_(
+                        Candidate.interview_scheduled == True,
+                        Candidate.interview_date >= month_start,
+                        Candidate.interview_date <= month_end
+                    )
+                ).scalar() or 0
+                
+                hires = session.query(func.count(Candidate.id)).filter(
+                    and_(
+                        Candidate.final_status == "Hired",
+                        Candidate.processed_date >= month_start,
+                        Candidate.processed_date <= month_end
+                    )
+                ).scalar() or 0
+                
+                stats.append({
+                    "month": month_name,
+                    "applications": applications,
+                    "interviews": interviews,
+                    "hires": hires
+                })
+                
+            except Exception as e:
+                logger.error(f"Error calculating stats for month {i}: {e}")
+                stats.append({
+                    "month": (current_date - timedelta(days=30*i)).strftime('%b'),
+                    "applications": 0,
+                    "interviews": 0,
+                    "hires": 0
+                })
+        
+        # Reverse to get chronological order
+        stats.reverse()
+        
+        logger.info(f"Generated recruitment stats for {len(stats)} months")
+        return jsonify(stats), 200
+        
+    except Exception as e:
+        logger.error(f"Error in api_recruitment_stats: {e}", exc_info=True)
+        return jsonify({"error": "Failed to get statistics", "message": str(e)}), 500
+    finally:
+        session.close()
+
+@app.route('/api/send_reminder/<int:candidate_id>', methods=['POST', 'OPTIONS'])
+@rate_limit(max_calls=10, time_window=60)
+def api_send_reminder(candidate_id):
+    """Send reminder to specific candidate"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+            if not candidate:
+                return jsonify({"success": False, "message": "Candidate not found"}), 404
+            
+            # Check if candidate is eligible for reminder
+            if not candidate.exam_link_sent or candidate.exam_completed:
+                return jsonify({"success": False, "message": "Candidate not eligible for reminder"}), 400
+            
+            # Calculate hours remaining
+            hours_remaining = 24  # Default
+            if candidate.exam_link_sent_date:
+                deadline = candidate.exam_link_sent_date + timedelta(hours=48)
+                hours_remaining = max(0, int((deadline - datetime.now()).total_seconds() / 3600))
+            
+            # Send reminder email
+            send_assessment_reminder(candidate, hours_remaining)
+            
+            # Update reminder tracking
+            candidate.reminder_sent = True
+            candidate.reminder_sent_date = datetime.now()
+            session.commit()
+            
+            # Clear cache
+            cache.delete_memoized(get_cached_candidates)
+            
+            return jsonify({
+                "success": True,
+                "message": f"Reminder sent to {candidate.name}"
+            }), 200
+            
+        finally:
+            session.close()
+        
+    except Exception as e:
+        logger.error(f"Error in send_reminder: {e}", exc_info=True)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/assessments', methods=['GET'])
+def api_assessments():
+    return jsonify([]), 200
+
+
+# COPY THIS EXACTLY AND PASTE IT IN YOUR backend.py
+# MAKE SURE IT'S NOT INDENTED INSIDE ANOTHER FUNCTION!
+
+# Updated backend.py - Replace the existing secure_interview_page route
+
+# Add these modifications to your backend.py
+
+# 1. Update the secure_interview_page function to handle reconnections
+@app.route('/secure-interview/<token>', methods=['GET'])
+def secure_interview_page(token):
+    """Serve the secure interview page with proper session data and reconnection support"""
+    try:
+        print(f"🎯 Interview request received for token: {token}")
+        
+        session = SessionLocal()
+        try:
+            # Find candidate by interview token
+            candidate = session.query(Candidate).filter_by(interview_token=token).first()
+            
+            if not candidate:
+                print(f"❌ No candidate found for token: {token}")
+                return create_error_page(token, "Interview not found"), 404
+            
+            # Check if interview has expired (optional - you can remove this check)
+            if hasattr(candidate, 'interview_expires_at') and candidate.interview_expires_at:
+                # Extend expiration if candidate is reconnecting within reasonable time
+                if candidate.interview_expires_at < datetime.now():
+                    # Check if it's within 24 hours of expiration
+                    time_since_expiry = datetime.now() - candidate.interview_expires_at
+                    if time_since_expiry.total_seconds() < 86400:  # 24 hours
+                        # Extend the expiration
+                        candidate.interview_expires_at = datetime.now() + timedelta(days=7)
+                        session.commit()
+                        print(f"✅ Extended interview expiration for {candidate.name}")
+                    else:
+                        return create_expired_interview_page(token)
+            
+            # Check if this is a reconnection
+            is_reconnection = False
+            if hasattr(candidate, 'interview_started_at') and candidate.interview_started_at:
+                is_reconnection = True
+                print(f"🔄 Reconnection detected for {candidate.name}")
+            
+            print(f"✅ Found candidate: {candidate.name} for position: {candidate.job_title}")
+            
+            # Get company name safely
+            company_name = os.getenv('COMPANY_NAME', 'Our Company')
+            if hasattr(candidate, 'company_name') and candidate.company_name:
+                company_name = candidate.company_name
+            
+            # Get job description safely
+            job_description = f'Interview for {candidate.job_title} position'
+            if hasattr(candidate, 'job_description') and candidate.job_description:
+                job_description = candidate.job_description
+            
+            # Prepare complete interview data
+            interview_data = {
+                'token': token,
+                'candidateId': candidate.id,
+                'candidateName': candidate.name,
+                'candidateEmail': candidate.email,
+                'position': candidate.job_title,
+                'company': company_name,
+                'knowledgeBaseId': getattr(candidate, 'knowledge_base_id', None),
+                'sessionId': getattr(candidate, 'interview_session_id', None),
+                'status': 'active',
+                'jobDescription': job_description,
+                'atsScore': candidate.ats_score,
+                'resumePath': candidate.resume_path,
+                'isReconnection': is_reconnection,
+                'previousSessionData': {
+                    'questionsAsked': getattr(candidate, 'interview_total_questions', 0),
+                    'questionsAnswered': getattr(candidate, 'interview_answered_questions', 0),
+                    'duration': getattr(candidate, 'interview_duration', 0)
+                }
+            }
+            
+            # Create the interview page
+            interview_html = create_interview_landing_page(interview_data, token)
+            
+            return interview_html, 200
+            
+        finally:
+            session.close()
+    
+    except Exception as e:
+        print(f"❌ Error in interview route: {e}")
+        import traceback
+        traceback.print_exc()
+        return create_error_page(token, str(e)), 500
+
+
+# 2. Add a new endpoint to validate and refresh interview tokens
+@app.route('/api/interview/validate-token/<token>', methods=['GET', 'POST'])
+def validate_interview_token(token):
+    """Validate interview token and extend expiration if needed"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+        if not candidate:
+            return jsonify({"valid": False, "error": "Invalid token"}), 404
+        
+        # Check expiration
+        is_expired = False
+        if hasattr(candidate, 'interview_expires_at') and candidate.interview_expires_at:
+            if candidate.interview_expires_at < datetime.now():
+                # Allow grace period of 24 hours
+                time_since_expiry = datetime.now() - candidate.interview_expires_at
+                if time_since_expiry.total_seconds() > 86400:
+                    is_expired = True
+                else:
+                    # Extend expiration
+                    candidate.interview_expires_at = datetime.now() + timedelta(days=7)
+                    session.commit()
+        
+        # Get session info
+        session_info = {
+            "valid": not is_expired,
+            "candidate_name": candidate.name,
+            "position": candidate.job_title,
+            "interview_started": bool(getattr(candidate, 'interview_started_at', None)),
+            "interview_completed": bool(getattr(candidate, 'interview_completed_at', None)),
+            "knowledge_base_id": getattr(candidate, 'knowledge_base_id', None),
+            "can_reconnect": True,
+            "questions_asked": getattr(candidate, 'interview_total_questions', 0),
+            "questions_answered": getattr(candidate, 'interview_answered_questions', 0)
+        }
+        
+        if request.method == 'POST':
+            # Refresh session
+            candidate.last_accessed = datetime.now()
+            session.commit()
+        
+        return jsonify(session_info), 200
+        
+    except Exception as e:
+        logger.error(f"Error validating token: {e}")
+        return jsonify({"valid": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+# 3. Update the create_interview_landing_page to show reconnection status
+def create_interview_landing_page(interview_data, token):
+    """Create the landing page HTML with reconnection support"""
+    
+    # Convert data to JSON for JavaScript
+    import json
+    interview_json = json.dumps(interview_data)
+    
+    is_reconnection = interview_data.get('isReconnection', False)
+    previous_data = interview_data.get('previousSessionData', {})
+    
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>AI Interview - {interview_data['position']}</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                margin: 0;
+                padding: 0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }}
+            .container {{
+                background: white;
+                padding: 2rem;
+                border-radius: 15px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                text-align: center;
+                max-width: 600px;
+                width: 90%;
+            }}
+            .header {{
+                color: #333;
+                margin-bottom: 1.5rem;
+            }}
+            .info-box {{
+                background: #f8f9fa;
+                padding: 1.5rem;
+                border-radius: 10px;
+                margin: 1rem 0;
+                border-left: 5px solid #667eea;
+            }}
+            .reconnect-info {{
+                background: #e3f2fd;
+                padding: 1rem;
+                border-radius: 8px;
+                margin: 1rem 0;
+                border-left: 5px solid #2196f3;
+            }}
+            .success-badge {{
+                color: #28a745;
+                font-weight: bold;
+                font-size: 1.1em;
+            }}
+            .start-btn {{
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 15px 30px;
+                border: none;
+                border-radius: 50px;
+                cursor: pointer;
+                font-size: 18px;
+                font-weight: bold;
+                text-decoration: none;
+                display: inline-block;
+                margin: 20px 10px;
+                transition: transform 0.3s, box-shadow 0.3s;
+            }}
+            .start-btn:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            }}
+            .instructions {{
+                text-align: left;
+                margin: 1.5rem 0;
+                padding: 1.5rem;
+                background: #e3f2fd;
+                border-radius: 10px;
+            }}
+            .debug-info {{
+                background: #fff3cd;
+                padding: 1rem;
+                border-radius: 8px;
+                font-size: 14px;
+                margin-top: 15px;
+                text-align: left;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="header">🤖 AI Interview Portal</h1>
+            
+            {f'''
+            <div class="reconnect-info">
+                <h3>🔄 Welcome Back!</h3>
+                <p>You're reconnecting to your interview session.</p>
+                <p><strong>Questions asked:</strong> {previous_data.get('questionsAsked', 0)}</p>
+                <p><strong>Questions answered:</strong> {previous_data.get('questionsAnswered', 0)}</p>
+            </div>
+            ''' if is_reconnection else ''}
+            
+            <div class="info-box">
+                <p><strong>👤 Candidate:</strong> {interview_data['candidateName']}</p>
+                <p><strong>💼 Position:</strong> {interview_data['position']}</p>
+                <p><strong>🏢 Company:</strong> {interview_data['company']}</p>
+                <p class="success-badge">✅ Interview Link Active & Ready</p>
+                {f'<p><strong>🔄 Session Type:</strong> Reconnection</p>' if is_reconnection else ''}
+            </div>
+            
+            <div class="instructions">
+                <h3>📋 Before {'Continuing' if is_reconnection else 'Starting'} Your Interview:</h3>
+                <ul>
+                    <li><strong>Internet:</strong> Ensure stable connection</li>
+                    <li><strong>Camera & Mic:</strong> Test and allow permissions</li>
+                    <li><strong>Environment:</strong> Find a quiet, well-lit space</li>
+                    <li><strong>Materials:</strong> Have your resume ready</li>
+                </ul>
+            </div>
+            
+            <div style="margin: 25px 0;">
+                <p><strong>⏱️ Duration:</strong> 30-45 minutes</p>
+                <p><strong>🎥 Format:</strong> AI-powered video interview</p>
+                {f'<p><strong>📊 Progress:</strong> {previous_data.get("questionsAnswered", 0)} questions completed</p>' if is_reconnection else ''}
+            </div>
+            
+            <button onclick="startInterview()" class="start-btn">
+                🚀 {'Continue' if is_reconnection else 'Start'} AI Interview
+            </button>
+            
+            <div class="debug-info">
+                <strong>🔧 System Status:</strong><br>
+                Token: {token}<br>
+                Knowledge Base: {interview_data['knowledgeBaseId']}<br>
+                Candidate ID: {interview_data['candidateId']}<br>
+                Status: Ready ✅<br>
+                Session Type: {'Reconnection' if is_reconnection else 'New Session'}<br>
+                Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            </div>
+            
+            <div style="margin-top: 30px; font-size: 12px; color: #666;">
+                <p>💡 Need help? Contact our support team</p>
+                <p>🕐 Interview link valid for multiple sessions</p>
+            </div>
+        </div>
+        
+        <script>
+            // Store interview data for Next.js app
+            const interviewData = {interview_json};
+            
+            function startInterview() {{
+                console.log('🚀 Starting interview with data:', interviewData);
+                
+                // Store data in sessionStorage for Next.js app
+                sessionStorage.setItem('interviewData', JSON.stringify(interviewData));
+                
+                // Track interview start/continuation
+                fetch('/api/avatar/interview/{token}', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{ 
+                        action: interviewData.isReconnection ? 'continue' : 'start' 
+                    }})
+                }})
+                .then(response => response.json())
+                .then(data => console.log('✅ Interview tracking:', data))
+                .catch(error => console.log('ℹ️ Tracking not available:', error));
+                
+                // Redirect to Next.js avatar app
+                window.location.href = 'http://localhost:3001/interview/{token}';
+            }}
+            
+            // Validate token on page load
+            fetch('/api/interview/validate-token/{token}', {{
+                method: 'POST'
+            }})
+            .then(response => response.json())
+            .then(data => {{
+                console.log('📄 Token validation:', data);
+                if (!data.valid) {{
+                    alert('This interview link has expired. Please contact HR for assistance.');
+                    document.querySelector('.start-btn').disabled = true;
+                }}
+            }})
+            .catch(error => console.error('Token validation error:', error));
+            
+            console.log('📄 Interview page loaded successfully');
+            console.log('🎯 Ready to {'continue' if is_reconnection else 'start'} interview for:', interviewData.candidateName);
+        </script>
+    </body>
+    </html>
+    """
+def create_expired_interview_page(token):
+    """Create page for expired interviews"""
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Interview Expired</title>
+        <style>
+            body {{ 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                margin-top: 100px; 
+                background: #f8f9fa; 
+            }}
+            .container {{ 
+                max-width: 500px; 
+                margin: 0 auto; 
+                padding: 2rem; 
+                background: white; 
+                border-radius: 10px; 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 style="color: #e74c3c;">⏰ Interview Link Expired</h1>
+            <p>This interview link has expired. Please contact HR for a new interview link.</p>
+            <p><strong>Token:</strong> {token}</p>
+        </div>
+    </body>
+    </html>
+    """, 410
+
+def create_error_page(token, error):
+    """Create error page"""
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Interview Error</title>
+        <style>
+            body {{ 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                margin-top: 100px; 
+                background: #f8f9fa; 
+            }}
+            .container {{ 
+                max-width: 500px; 
+                margin: 0 auto; 
+                padding: 2rem; 
+                background: white; 
+                border-radius: 10px; 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 style="color: #e74c3c;">🔥 Interview System Error</h1>
+            <p>There was an error loading the interview.</p>
+            <p><strong>Error:</strong> {error}</p>
+            <p><strong>Token:</strong> {token}</p>
+            <p>The system has been notified. Please try again or contact support.</p>
+            <button onclick="window.location.reload()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                Retry
+            </button>
+        </div>
+    </body>
+    </html>
+    """
+@app.route('/api/scrape_assessment_results', methods=['POST', 'OPTIONS'])
+@rate_limit(max_calls=3, time_window=300)  # Max 3 scraping requests per 5 minutes
+def api_scrape_assessment_results():
+    """API endpoint to scrape assessment results for a specific assessment"""
+    if request.method == 'OPTIONS':
+        return '', 200
+        
+    try:
+        data = request.json
+        assessment_name = data.get('assessment_name')
+        
+        if not assessment_name:
+            return jsonify({"success": False, "message": "assessment_name is required"}), 400
+        
+        logger.info(f"Starting results scraping for assessment: {assessment_name}")
+        
+        # Start scraping in a separate thread
+        scraping_thread = threading.Thread(
+            target=lambda: run_scraping_with_monitoring(assessment_name),
+            daemon=True,
+            name=f"scraping_{assessment_name.replace(' ', '_')}_{int(time.time())}"
+        )
+        scraping_thread.start()
+        
+        return jsonify({
+            "success": True,
+            "message": f"Started scraping results for '{assessment_name}'",
+            "estimated_time": "2-5 minutes"
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error in scrape_assessment_results: {e}", exc_info=True)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/scrape_all_pending_results', methods=['POST', 'OPTIONS'])
+@rate_limit(max_calls=1, time_window=600)  # Max 1 bulk scraping per 10 minutes
+def api_scrape_all_pending_results():
+    """API endpoint to scrape all pending assessment results"""
+    if request.method == 'OPTIONS':
+        return '', 200
+        
+    try:
+        logger.info("Starting bulk results scraping for all pending assessments")
+        
+        # Start bulk scraping in a separate thread
+        scraping_thread = threading.Thread(
+            target=lambda: run_bulk_scraping_with_monitoring(),
+            daemon=True,
+            name=f"bulk_scraping_{int(time.time())}"
+        )
+        scraping_thread.start()
+        
+        return jsonify({
+            "success": True,
+            "message": "Started bulk scraping for all pending assessments",
+            "estimated_time": "5-15 minutes"
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error in scrape_all_pending_results: {e}", exc_info=True)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/scrape_assessment_results', methods=['GET','OPTIONS'])
+def api_scraping_status():
+    """Get status of running scraping operations"""
+    try:
+        # Get active scraping threads
+        active_threads = []
+        for thread in threading.enumerate():
+            if thread.name.startswith(('scraping_', 'bulk_scraping_')):
+                thread_info = {
+                    "name": thread.name,
+                    "is_alive": thread.is_alive(),
+                    "daemon": thread.daemon
+                }
+                active_threads.append(thread_info)
+        
+        return jsonify({
+            "success": True,
+            "active_operations": len(active_threads),
+            "operations": active_threads
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error in scraping_status: {e}", exc_info=True)
+        return jsonify({"success": False, "message": str(e)}), 500
+def run_scraping_with_monitoring(assessment_name: str):
+    """Wrapper to run scraping with monitoring and error handling"""
+    start_time = time.time()
+    
+    try:
+        logger.info(f"Starting monitored scraping for assessment: {assessment_name}")
+        
+        # Import and run the scraping function
+        try:
+            from testlify_results_scraper import scrape_assessment_results_by_name
+        except ImportError as e:
+            logger.error(f"Failed to import scraper: {e}")
+            notify_admin(
+                "Scraper Import Error",
+                f"Could not import results scraper: {str(e)}. Please ensure testlify_results_scraper.py is available."
+            )
+            return
+        
+        # Run the async scraping function
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            results = loop.run_until_complete(scrape_assessment_results_by_name(assessment_name))
+        finally:
+            loop.close()
+        
+        duration = time.time() - start_time
+        logger.info(f"Scraping completed successfully in {duration:.2f} seconds. Found {len(results)} candidates.")
+        
+        # Send success notification
+        notify_admin(
+            "Assessment Results Scraping Completed",
+            f"Assessment: {assessment_name}\nCandidates processed: {len(results)}\nDuration: {duration:.2f} seconds"
+        )
+        
+    except Exception as e:
+        duration = time.time() - start_time
+        error_msg = f"Scraping failed for assessment '{assessment_name}' after {duration:.2f} seconds"
+        logger.error(error_msg, exc_info=True)
+        
+        # Send failure notification
+        notify_admin(
+            "Assessment Results Scraping Failed",
+            error_msg,
+            error_details=traceback.format_exc()
+        )
+
+# Remove the fallback get_interview endpoint and demo data
+@app.route('/api/get-interview/<token>', methods=['GET', 'POST'])
+def get_interview(token):
+    """Get interview data by token with proper error handling"""
+    try:
+        session = SessionLocal()
+        try:
+            # Log the request
+            logger.info(f"GET /api/get-interview/{token} - Looking for interview")
+            
+            # Find candidate by interview token
+            candidate = session.query(Candidate).filter_by(interview_token=token).first()
+            
+            if not candidate:
+                logger.warning(f"No candidate found with interview_token: {token}")
+                # Return 404, not 401, when interview not found
+                return jsonify({
+                    'error': 'Interview not found',
+                    'message': f'No interview exists with token: {token}',
+                    'token': token
+                }), 404
+            
+            logger.info(f"Found candidate: {candidate.name} (ID: {candidate.id})")
+            
+            # Build response data safely
+            data = {
+                'id': candidate.id,
+                'token': token,
+                'candidateId': candidate.id,
+                'candidateName': candidate.name,
+                'candidateEmail': candidate.email,
+                'position': candidate.job_title,
+                'company': getattr(candidate, 'company_name', os.getenv('COMPANY_NAME', 'Our Company')),
+                'knowledgeBaseId': getattr(candidate, 'knowledge_base_id', None),
+                'status': 'active',
+                'jobDescription': getattr(candidate, 'job_description', f'Interview for {candidate.job_title} position'),
+                'resumeLink': getattr(candidate, 'resume_path', None)
+            }
+            
+            return jsonify(data), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Error in get_interview: {e}", exc_info=True)
+        # Return 500 for server errors, not 401
+        return jsonify({
+            'error': 'Internal server error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/verify-knowledge-base/<candidate_id>', methods=['GET'])
+def verify_knowledge_base(candidate_id):
+    """Verify knowledge base content for debugging"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        # Extract resume content
+        resume_content = ""
+        if candidate.resume_path and os.path.exists(candidate.resume_path):
+            resume_content = extract_resume_content(candidate.resume_path)
+        
+        # Generate questions to show what would be created
+        questions = generate_interview_questions(
+            candidate_name=candidate.name,
+            position=candidate.job_title,
+            resume_content=resume_content,
+            job_description=getattr(candidate, 'job_description', f"Position: {candidate.job_title}")
+        )
+        
+        return jsonify({
+            "candidate_id": candidate.id,
+            "name": candidate.name,
+            "position": candidate.job_title,
+            "knowledge_base_id": candidate.knowledge_base_id,
+            "resume_exists": bool(candidate.resume_path and os.path.exists(candidate.resume_path)),
+            "resume_content_length": len(resume_content),
+            "interview_scheduled": candidate.interview_scheduled,
+            "generated_questions_preview": questions[:1000] + "...",  # First 1000 chars
+            "total_questions_length": len(questions)
+        }), 200
+    finally:
+        session.close()
+
+def extract_skills_from_resume(resume_content):
+    """Extract technical skills from resume"""
+    skills = []
+    resume_lower = resume_content.lower()
+    
+    # Common technical skills to look for
+    tech_skills = [
+        'python', 'javascript', 'java', 'c++', 'c#', 'react', 'angular', 'vue',
+        'node.js', 'django', 'flask', 'spring', 'sql', 'nosql', 'mongodb',
+        'postgresql', 'mysql', 'aws', 'azure', 'gcp', 'docker', 'kubernetes',
+        'git', 'ci/cd', 'machine learning', 'data science', 'api', 'rest',
+        'graphql', 'typescript', 'golang', 'rust', 'swift', 'kotlin'
+    ]
+    
+    for skill in tech_skills:
+        if skill in resume_lower:
+            skills.append(skill.title())
+    
+    return skills[:10]  # Return top 10 skills
+
+
+def extract_projects_from_resume(resume_content):
+    """Extract project names from resume"""
+    projects = []
+    lines = resume_content.split('\n')
+    
+    for i, line in enumerate(lines):
+        if 'project' in line.lower():
+            # Try to extract project name
+            if ':' in line:
+                project_name = line.split(':')[1].strip()[:50]
+                if project_name:
+                    projects.append(project_name)
+    
+    return projects[:5]  # Return top 5 projects
+
+
+def extract_experience_years(resume_content):
+    """Extract years of experience from resume"""
+    import re
+    
+    # Look for patterns like "X years of experience"
+    pattern = r'(\d+)\+?\s*years?\s*(?:of\s*)?experience'
+    match = re.search(pattern, resume_content.lower())
+    
+    if match:
+        return f"{match.group(1)}+ years"
+    
+    # Look for date ranges
+    year_pattern = r'20\d{2}'
+    years = re.findall(year_pattern, resume_content)
+    
+    if len(years) >= 2:
+        min_year = min(int(y) for y in years)
+        max_year = max(int(y) for y in years)
+        experience = max_year - min_year
+        if experience > 0:
+            return f"{experience}+ years"
+    
+    return "Not specified"
+
+@app.route('/api/avatar/get-access-token', methods=['POST', 'OPTIONS'])
+def get_avatar_access_token():
+    """Generate HeyGen access token for avatar session"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        # Generate or retrieve HeyGen access token
+        # This is a placeholder - implement according to HeyGen's auth flow
+        heygen_key = os.getenv('HEYGEN_API_KEY', 'your_heygen_api_key_here')
+        
+        return heygen_key, 200, {'Content-Type': 'text/plain'}
+        s
+    except Exception as e:
+        logger.error(f"Error getting access token: {e}")
+        return jsonify({"error": "Failed to get access token"}), 500
+
+# Add this debug version to your backend.py to troubleshoot
+
+@app.route('/api/debug-schedule-interview', methods=['POST'])
+def debug_schedule_interview():
+    """Debug version to test knowledge base creation"""
+    try:
+        data = request.json
+        candidate_id = data.get('candidate_id')
+        
+        # Test 1: Check if API key exists
+        api_key = os.getenv('HEYGEN_API_KEY')
+        if not api_key:
+            return jsonify({
+                "error": "HEYGEN_API_KEY not found in environment variables",
+                "fix": "Add HEYGEN_API_KEY to your .env file"
+            }), 400
+        
+        # Test 2: Check API key format
+        if len(api_key) < 20:
+            return jsonify({
+                "error": "HEYGEN_API_KEY seems too short",
+                "length": len(api_key)
+            }), 400
+        
+        # Test 3: Try to create a simple knowledge base
+        test_payload = {
+            'name': f'Test_Interview_{int(time.time())}',
+            'description': 'Test knowledge base',
+            'content': 'Test interview questions: 1. Tell me about yourself. 2. Why this role?',
+            'opening_line': 'Hello, this is a test interview.'
+        }
+        
+        try:
+            heygen_response = requests.post(
+                'https://api.heygen.com/v1/streaming/knowledge_base',
+                headers={
+                    'X-Api-Key': api_key,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                json=test_payload,
+                timeout=30
+            )
+            
+            response_data = {
+                "status_code": heygen_response.status_code,
+                "headers": dict(heygen_response.headers),
+                "body": heygen_response.text[:500]  # First 500 chars
+            }
+            
+            if heygen_response.ok:
+                kb_data = heygen_response.json()
+                return jsonify({
+                    "success": True,
+                    "knowledge_base_id": kb_data.get('data', {}).get('knowledge_base_id'),
+                    "full_response": kb_data
+                }), 200
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": "HeyGen API error",
+                    "response": response_data
+                }), 400
+                
+        except requests.exceptions.RequestException as e:
+            return jsonify({
+                "success": False,
+                "error": "Request failed",
+                "details": str(e)
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": "Unexpected error",
+            "details": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
+# Also add this check to your existing api_schedule_interview
+def api_schedule_interview():
+    # ... existing code ...
+    
+    # When creating knowledge base, add more detailed logging
+    if os.getenv('HEYGEN_API_KEY'):
+        try:
+            logger.info(f"Creating HeyGen knowledge base for candidate {candidate.name}")
+            
+            # Log the payload being sent
+            logger.info(f"HeyGen payload: {json.dumps(heygen_payload, indent=2)}")
+            
+            heygen_response = requests.post(
+                'https://api.heygen.com/v1/streaming/knowledge_base',
+                headers={
+                    'X-Api-Key': os.getenv('HEYGEN_API_KEY'),
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                json=heygen_payload,
+                timeout=30
+            )
+            
+            # Log full response
+            logger.info(f"HeyGen response status: {heygen_response.status_code}")
+            logger.info(f"HeyGen response headers: {heygen_response.headers}")
+            logger.info(f"HeyGen response body: {heygen_response.text}")
+            
+            if heygen_response.ok:
+                kb_data = heygen_response.json()
+                knowledge_base_id = kb_data.get('data', {}).get('knowledge_base_id')
+                if knowledge_base_id:
+                    logger.info(f"✅ Knowledge base created: {knowledge_base_id}")
+                else:
+                    logger.error("Knowledge base ID not found in response")
+                    logger.error(f"Full response: {kb_data}")
+            else:
+                logger.error(f"HeyGen API error: {heygen_response.status_code}")
+                logger.error(f"Error details: {heygen_response.text}")
+                
+        except Exception as e:
+            logger.error(f"Exception creating knowledge base: {e}", exc_info=True)
+    else:
+        logger.warning("HEYGEN_API_KEY not found - using fallback knowledge base")
+
+# backend.py - Replace your create_knowledge_base endpoint with this corrected version
+
+@app.route('/api/create-knowledge-base', methods=['POST', 'OPTIONS'])
+def create_knowledge_base():
+    """Create a HeyGen knowledge base with proper error handling and fallbacks"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        candidate_name = data.get('candidateName')
+        position = data.get('position') 
+        company = data.get('company', 'Our Company')
+        token = data.get('token')
+        
+        if not candidate_name or not position:
+            logger.error("Missing required fields for knowledge base creation")
+            return jsonify({"error": "candidateName and position are required"}), 400
+        
+        logger.info(f"🧠 Creating knowledge base for: {candidate_name} - {position}")
+        
+        # Check HeyGen API key
+        heygen_key = os.getenv('HEYGEN_API_KEY')
+        if not heygen_key:
+            logger.warning("HEYGEN_API_KEY not configured, using fallback")
+            fallback_kb_id = f"kb_fallback_{candidate_name.replace(' ', '_')}_{int(time.time())}"
+            return jsonify({
+                "success": True,
+                "knowledgeBaseId": fallback_kb_id,
+                "fallback": True,
+                "message": "Using fallback knowledge base (API key not configured)"
+            }), 200
+        
+        # Find candidate in database for resume content
+        resume_content = ""
+        candidate_id = None
+        
+        if token:
+            session = SessionLocal()
+            try:
+                candidate = session.query(Candidate).filter_by(interview_token=token).first()
+                if candidate:
+                    candidate_id = candidate.id
+                    if candidate.resume_path and os.path.exists(candidate.resume_path):
+                        resume_content = extract_resume_content(candidate.resume_path)
+                        logger.info(f"📄 Resume extracted: {len(resume_content)} characters")
+            finally:
+                session.close()
+        
+        # Create comprehensive knowledge base content
+        kb_content = create_enhanced_kb_content(
+            candidate_name=candidate_name,
+            position=position,
+            company=company,
+            resume_content=resume_content
+        )
+        
+        kb_name = f"Interview_{candidate_name.replace(' ', '_')}_{position.replace(' ', '_')}_{int(time.time())}"
+        
+        # Enhanced HeyGen payload with correct structure
+        heygen_payload = {
+            "name": kb_name,
+            "description": f"Structured interview for {candidate_name} - {position} at {company}",
+            "content": kb_content,
+            "opening_line": f"Hello {candidate_name}! Welcome to your interview for the {position} position at {company}. I've reviewed your background and I'm excited to learn more about your experience. Let's start with you telling me about yourself and your journey to this role.",
+            "avatar_settings": {
+                "voice_settings": {
+                    "rate": 1.2,
+                    "emotion": "friendly"
+                }
+            }
+        }
+        
+        logger.info(f"📡 Sending to HeyGen API...")
+        logger.info(f"🔑 Using API key: {heygen_key[:10]}...")
+        logger.info(f"📦 Payload size: {len(str(heygen_payload))} characters")
+        
+        # Try multiple HeyGen endpoints (they sometimes change)
+        heygen_endpoints = [
+            "https://api.heygen.com/v1/streaming_avatar/knowledge_base",
+            "https://api.heygen.com/v1/streaming/knowledge_base",
+            "https://api.heygen.com/v1/knowledge_base"
+        ]
+        
+        for endpoint in heygen_endpoints:
+            try:
+                logger.info(f"🎯 Trying endpoint: {endpoint}")
+                
+                response = requests.post(
+                    endpoint,
+                    headers={
+                        'X-Api-Key': heygen_key,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'User-Agent': 'TalentFlow-AI/1.0'
+                    },
+                    json=heygen_payload,
+                    timeout=45
+                )
+                
+                logger.info(f"📊 Response status: {response.status_code}")
+                logger.info(f"📋 Response headers: {dict(response.headers)}")
+                
+                if response.status_code == 401:
+                    logger.error("❌ HeyGen API authentication failed - check API key")
+                    continue
+                elif response.status_code == 403:
+                    logger.error("❌ HeyGen API access forbidden - check permissions")
+                    continue
+                elif response.status_code >= 500:
+                    logger.error(f"❌ HeyGen API server error: {response.status_code}")
+                    continue
+                
+                if response.ok:
+                    try:
+                        kb_data = response.json()
+                        logger.info(f"✅ HeyGen response: {json.dumps(kb_data, indent=2)}")
+                        
+                        # Extract KB ID from various possible response formats
+                        kb_id = None
+                        if 'data' in kb_data and isinstance(kb_data['data'], dict):
+                            kb_id = (kb_data['data'].get('knowledge_base_id') or 
+                                   kb_data['data'].get('knowledgeBaseId') or
+                                   kb_data['data'].get('id'))
+                        else:
+                            kb_id = (kb_data.get('knowledge_base_id') or 
+                                   kb_data.get('knowledgeBaseId') or
+                                   kb_data.get('id'))
+                        
+                        if kb_id:
+                            logger.info(f"🎉 Knowledge base created successfully: {kb_id}")
+                            
+                            # Save to database if we have candidate info
+                            if candidate_id:
+                                session = SessionLocal()
+                                try:
+                                    candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+                                    if candidate:
+                                        candidate.knowledge_base_id = kb_id
+                                        session.commit()
+                                        logger.info(f"💾 Saved KB ID to database for candidate {candidate_id}")
+                                finally:
+                                    session.close()
+                            
+                            return jsonify({
+                                "success": True,
+                                "knowledgeBaseId": kb_id,
+                                "endpoint_used": endpoint,
+                                "message": "Knowledge base created successfully in HeyGen"
+                            }), 200
+                        else:
+                            logger.error(f"❌ No KB ID found in response: {kb_data}")
+                    
+                    except json.JSONDecodeError as e:
+                        logger.error(f"❌ Invalid JSON response: {e}")
+                        logger.error(f"Response text: {response.text}")
+                else:
+                    error_text = response.text
+                    logger.error(f"❌ HeyGen API error {response.status_code}: {error_text}")
+                    
+            except requests.exceptions.Timeout:
+                logger.error(f"⏰ Timeout for endpoint: {endpoint}")
+                continue
+            except requests.exceptions.ConnectionError:
+                logger.error(f"🔌 Connection error for endpoint: {endpoint}")
+                continue
+            except Exception as e:
+                logger.error(f"💥 Unexpected error for endpoint {endpoint}: {e}")
+                continue
+        
+        # If all HeyGen endpoints fail, create fallback KB
+        logger.warning("⚠️ All HeyGen endpoints failed, creating fallback knowledge base")
+        fallback_kb_id = f"kb_{candidate_name.replace(' ', '_')}_{int(time.time())}"
+        
+        # Save fallback KB to database
+        if candidate_id:
+            session = SessionLocal()
+            try:
+                candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+                if candidate:
+                    candidate.knowledge_base_id = fallback_kb_id
+                    candidate.interview_kb_content = kb_content  # Store content for fallback
+                    session.commit()
+            finally:
+                session.close()
+        
+        return jsonify({
+            "success": True,
+            "knowledgeBaseId": fallback_kb_id,
+            "fallback": True,
+            "message": "Using fallback knowledge base due to HeyGen API issues"
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"💥 Critical error in knowledge base creation: {e}", exc_info=True)
+        
+        # Emergency fallback
+        emergency_kb_id = f"kb_emergency_{int(time.time())}"
+        return jsonify({
+            "success": True,
+            "knowledgeBaseId": emergency_kb_id,
+            "fallback": True,
+            "emergency": True,
+            "message": f"Emergency fallback due to system error: {str(e)}"
+        }), 200
+
+
+def create_enhanced_kb_content(candidate_name, position, company, resume_content):
+    """Create enhanced knowledge base content with better interview flow"""
+    
+    # Extract skills and experience from resume
+    skills = extract_skills_from_resume(resume_content) if resume_content else []
+    experience_years = extract_experience_years(resume_content) if resume_content else "Not specified"
+    
+    return f"""
+INTERVIEW SYSTEM CONFIGURATION
+==============================
+🎯 MISSION: Conduct a professional, comprehensive interview for {candidate_name}
+📋 POSITION: {position}
+🏢 COMPANY: {company}
+⏱️ DURATION: 30-45 minutes
+🤖 MODE: AI-Powered Structured Interview
+
+🔥 CRITICAL COMMANDS - RESPOND IMMEDIATELY:
+==========================================
+✅ "INIT_INTERVIEW" = START INTERVIEW NOW
+✅ "Hello" / "Hi" = BEGIN WITH GREETING + FIRST QUESTION  
+✅ "NEXT_QUESTION" = MOVE TO NEXT QUESTION
+✅ Any greeting = Start the interview immediately
+
+🚀 INSTANT RESPONSE PROTOCOL:
+============================
+When you receive "INIT_INTERVIEW" or ANY greeting, respond IMMEDIATELY with:
+
+"Hello {candidate_name}! Welcome to your interview for the {position} position at {company}. I'm your AI interviewer today, and I'm excited to learn about your experience and qualifications. I've reviewed your background, and I have some great questions for you.
+
+Let's start with the first question: Tell me about yourself and your professional journey that led you to apply for this {position} role with us."
+
+📋 STRUCTURED INTERVIEW QUESTIONS:
+=================================
+
+PHASE 1: INTRODUCTION (5-8 minutes)
+1. "Tell me about yourself and your professional journey that led you to apply for this {position} role."
+2. "What specifically attracted you to {company} and this {position} position?"
+3. "What do you know about our company and our mission?"
+
+PHASE 2: TECHNICAL ASSESSMENT (15-20 minutes)
+{generate_technical_questions(position, skills)}
+
+PHASE 3: BEHAVIORAL EVALUATION (10-15 minutes)  
+4. "Describe a challenging project you worked on. What was your role and how did you overcome obstacles?"
+5. "Tell me about a time you had to work under pressure or tight deadlines. How did you handle it?"
+6. "Give me an example of when you had to collaborate with a difficult team member. How did you manage the situation?"
+7. "Describe a time when you had to learn a new technology or skill quickly. What was your approach?"
+
+PHASE 4: ROLE-SPECIFIC QUESTIONS (5-8 minutes)
+8. "Based on what you understand about this {position} role, how do you see yourself contributing in the first 90 days?"
+9. "What aspects of this role excite you most, and what do you think will be your biggest challenges?"
+10. "Where do you see your career progressing in the next 3-5 years?"
+
+PHASE 5: CLOSING (3-5 minutes)
+11. "What questions do you have for me about the role, team, or company culture?"
+12. "Is there anything else about your background or qualifications that you'd like me to know?"
+
+🎭 PERSONALITY & BEHAVIOR:
+=========================
+✅ Professional yet warm and approachable
+✅ Genuinely interested in candidate's responses  
+✅ Encouraging, especially if candidate seems nervous
+✅ Patient - give candidates time to think (10-15 seconds)
+✅ Active listener - use phrases like "That's interesting", "Tell me more", "I see"
+✅ Ask follow-up questions based on their answers
+
+💬 CONVERSATION MANAGEMENT:
+==========================
+- Ask ONE question at a time
+- Wait for COMPLETE answers before proceeding
+- If candidate gives brief answer, ask: "Could you elaborate on that?" or "Can you give me a specific example?"
+- If candidate is silent >20 seconds: "Take your time, or would you like me to rephrase the question?"
+- If candidate seems confused: "Let me clarify..." or "What I'm looking for is..."
+- Track which questions you've asked to avoid repetition
+
+⚠️ CRITICAL SUCCESS FACTORS:
+============================
+1. START IMMEDIATELY when receiving "INIT_INTERVIEW" 
+2. NO delays or confirmations - just begin the interview
+3. Make {candidate_name} feel comfortable and valued
+4. Assess both technical skills AND cultural fit
+5. Keep the conversation flowing naturally
+6. End professionally with clear next steps
+
+📊 CANDIDATE BACKGROUND:
+=======================
+Name: {candidate_name}
+Position: {position}  
+Company: {company}
+Technical Skills: {', '.join(skills[:5]) if skills else 'Various technical skills based on role'}
+Experience Level: {experience_years}
+
+{f"Resume Highlights:\n{resume_content[:2000]}..." if resume_content else "No resume content available - focus on standard interview questions"}
+
+🎯 SUCCESS METRICS:
+==================
+- Comprehensive assessment of technical skills
+- Evaluation of communication abilities  
+- Assessment of problem-solving approach
+- Cultural fit evaluation
+- Professional experience validation
+
+Remember: This is a conversation, not an interrogation. Make {candidate_name} feel valued while thoroughly assessing their qualifications for the {position} role at {company}.
+
+🚀 READY TO START - Waiting for "INIT_INTERVIEW" command!
+"""
+
+def generate_technical_questions(position, skills):
+    """Generate position-specific technical questions"""
+    position_lower = position.lower()
+    
+    if 'software' in position_lower or 'developer' in position_lower or 'engineer' in position_lower:
+        return """
+4. "Walk me through your development process from requirements to deployment."
+5. "Describe a complex technical problem you solved. What was your approach?"
+6. "How do you ensure code quality and handle debugging in your projects?"
+7. "Tell me about your experience with version control and collaborative development."
+"""
+    elif 'data' in position_lower or 'analyst' in position_lower:
+        return """
+4. "Describe your approach to data analysis and how you ensure data quality."
+5. "Tell me about a complex data problem you solved and the tools you used."
+6. "How do you communicate technical findings to non-technical stakeholders?"
+7. "What's your experience with data visualization and reporting tools?"
+"""
+    elif 'product' in position_lower or 'manager' in position_lower:
+        return """
+4. "How do you prioritize features and manage competing stakeholder demands?"
+5. "Describe a product decision you made that didn't go as planned. What did you learn?"
+6. "How do you gather and incorporate user feedback into product development?"
+7. "Tell me about your experience working with cross-functional teams."
+"""
+    else:
+        return """
+4. "Describe the most challenging aspect of your current/recent role and how you handle it."
+5. "Tell me about a time when you had to adapt to significant changes in your work environment."
+6. "How do you stay current with industry trends and best practices in your field?"
+7. "Describe your approach to professional development and skill building."
+"""
+# backend.py - Add this debug endpoint
+@app.route('/api/verify-interview-system/<token>', methods=['GET'])
+def verify_interview_system(token):
+    """Verify complete interview system setup"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        if not candidate:
+            return jsonify({"error": "Interview not found"}), 404
+        
+        # Check all components
+        checks = {
+            "candidate_found": True,
+            "resume_exists": bool(candidate.resume_path and os.path.exists(candidate.resume_path)),
+            "knowledge_base_created": bool(candidate.knowledge_base_id),
+            "heygen_api_configured": bool(os.getenv('HEYGEN_API_KEY')),
+            "session_configured": bool(candidate.interview_session_id),
+            "recording_ready": True,
+            "qa_tracking_ready": True
+        }
+        
+        # Extract sample questions
+        sample_questions = []
+        if candidate.resume_path:
+            resume_content = extract_resume_content(candidate.resume_path)
+            skills = extract_skills_from_resume(resume_content)
+            sample_questions = [
+                f"Tell me about your experience with {skills[0]}" if skills else "Tell me about yourself",
+                "What interests you about this position?",
+                "Describe a challenging project you've worked on"
+            ]
+        
+        return jsonify({
+            "status": "ready" if all(checks.values()) else "issues_found",
+            "checks": checks,
+            "candidate_info": {
+                "name": candidate.name,
+                "position": candidate.job_title,
+                "knowledge_base_id": candidate.knowledge_base_id
+            },
+            "sample_questions": sample_questions,
+            "recommendations": [
+                "Ensure HEYGEN_API_KEY is set" if not checks["heygen_api_configured"] else None,
+                "Upload candidate resume" if not checks["resume_exists"] else None,
+                "Create knowledge base" if not checks["knowledge_base_created"] else None
+            ]
+        }), 200
+        
+    finally:
+        session.close()
+
+@app.route('/api/avatar/interviews', methods=['POST', 'OPTIONS'])
+def save_interview():
+    """Create/refresh an interview token for a candidate and persist expiry."""
+    # --- CORS preflight ---
+    if request.method == 'OPTIONS':
+        resp = jsonify({})
+        resp.status_code = 200
+        # add CORS headers if you need cross-origin
+        resp.headers['Access-Control-Allow-Origin'] = '*'  # tighten in prod
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        resp.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        return resp
+
+    try:
+        data = request.get_json(silent=True) or {}
+        candidate_email = data.get('candidateEmail')
+        candidate_name = data.get('candidateName')  # optional
+        incoming_kb_id = data.get('knowledgeBaseId')  # may be None (created later)
+
+        if not candidate_email:
+            return jsonify({"error": "candidateEmail is required"}), 400
+
+        # Generate token and expiry (UTC)
+        interview_token = str(uuid.uuid4())
+        expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(email=candidate_email).first()
+            if not candidate:
+                # Option A: return clear error (recommended)
+                return jsonify({"error": "Candidate not found"}), 404
+
+                # Option B (if you want to auto-create):
+                # candidate = Candidate(email=candidate_email, name=candidate_name or "")
+                # session.add(candidate)
+                # session.flush()  # to get candidate.id
+
+            # Update candidate interview state
+            candidate.interview_token = interview_token
+            candidate.interview_expires_at = expires_at
+
+            # Only overwrite KB if one is provided; otherwise keep existing to avoid losing it
+            if incoming_kb_id:
+                candidate.knowledge_base_id = incoming_kb_id
+
+            session.commit()
+
+            # IMPORTANT: do NOT expose your real HeyGen API key to the client
+            # If you need a client token, create a separate route that returns a short-lived token
+            # or proxy the HeyGen calls through your backend.
+
+            return jsonify({
+                "token": interview_token,
+                "expiresAt": expires_at.isoformat(),
+                # handy for the client: if KB already exists, they can skip creation
+                "knowledgeBaseId": candidate.knowledge_base_id
+            }), 200
+
+        except SQLAlchemyError as db_err:
+            session.rollback()
+            logger.exception("DB error saving interview")
+            return jsonify({"error": "Database error saving interview"}), 500
+        finally:
+            session.close()
+
+    except Exception as e:
+        logger.exception("Error saving interview")
+        return jsonify({"error": "Failed to save interview"}), 500
+
+
+@app.route('/api/avatar/interview/<token>', methods=['POST'])
+def api_avatar_interview(token):
+    """Handle avatar interview updates"""
+    try:
+        data = request.json
+        action = data.get('action')
+        
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(interview_token=token).first()
+            
+            if not candidate:
+                return jsonify({"error": "Interview not found"}), 404
+            
+            if action == 'start':
+                candidate.interview_started_at = datetime.now()
+                message = "Interview started"
+            elif action == 'complete':
+                candidate.interview_completed_at = datetime.now()
+                if data.get('transcript'):
+                    candidate.interview_transcript = json.dumps(data['transcript'])
+                message = "Interview completed"
+            else:
+                message = "Interview updated"
+            
+            session.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": message
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Error in avatar interview {token}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/interview-automation/status', methods=['GET', 'OPTIONS'])
+def get_automation_status():
+    """Get interview automation system status"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        from interview_automation import interview_automation
+        
+        status = {
+            'is_running': interview_automation.is_running,
+            'check_interval_minutes': interview_automation.check_interval / 60,
+            'next_check': 'Running' if interview_automation.is_running else 'Stopped'
+        }
+        
+        # Get statistics
+        session = SessionLocal()
+        try:
+            stats = {
+                'candidates_pending_interview': session.query(Candidate).filter(
+                    and_(
+                        Candidate.exam_completed == True,
+                        Candidate.exam_percentage >= 70,
+                        Candidate.interview_scheduled == False
+                    )
+                ).count(),
+                'interviews_scheduled': session.query(Candidate).filter(
+                    Candidate.interview_scheduled == True
+                ).count(),
+                'interviews_completed': session.query(Candidate).filter(
+                    Candidate.interview_completed_at.isnot(None)
+                ).count()
+            }
+            status['statistics'] = stats
+        finally:
+            session.close()
+        
+        return jsonify(status), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting automation status: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/v1/streaming_new', methods=['POST', 'OPTIONS'])
+def streaming_new():
+    """Proxy requests to HeyGen streaming API"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json or {}
+        
+        # Get HeyGen API key
+        heygen_key = os.getenv('HEYGEN_API_KEY')
+        if not heygen_key:
+            return jsonify({"error": "HeyGen API key not configured"}), 500
+        
+        # Use correct HeyGen streaming endpoint
+        heygen_streaming_url = "https://api.heygen.com/v1/streaming.new"
+        
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Api-Key': heygen_key,
+            'Accept': 'application/json'
+        }
+        
+        print(f"🔄 Forwarding request to HeyGen: {heygen_streaming_url}")
+        print(f"📦 Request data: {data}")
+        
+        response = requests.post(
+            heygen_streaming_url, 
+            json=data, 
+            headers=headers,
+            timeout=30
+        )
+        
+        print(f"📡 HeyGen response status: {response.status_code}")
+        
+        if response.ok:
+            response_data = response.json()
+            return jsonify(response_data), response.status_code
+        else:
+            error_text = response.text
+            print(f"❌ HeyGen API error: {error_text}")
+            return jsonify({
+                "error": "HeyGen API error", 
+                "details": error_text,
+                "status": response.status_code
+            }), response.status_code
+            
+    except requests.exceptions.Timeout:
+        print("⏰ HeyGen API timeout")
+        return jsonify({"error": "Request timeout"}), 504
+    except requests.exceptions.ConnectionError:
+        print("🔌 HeyGen API connection error")
+        return jsonify({"error": "Connection error"}), 503
+    except Exception as e:
+        print(f"💥 Streaming proxy error: {e}")
+        return jsonify({"error": "Avatar service unavailable", "details": str(e)}), 500
+
+@app.route('/api/get-access-token', methods=['POST', 'OPTIONS'])
+def get_access_token():
+    """Get HeyGen streaming access token"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        heygen_key = os.getenv('HEYGEN_API_KEY')
+        if not heygen_key:
+            return jsonify({"error": "HeyGen API key not configured"}), 500
+        
+        # Call HeyGen token creation API
+        response = requests.post(
+            'https://api.heygen.com/v1/streaming.create_token',
+            headers={
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Api-Key': heygen_key,
+            },
+            timeout=10
+        )
+        
+        if not response.ok:
+            error_text = response.text
+            print(f"❌ HeyGen token error: {error_text}")
+            return jsonify({"error": "Failed to get token", "details": error_text}), response.status_code
+        
+        data = response.json()
+        if not data.get('data', {}).get('token'):
+            return jsonify({"error": "No token in response"}), 500
+        
+        token = data['data']['token']
+        print(f"✅ Token obtained successfully")
+        
+        # Return as plain text
+        return Response(token, mimetype='text/plain', status=200)
+        
+    except Exception as e:
+        print(f"❌ Token error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/debug/avatar', methods=['GET'])
+def debug_avatar():
+    """Debug avatar configuration"""
+    return jsonify({
+        "heygen_key_configured": bool(os.getenv('HEYGEN_API_KEY')),
+        "heygen_key_length": len(os.getenv('HEYGEN_API_KEY', '')),
+        "cors_enabled": True,
+        "endpoints": [
+            "/api/get-access-token",
+            "/api/v1/streaming_new",
+            "/secure-interview/<token>"
+        ]
+    }), 200
+
+@app.route('/api/interview/results', methods=['GET'])
+def get_interview_results():
+    """Get all interview results with filtering options"""
+    session = SessionLocal()
+    try:
+        # Get query parameters
+        position = request.args.get('position')
+        status = request.args.get('status')
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+        
+        # Build query
+        query = session.query(Candidate).filter(
+            Candidate.interview_scheduled == True
+        )
+        
+        # Apply filters
+        if position:
+            query = query.filter(Candidate.job_title == position)
+        
+        if status:
+            if status == 'completed':
+                query = query.filter(Candidate.interview_completed_at.isnot(None))
+            elif status == 'pending':
+                query = query.filter(Candidate.interview_completed_at.is_(None))
+        
+        if date_from:
+            query = query.filter(Candidate.interview_date >= date_from)
+        
+        if date_to:
+            query = query.filter(Candidate.interview_date <= date_to)
+        
+        # Get results
+        candidates = query.all()
+        
+        # Format results
+        results = []
+        for candidate in candidates:
+            results.append({
+                'id': candidate.id,
+                'name': candidate.name,
+                'email': candidate.email,
+                'job_title': candidate.job_title,
+                'interview_date': candidate.interview_date.isoformat() if candidate.interview_date else None,
+                'interview_completed_at': candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+                'interview_ai_score': candidate.interview_ai_score,
+                'interview_ai_technical_score': candidate.interview_ai_technical_score,
+                'interview_ai_communication_score': candidate.interview_ai_communication_score,
+                'interview_ai_problem_solving_score': candidate.interview_ai_problem_solving_score,
+                'interview_ai_cultural_fit_score': candidate.interview_ai_cultural_fit_score,
+                'interview_ai_overall_feedback': candidate.interview_ai_overall_feedback,
+                'interview_final_status': candidate.interview_final_status,
+                'interview_recording_url': candidate.interview_recording_url,
+                'interview_transcript': candidate.interview_transcript
+            })
+        
+        return jsonify({
+            'success': True,
+            'results': results,
+            'total': len(results)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting interview results: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        session.close()
+
+@app.route('/api/interview/stats', methods=['GET'])
+def get_interview_stats():
+    """Get interview statistics"""
+    session = SessionLocal()
+    try:
+        # Get all interviewed candidates
+        candidates = session.query(Candidate).filter(
+            Candidate.interview_scheduled == True
+        ).all()
+        
+        # Calculate statistics
+        total = len(candidates)
+        completed = len([c for c in candidates if c.interview_completed_at])
+        with_scores = len([c for c in candidates if c.interview_ai_score])
+        passed = len([c for c in candidates if c.interview_ai_score and c.interview_ai_score >= 70])
+        
+        avg_score = 0
+        if with_scores > 0:
+            total_score = sum(c.interview_ai_score for c in candidates if c.interview_ai_score)
+            avg_score = total_score / with_scores
+        
+        # Skills averages
+        skills = {
+            'technical': 0,
+            'communication': 0,
+            'problem_solving': 0,
+            'cultural_fit': 0
+        }
+        
+        for c in candidates:
+            if c.interview_ai_technical_score:
+                skills['technical'] += c.interview_ai_technical_score
+            if c.interview_ai_communication_score:
+                skills['communication'] += c.interview_ai_communication_score
+            if c.interview_ai_problem_solving_score:
+                skills['problem_solving'] += c.interview_ai_problem_solving_score
+            if c.interview_ai_cultural_fit_score:
+                skills['cultural_fit'] += c.interview_ai_cultural_fit_score
+        
+        # Calculate averages
+        for skill in skills:
+            if with_scores > 0:
+                skills[skill] = skills[skill] / with_scores
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total_interviews': total,
+                'completed_interviews': completed,
+                'average_score': round(avg_score, 1),
+                'pass_rate': round((passed / with_scores * 100), 1) if with_scores > 0 else 0,
+                'pending_analysis': completed - with_scores,
+                'skills_average': skills
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting interview stats: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/api/interview-automation/toggle', methods=['POST', 'OPTIONS'])
+@rate_limit(max_calls=5, time_window=60)
+def toggle_automation():
+    """Start or stop the interview automation system"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        action = data.get('action', 'toggle')
+        
+        from interview_automation import interview_automation
+        
+        if action == 'start':
+            start_interview_automation()
+            message = "Interview automation started"
+        elif action == 'stop':
+            stop_interview_automation()
+            message = "Interview automation stopped"
+        else:
+            # Toggle
+            if interview_automation.is_running:
+                stop_interview_automation()
+                message = "Interview automation stopped"
+            else:
+                start_interview_automation()
+                message = "Interview automation started"
+        
+        return jsonify({
+            'success': True,
+            'message': message,
+            'is_running': interview_automation.is_running
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error toggling automation: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# 3. Fix the api_schedule_interview function to properly handle company_name
+@app.route('/api/schedule-interview', methods=['POST', 'OPTIONS'])
+@rate_limit(max_calls=10, time_window=60)
+def api_schedule_interview():
+    """Schedule interview with enhanced knowledge base creation for proactive questioning"""
+    if request.method == 'OPTIONS':
+        return '', 200
+        
+    try:
+        data = request.json
+        candidate_id = data.get('candidate_id')
+        email = data.get('email')
+        interview_date = data.get('date')
+        time_slot = data.get('time_slot')
+        job_description_override = data.get('job_description')
+        
+        logger.info(f"Schedule interview request: candidate_id={candidate_id}")
+        
+        if not candidate_id and not email:
+            return jsonify({"success": False, "message": "candidate_id or email is required"}), 400
+        
+        session = SessionLocal()
+        try:
+            # Find candidate
+            if candidate_id:
+                candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+            else:
+                candidate = session.query(Candidate).filter_by(email=email).first()
+            
+            if not candidate:
+                return jsonify({"success": False, "message": "Candidate not found"}), 404
+            
+            # Check if already scheduled
+            if candidate.interview_scheduled and candidate.interview_token:
+                existing_link = f"{request.host_url.rstrip('/')}/secure-interview/{candidate.interview_token}"
+                return jsonify({
+                    "success": True,
+                    "message": "Interview already scheduled",
+                    "interview_link": existing_link,
+                    "knowledge_base_id": getattr(candidate, 'knowledge_base_id', None),
+                    "already_scheduled": True
+                }), 200
+            
+            # Extract resume content
+            resume_content = ""
+            resume_extracted = False
+            
+            if candidate.resume_path and os.path.exists(candidate.resume_path):
+                logger.info(f"Extracting resume from: {candidate.resume_path}")
+                resume_content = extract_resume_content(candidate.resume_path)
+                if resume_content:
+                    resume_extracted = True
+                    logger.info(f"✅ Resume extracted: {len(resume_content)} characters")
+                else:
+                    logger.error("Resume extraction returned empty content")
+            
+            # Fallback to candidate profile if no resume
+            if not resume_content:
+                logger.warning("Using candidate profile as fallback")
+                resume_content = f"""
+CANDIDATE: {candidate.name}
+EMAIL: {candidate.email}
+POSITION: {candidate.job_title}
+ATS SCORE: {candidate.ats_score}
+STATUS: {candidate.status}
+{f"SCORING: {candidate.score_reasoning}" if candidate.score_reasoning else ""}
+"""
+            
+            # Get company name
+            company_name = os.getenv('COMPANY_NAME', 'Our Company')
+            
+            # Get job description
+            job_description = job_description_override or getattr(candidate, 'job_description', f"Position: {candidate.job_title}")
+            
+            # CREATE HEYGEN KNOWLEDGE BASE WITH INTERVIEW QUESTIONS
+            knowledge_base_id = None
+            kb_creation_method = "none"
+            
+            if os.getenv('HEYGEN_API_KEY') and resume_content:
+                try:
+                    logger.info("Creating HeyGen knowledge base with interview questions...")
+                    
+                    # Generate structured interview questions
+                    interview_questions = generate_interview_questions(
+                        candidate_name=candidate.name,
+                        position=candidate.job_title,
+                        resume_content=resume_content,
+                        job_description=job_description
+                    )
+                    
+                    kb_name = f"Interview_{candidate.name.replace(' ', '_')}_{candidate.id}"
+                    
+                    # Create comprehensive knowledge base content
+                    kb_content = f"""
+INTERVIEW CONFIGURATION:
+- Mode: Structured Technical Interview
+- Candidate: {candidate.name}
+- Position: {candidate.job_title}
+- Company: {company_name}
+- Interview Type: Technical and Behavioral
+- Duration: 30-45 minutes
+
+SPECIAL COMMANDS:
+- When you receive "INIT_INTERVIEW": Start with the warm greeting and first question
+- When you receive "NEXT_QUESTION": Move to the next question in the list
+- If user is silent for 15+ seconds: Gently prompt or ask if they need more time
+
+
+CANDIDATE BACKGROUND:
+{resume_content[:8000]}
+
+JOB REQUIREMENTS:
+{job_description[:2000]}
+
+{interview_questions}
+
+INTERVIEW BEHAVIOR INSTRUCTIONS:
+1. When stream starts, wait for "INIT_INTERVIEW" command
+2. Upon receiving "INIT_INTERVIEW", immediately greet the candidate and ask the first question
+3. Listen to complete answers before proceeding
+4. Ask follow-up questions when appropriate
+5. Keep track of which questions you've asked
+6. Be encouraging if candidate seems nervous
+7. End professionally after covering all questions
+
+CONVERSATION STARTERS:
+- If you receive any greeting like "Hello", "Hi", respond with: "Hello {candidate.name}! Welcome to your interview for {candidate.job_title} at {company_name}. I'm excited to learn about your experience. Let's start with you telling me about yourself and your journey to applying for this role."
+- If candidate asks "Can you hear me?", respond: "Yes, I can hear you clearly! Let's begin with our interview. Please tell me about yourself."
+- If candidate seems confused, say: "No worries! This is an AI-powered interview. I'll be asking you questions about your experience and the {candidate.job_title} role. Shall we start?"
+
+IMPORTANT RULES:
+- Start immediately when you receive "INIT_INTERVIEW"
+- Always maintain a professional yet friendly tone
+- Give candidates time to think (10-15 seconds)
+- If no response after 20 seconds, ask: "Take your time, or would you like me to rephrase the question?"
+- Track answered questions to avoid repetition
+"""                    
+                    # Prepare HeyGen payload with proper configuration
+                    heygen_payload = {
+                        'name': kb_name,
+                        'description': f'Structured interview for {candidate.name} - {candidate.job_title}',
+                        'content': kb_content,
+                        'opening_line': f"Hello {candidate.name}, welcome to your interview for the {candidate.job_title} position at {company_name}. I'm your AI interviewer today. I've reviewed your resume and I'm excited to learn more about your experiences. Let's start with you telling me a bit about yourself and your journey to applying for this role.",
+                        'custom_prompt': f"""You are conducting a professional technical interview for {candidate.name}. 
+                        
+Your personality: Professional, friendly, encouraging, and engaged.
+
+Key behaviors:
+1. Ask questions from the provided list ONE AT A TIME
+2. Wait for complete answers before proceeding
+3. Show active listening with phrases like "That's interesting", "I see", "Tell me more"
+4. If they struggle, offer encouragement: "Take your time", "No worries"
+5. Ask follow-up questions based on their responses
+6. Keep track of which questions you've asked to avoid repetition
+
+Interview style:
+- Conversational, not robotic
+- Professional but warm
+- Encouraging when candidate seems nervous
+- Patient with responses
+
+Remember: This is a conversation, not an interrogation. Make {candidate.name} feel comfortable while thoroughly assessing their qualifications for the {candidate.job_title} role."""
+                    }
+                    
+                    # Make API call to HeyGen
+                    heygen_response = requests.post(
+                        'https://api.heygen.com/v1/streaming/knowledge_base',
+                        headers={
+                            'X-Api-Key': os.getenv('HEYGEN_API_KEY'),
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        json=heygen_payload,
+                        timeout=30
+                    )
+                    
+                    if heygen_response.ok:
+                        kb_data = heygen_response.json()
+                        knowledge_base_id = kb_data.get('data', {}).get('knowledge_base_id')
+                        kb_creation_method = "heygen_api"
+                        logger.info(f"✅ HeyGen KB created successfully: {knowledge_base_id}")
+                    else:
+                        error_text = heygen_response.text
+                        logger.error(f"HeyGen API error: {heygen_response.status_code} - {error_text}")
+                        
+                except Exception as e:
+                    logger.error(f"HeyGen KB creation failed: {e}", exc_info=True)
+            
+            # Fallback KB ID if HeyGen fails
+            if not knowledge_base_id:
+                knowledge_base_id = f"kb_{candidate.id}_{int(time.time())}"
+                kb_creation_method = "fallback"
+                logger.warning(f"Using fallback KB: {knowledge_base_id}")
+            
+            # Create interview session
+            interview_token = str(uuid.uuid4())
+            interview_session_id = f"session_{candidate.id}_{int(time.time())}"
+            
+            # Parse interview date
+            if isinstance(interview_date, str):
+                interview_datetime = datetime.fromisoformat(interview_date.replace('Z', '+00:00'))
+            else:
+                interview_datetime = datetime.now() + timedelta(days=3)
+            
+            # Update candidate record
+            candidate.interview_scheduled = True
+            candidate.interview_date = interview_datetime
+            candidate.interview_token = interview_token
+            candidate.interview_link = f"{request.host_url.rstrip('/')}/secure-interview/{interview_token}"
+            candidate.final_status = 'Interview Scheduled'
+            
+            # Safe attribute setting for optional fields
+            safe_attrs = {
+                'interview_session_id': interview_session_id,
+                'knowledge_base_id': knowledge_base_id,
+                'interview_created_at': datetime.now(),
+                'interview_expires_at': datetime.now() + timedelta(days=7),
+                'company_name': company_name,
+                'interview_time_slot': time_slot,
+                'interview_questions_asked': '[]',
+                'interview_answers_given': '[]',
+                'interview_total_questions': 0,
+                'interview_answered_questions': 0,
+                'job_description': job_description if job_description_override else None
+            }
+            
+            for attr, value in safe_attrs.items():
+                if hasattr(candidate, attr):
+                    setattr(candidate, attr, value)
+            
+            # Commit changes
+            session.commit()
+            
+            # Send email
+            email_sent = False
+            try:
+                send_interview_link_email(
+                    candidate_email=candidate.email,
+                    candidate_name=candidate.name,
+                    interview_link=candidate.interview_link,
+                    interview_date=interview_datetime,
+                    time_slot=time_slot,
+                    position=candidate.job_title
+                )
+                email_sent = True
+                logger.info(f"Interview email sent to {candidate.email}")
+            except Exception as e:
+                logger.error(f"Email failed: {e}")
+            
+            # Clear caches
+            cache.delete_memoized(get_cached_candidates)
+            
+            return jsonify({
+                "success": True,
+                "message": f"Interview scheduled for {candidate.name}",
+                "interview_link": candidate.interview_link,
+                "interview_date": interview_datetime.isoformat(),
+                "knowledge_base_id": knowledge_base_id,
+                "kb_creation_method": kb_creation_method,
+                "resume_extracted": resume_extracted,
+                "resume_content_length": len(resume_content),
+                "email_sent": email_sent,
+                "session_id": interview_session_id
+            }), 200
+            
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Error in schedule_interview: {e}", exc_info=True)
+            return jsonify({"success": False, "message": str(e)}), 500
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Critical error: {e}", exc_info=True)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+def generate_interview_questions(candidate_name, position, resume_content, job_description):
+    """Generate structured interview questions based on resume and job"""
+    
+    # Extract key skills from resume
+    skills = extract_skills_from_resume(resume_content)
+    
+    questions = f"""
+INTERVIEW QUESTIONS:
+
+1. INTRODUCTION (Ask first):
+   - "Tell me about yourself and your journey to applying for this {position} role."
+   - "What attracted you to our company and this position?"
+
+2. TECHNICAL QUESTIONS (Based on resume):"""
+    
+    # Add technical questions based on skills found
+    if 'python' in resume_content.lower():
+        questions += """
+   - "I see you have Python experience. Can you tell me about a complex Python project you've worked on?"
+   - "How do you handle error handling and debugging in Python?"""
+   
+    if 'javascript' in resume_content.lower() or 'react' in resume_content.lower():
+        questions += """
+   - "Tell me about your experience with JavaScript/React. What was the most challenging frontend problem you've solved?"
+   - "How do you manage state in React applications?"""
+    
+    if 'database' in resume_content.lower() or 'sql' in resume_content.lower():
+        questions += """
+   - "Describe your experience with databases. How do you optimize slow queries?"
+   - "Tell me about a time you designed a database schema."""
+    
+    questions += f"""
+
+3. BEHAVIORAL QUESTIONS:
+   - "Describe a time when you had to work under pressure. How did you handle it?"
+   - "Tell me about a project where you had to collaborate with a difficult team member."
+   - "Give me an example of when you had to learn a new technology quickly."
+
+4. ROLE-SPECIFIC QUESTIONS:
+   - "How do you see yourself contributing to our team in the first 90 days?"
+   - "What aspects of this {position} role excite you the most?"
+
+5. CLOSING QUESTIONS:
+   - "What questions do you have for me about the role or the company?"
+   - "Is there anything else you'd like me to know about your qualifications?"
+
+REMEMBER: Ask these questions one at a time, wait for complete responses, and ask relevant follow-up questions based on their answers.
+"""
+    
+    return questions
+
+
+# Add this helper endpoint to check interview status
+@app.route('/api/interview-status/<int:candidate_id>', methods=['GET'])
+def get_interview_status(candidate_id):
+    """Check if interview is already scheduled for a candidate"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        return jsonify({
+            "candidate_id": candidate.id,
+            "name": candidate.name,
+            "email": candidate.email,
+            "exam_completed": candidate.exam_completed,
+            "exam_percentage": candidate.exam_percentage,
+            "interview_scheduled": candidate.interview_scheduled,
+            "interview_token": candidate.interview_token,
+            "interview_link": candidate.interview_link,
+            "final_status": candidate.final_status
+        }), 200
+    finally:
+        session.close()
+
+
+@app.route('/api/verify-interview-process/<int:candidate_id>', methods=['GET'])
+def verify_interview_process(candidate_id):
+    """Verify the interview link generation process for a candidate"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        # Check assessment completion
+        assessment_status = {
+            "exam_completed": candidate.exam_completed,
+            "exam_percentage": candidate.exam_percentage,
+            "exam_score": candidate.exam_score,
+            "exam_feedback": candidate.exam_feedback
+        }
+        
+        # Check interview status
+        interview_status = {
+            "interview_scheduled": candidate.interview_scheduled,
+            "interview_token": candidate.interview_token,
+            "interview_link": candidate.interview_link,
+            "knowledge_base_id": candidate.knowledge_base_id,
+            "final_status": candidate.final_status
+        }
+        
+        # Determine if interview should be scheduled
+        should_schedule = (
+            candidate.exam_completed and 
+            candidate.exam_percentage >= 70 and 
+            not candidate.interview_scheduled
+        )
+        
+        # Generate test interview link if needed
+        test_link = None
+        if should_schedule and not candidate.interview_token:
+            import uuid
+            test_token = str(uuid.uuid4())
+            test_link = f"{request.host_url.rstrip('/')}/secure-interview/{test_token}"
+        
+        return jsonify({
+            "candidate_info": {
+                "id": candidate.id,
+                "name": candidate.name,
+                "email": candidate.email,
+                "job_title": candidate.job_title
+            },
+            "assessment_status": assessment_status,
+            "interview_status": interview_status,
+            "should_schedule_interview": should_schedule,
+            "test_interview_link": test_link,
+            "process_ready": candidate.exam_completed and candidate.exam_percentage is not None
+        }), 200
+    finally:
+        session.close()
+
+# Add these endpoints to your backend.py
+
+@app.route('/api/interview/recording/start', methods=['POST', 'OPTIONS'])
+def start_interview_recording():
+    """Mark interview recording as started"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        recording_format = data.get('recording_format', 'video/webm')
+        
+        if not session_id:
+            return jsonify({"error": "session_id is required"}), 400
+        
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(
+                interview_session_id=session_id
+            ).first()
+            
+            if not candidate:
+                return jsonify({"error": "Session not found"}), 404
+            
+            # Update recording status
+            candidate.interview_recording_status = 'recording'
+            candidate.interview_recording_format = recording_format
+            candidate.interview_recording_started_at = datetime.now()
+            
+            session.commit()
+            
+            logger.info(f"🔴 Recording started for session {session_id}")
+            
+            return jsonify({
+                "success": True,
+                "message": "Recording started",
+                "session_id": session_id
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Error starting recording: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/interview/recording/upload', methods=['POST', 'OPTIONS'])
+def upload_recording():
+    """Handle interview recording upload"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        if 'recording' not in request.files:
+            return jsonify({"error": "No recording file provided"}), 400
+        
+        file = request.files['recording']
+        session_id = request.form.get('session_id')
+        duration = request.form.get('duration', '0')
+        
+        if not session_id:
+            return jsonify({"error": "Session ID required"}), 400
+        
+        # Create recordings directory
+        recordings_dir = os.path.join(BASE_DIR, 'interview_recordings')
+        os.makedirs(recordings_dir, exist_ok=True)
+        
+        # Save file
+        filename = f"interview_{session_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.webm"
+        filepath = os.path.join(recordings_dir, filename)
+        file.save(filepath)
+        
+        # Update database
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(
+                interview_session_id=session_id
+            ).first()
+            
+            if candidate:
+                candidate.interview_recording_file = filepath
+                candidate.interview_recording_size = os.path.getsize(filepath)
+                candidate.interview_recording_duration = int(duration)
+                candidate.interview_recording_status = 'completed'
+                session.commit()
+                
+                logger.info(f"Recording saved for session {session_id}: {filename}")
+                
+                # Optional: Upload to cloud storage (S3, etc.)
+                cloud_url = upload_to_cloud_storage(filepath, filename)
+                if cloud_url:
+                    candidate.interview_recording_url = cloud_url
+                    session.commit()
+                
+            return jsonify({
+                "success": True,
+                "filename": filename,
+                "size": os.path.getsize(filepath),
+                "duration": duration
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Error uploading recording: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# Add this to your backend.py if the /api/interview/qa/track endpoint is missing:
+
+@app.route('/api/interview/qa/track', methods=['POST', 'OPTIONS'])
+def track_qa():
+    """Track questions and answers during interview with proper session management"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        qa_type = data.get('type')  # 'question' or 'answer'
+        content = data.get('content')
+        timestamp = data.get('timestamp')
+        
+        # FIXED: Also accept interview_token as fallback
+        interview_token = data.get('interview_token')
+        
+        if not (session_id or interview_token) or not qa_type or not content:
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        logger.info(f"Tracking {qa_type}: session={session_id}, token={interview_token}")
+        
+        session = SessionLocal()
+        try:
+            # Find candidate by session ID or interview token
+            if session_id:
+                candidate = session.query(Candidate).filter_by(
+                    interview_session_id=session_id
+                ).first()
+            else:
+                candidate = session.query(Candidate).filter_by(
+                    interview_token=interview_token
+                ).first()
+            
+            if not candidate:
+                logger.error(f"No candidate found for session={session_id}, token={interview_token}")
+                return jsonify({"error": "Session not found"}), 404
+            
+            # Initialize Q&A arrays if needed
+            try:
+                questions = json.loads(candidate.interview_questions_asked or '[]')
+            except:
+                questions = []
+            
+            try:
+                answers = json.loads(candidate.interview_answers_given or '[]')
+            except:
+                answers = []
+            
+            if qa_type == 'question':
+                question_data = {
+                    'id': str(uuid.uuid4()),
+                    'text': content,
+                    'timestamp': timestamp or datetime.now().isoformat(),
+                    'order': len(questions) + 1,
+                    'type': 'avatar_question'
+                }
+                questions.append(question_data)
+                candidate.interview_questions_asked = json.dumps(questions)
+                candidate.interview_total_questions = len(questions)
+                logger.info(f"Added question #{len(questions)}: {content[:50]}...")
+                
+            elif qa_type == 'answer':
+                answer_data = {
+                    'id': str(uuid.uuid4()),
+                    'text': content,
+                    'timestamp': timestamp or datetime.now().isoformat(),
+                    'question_order': len(questions),
+                    'order': len(answers) + 1,
+                    'type': 'candidate_answer'
+                }
+                answers.append(answer_data)
+                candidate.interview_answers_given = json.dumps(answers)
+                candidate.interview_answered_questions = len(answers)
+                logger.info(f"Added answer #{len(answers)}: {content[:50]}...")
+            
+            # Update transcript
+            transcript_entry = f"\n[{datetime.now().strftime('%H:%M:%S')}] {qa_type.upper()}: {content}"
+            candidate.interview_transcript = (candidate.interview_transcript or '') + transcript_entry
+            
+            session.commit()
+            
+            return jsonify({
+                "success": True,
+                "candidate_id": candidate.id,
+                "session_id": candidate.interview_session_id,
+                "total_questions": len(questions),
+                "total_answers": len(answers),
+                "message": f"{qa_type} tracked successfully"
+            }), 200
+            
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Error in track_qa: {e}", exc_info=True)
+            return jsonify({"error": f"Database error: {str(e)}"}), 500
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Error tracking Q&A: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+# Also add this helper endpoint to verify Q&A data:
+@app.route('/api/interview/qa/verify/<session_id>', methods=['GET'])
+def verify_qa_tracking(session_id):
+    """Verify Q&A tracking for a session"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(
+            interview_session_id=session_id
+        ).first()
+        
+        if not candidate:
+            return jsonify({"error": "Session not found"}), 404
+        
+        questions = json.loads(candidate.interview_questions_asked or '[]')
+        answers = json.loads(candidate.interview_answers_given or '[]')
+        
+        # Create Q&A pairs for verification
+        qa_pairs = []
+        for i, question in enumerate(questions):
+            matching_answer = None
+            for answer in answers:
+                if answer.get('question_order') == i + 1:
+                    matching_answer = answer
+                    break
+            
+            qa_pairs.append({
+                'question': question,
+                'answer': matching_answer,
+                'has_answer': matching_answer is not None
+            })
+        
+        return jsonify({
+            "session_id": session_id,
+            "candidate_name": candidate.name,
+            "total_questions": len(questions),
+            "total_answers": len(answers),
+            "answer_rate": f"{(len(answers) / len(questions) * 100) if questions else 0:.1f}%",
+            "qa_pairs": qa_pairs,
+            "transcript_length": len(candidate.interview_transcript or ''),
+            "recording_status": candidate.interview_recording_status
+        }), 200
+        
+    finally:
+        session.close()
+
+def upload_to_cloud_storage(local_path, filename):
+    """Upload recording to cloud storage (implement based on your provider)"""
+    try:
+        # Example for S3
+        if os.getenv('AWS_ACCESS_KEY_ID'):
+            import boto3
+            s3 = boto3.client('s3')
+            bucket = os.getenv('S3_BUCKET_NAME', 'interview-recordings')
+            key = f"interviews/{filename}"
+            
+            s3.upload_file(local_path, bucket, key)
+            return f"https://{bucket}.s3.amazonaws.com/{key}"
+        
+        # Example for Google Cloud Storage
+        # if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
+        #     from google.cloud import storage
+        #     client = storage.Client()
+        #     bucket = client.bucket('interview-recordings')
+        #     blob = bucket.blob(f"interviews/{filename}")
+        #     blob.upload_from_filename(local_path)
+        #     return blob.public_url
+        
+        return None
+        
+    except Exception as e:
+        logger.error(f"Cloud upload failed: {e}")
+        return None
+
+
+# Add this route to check recording and Q&A data
+@app.route('/api/interview/session/data/<session_id>', methods=['GET'])
+def get_interview_session_data(session_id):
+    """Get complete interview session data including recording and Q&A"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(
+            interview_session_id=session_id
+        ).first()
+        
+        if not candidate:
+            return jsonify({"error": "Session not found"}), 404
+        
+        # Parse Q&A data
+        questions = json.loads(candidate.interview_questions_asked or '[]')
+        answers = json.loads(candidate.interview_answers_given or '[]')
+        
+        # Create Q&A pairs
+        qa_pairs = []
+        for i, question in enumerate(questions):
+            answer = next((a for a in answers if a.get('question_order') == i + 1), None)
+            qa_pairs.append({
+                'question': question,
+                'answer': answer
+            })
+        
+        return jsonify({
+            "session_id": session_id,
+            "candidate": {
+                "id": candidate.id,
+                "name": candidate.name,
+                "email": candidate.email,
+                "position": candidate.job_title
+            },
+            "recording": {
+                "status": candidate.interview_recording_status,
+                "file": candidate.interview_recording_file,
+                "url": candidate.interview_recording_url,
+                "duration": candidate.interview_recording_duration,
+                "size": candidate.interview_recording_size,
+                "format": candidate.interview_recording_format
+            },
+            "qa_data": {
+                "total_questions": candidate.interview_total_questions,
+                "total_answers": candidate.interview_answered_questions,
+                "qa_pairs": qa_pairs,
+                "raw_questions": questions,
+                "raw_answers": answers
+            },
+            "ai_analysis": {
+                "status": candidate.interview_ai_analysis_status,
+                "overall_score": candidate.interview_ai_score,
+                "technical_score": candidate.interview_ai_technical_score,
+                "communication_score": candidate.interview_ai_communication_score,
+                "feedback": candidate.interview_ai_overall_feedback
+            },
+            "timestamps": {
+                "started": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+                "completed": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None
+            }
+        }), 200
+        
+    finally:
+        session.close()
+
+
+
+# Interview Session Management Endpoints
+# Add these endpoints to your backend.py file
+
+@app.route('/api/interview/session/start', methods=['POST', 'OPTIONS'])
+def start_interview_session():
+    """Enhanced interview session creation with better error handling"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        interview_token = data.get('interview_token')
+        session_id = data.get('session_id')  # Accept explicit session ID
+        candidate_id = data.get('candidate_id')
+        
+        if not interview_token and not candidate_id:
+            return jsonify({"success": False, "message": "interview_token or candidate_id is required"}), 400
+        
+        session = SessionLocal()
+        try:
+            # Find candidate
+            if interview_token:
+                candidate = session.query(Candidate).filter_by(interview_token=interview_token).first()
+            else:
+                candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+                
+            if not candidate:
+                return jsonify({"success": False, "message": "Candidate not found"}), 404
+            
+            # Use provided session ID or generate new one
+            if not session_id:
+                session_id = f"session_{candidate.id}_{int(time.time())}"
+            
+            # Update candidate with session info
+            candidate.interview_session_id = session_id
+            candidate.interview_started_at = datetime.now()
+            candidate.interview_status = 'in_progress'
+            
+            # Initialize Q&A tracking
+            candidate.interview_questions_asked = '[]'
+            candidate.interview_answers_given = '[]'
+            candidate.interview_total_questions = 0
+            candidate.interview_answered_questions = 0
+            
+            session.commit()
+            
+            logger.info(f"✅ Interview session started: {session_id} for {candidate.name}")
+            
+            return jsonify({
+                "success": True,
+                "session_id": session_id,
+                "candidate_id": candidate.id,
+                "candidate_name": candidate.name,
+                "message": "Interview session started successfully"
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Error starting interview session: {e}", exc_info=True)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+# 1. Add route to get candidate data by token
+@app.route('/api/get-candidate-by-token/<token>', methods=['GET', 'OPTIONS'])
+def get_candidate_by_token(token):
+    """Get candidate data by interview token for KB creation"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        candidate_data = {
+            "id": candidate.id,
+            "name": candidate.name,
+            "email": candidate.email,
+            "job_title": candidate.job_title,
+            "company": getattr(candidate, 'company_name', os.getenv('COMPANY_NAME', 'Our Company')),
+            "resume_path": candidate.resume_path,
+            "job_description": getattr(candidate, 'job_description', None),
+            "ats_score": candidate.ats_score,
+            "phone": getattr(candidate, 'phone', None)
+        }
+        
+        return jsonify(candidate_data), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting candidate by token: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+# 2. Add route to extract resume content
+@app.route('/api/extract-resume/<int:candidate_id>', methods=['GET', 'OPTIONS'])
+def extract_resume_content_api(candidate_id):
+    """Extract resume content for a candidate"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        if not candidate.resume_path or not os.path.exists(candidate.resume_path):
+            return jsonify({
+                "content": "",
+                "message": "No resume file available",
+                "file_path": candidate.resume_path
+            }), 200
+        
+        # Extract resume content
+        resume_content = extract_resume_content(candidate.resume_path)
+        
+        # Extract additional metadata
+        skills = extract_skills_from_resume(resume_content)
+        experience = extract_experience_years(resume_content)
+        projects = extract_projects_from_resume(resume_content)
+        
+        return jsonify({
+            "content": resume_content,
+            "skills": skills,
+            "experience": experience,
+            "projects": projects,
+            "file_path": candidate.resume_path,
+            "content_length": len(resume_content),
+            "extraction_successful": len(resume_content) > 0
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error extracting resume: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+# 3. Enhanced knowledge base storage
+@app.route('/api/store-knowledge-base', methods=['POST', 'OPTIONS'])
+def store_knowledge_base_enhanced():
+    """Store knowledge base data with enhanced tracking"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        candidate_id = data.get('candidate_id')
+        kb_id = data.get('knowledge_base_id')
+        content = data.get('content', '')
+        
+        if not candidate_id or not kb_id:
+            return jsonify({"error": "candidate_id and knowledge_base_id are required"}), 400
+        
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+            
+            if not candidate:
+                return jsonify({"error": "Candidate not found"}), 404
+            
+            # Update candidate with knowledge base information
+            candidate.knowledge_base_id = kb_id
+            candidate.interview_kb_id = kb_id  # Also store in interview-specific field
+            
+            # Store knowledge base content if we have the field
+            if hasattr(candidate, 'interview_kb_content'):
+                candidate.interview_kb_content = content
+            
+            # Store metadata
+            if hasattr(candidate, 'interview_kb_metadata'):
+                metadata = {
+                    'created_at': data.get('created_at', datetime.now().isoformat()),
+                    'content_length': len(content),
+                    'kb_type': 'heygen' if not kb_id.startswith('kb_') else 'fallback',
+                    'version': '1.0'
+                }
+                candidate.interview_kb_metadata = json.dumps(metadata)
+            
+            # Update timestamps
+            candidate.interview_created_at = datetime.now()
+            if not candidate.interview_expires_at:
+                candidate.interview_expires_at = datetime.now() + timedelta(days=7)
+            
+            session.commit()
+            
+            logger.info(f"✅ Knowledge base {kb_id} stored for candidate {candidate.name}")
+            
+            return jsonify({
+                "success": True,
+                "message": "Knowledge base stored successfully",
+                "candidate_id": candidate_id,
+                "knowledge_base_id": kb_id
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Error storing knowledge base: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# 4. Enhanced resume extraction function
+def extract_resume_content(resume_path):
+    """Enhanced resume extraction with fixed f-string syntax"""
+    try:
+        if not os.path.exists(resume_path):
+            logger.error(f"Resume file not found: {resume_path}")
+            return ""
+        
+        file_ext = os.path.splitext(resume_path)[1].lower()
+        logger.info(f"Extracting resume: {resume_path} (type: {file_ext})")
+        
+        resume_text = ""
+        
+        if file_ext == '.pdf':
+            # Try multiple PDF extraction methods
+            resume_text = extract_pdf_content(resume_path)
+        elif file_ext in ['.docx', '.doc']:
+            resume_text = extract_docx_content(resume_path)
+        elif file_ext == '.txt':
+            resume_text = extract_txt_content(resume_path)
+        else:
+            logger.warning(f"Unsupported file type: {file_ext}")
+        
+        if resume_text and len(resume_text.strip()) > 50:
+            logger.info(f"Resume extracted successfully: {len(resume_text)} characters")
+            return resume_text.strip()
+        else:
+            logger.error("Resume extraction failed or produced minimal content")
+            return ""
+            
+    except Exception as e:
+        logger.error(f"Resume extraction error: {str(e)}", exc_info=True)
+        return ""
+
+
+def extract_pdf_content(pdf_path):
+    """Extract content from PDF using multiple methods"""
+    try:
+        # Method 1: Try PyPDF2
+        try:
+            import PyPDF2
+            with open(pdf_path, 'rb') as file:
+                pdf_reader = PyPDF2.PdfReader(file)
+                text = ""
+                for page in pdf_reader.pages:
+                    text += page.extract_text() + "\n"
+                if text.strip():
+                    return text.strip()
+        except Exception as e:
+            logger.warning(f"PyPDF2 extraction failed: {str(e)}")
+        
+        # Method 2: Try pdfplumber
+        try:
+            import pdfplumber
+            with pdfplumber.open(pdf_path) as pdf:
+                text = ""
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+                if text.strip():
+                    return text.strip()
+        except Exception as e:
+            logger.warning(f"pdfplumber extraction failed: {str(e)}")
+        
+        # Method 3: Try pymupdf (fitz)
+        try:
+            import fitz  # pymupdf
+            doc = fitz.open(pdf_path)
+            text = ""
+            for page in doc:
+                text += page.get_text() + "\n"
+            doc.close()
+            if text.strip():
+                return text.strip()
+        except Exception as e:
+            logger.warning(f"pymupdf extraction failed: {str(e)}")
+            
+    except Exception as e:
+        logger.error(f"PDF extraction failed: {str(e)}")
+    
+    return ""
+
+
+def extract_docx_content(docx_path):
+    """Extract content from DOCX files"""
+    try:
+        from docx import Document
+        doc = Document(docx_path)
+        
+        # Extract text from paragraphs
+        text = "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
+        
+        # Also extract text from tables
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    if cell.text.strip():
+                        text += "\n" + cell.text.strip()
+        
+        return text.strip()
+    except Exception as e:
+        logger.error(f"DOCX extraction failed: {str(e)}")
+        return ""
+
+
+def extract_txt_content(txt_path):
+    """Extract content from text files"""
+    try:
+        # Try UTF-8 first
+        try:
+            with open(txt_path, 'r', encoding='utf-8') as file:
+                return file.read().strip()
+        except UnicodeDecodeError:
+            # Fallback to latin-1
+            with open(txt_path, 'r', encoding='latin-1') as file:
+                return file.read().strip()
+    except Exception as e:
+        logger.error(f"TXT extraction failed: {str(e)}")
+        return ""
+
+# 5. Add validation endpoint for knowledge base creation
+@app.route('/api/validate-kb-creation/<int:candidate_id>', methods=['GET', 'OPTIONS'])
+def validate_kb_creation(candidate_id):
+    """Validate that all components are ready for KB creation"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        # Check all requirements
+        checks = {
+            "candidate_exists": True,
+            "interview_token_exists": bool(candidate.interview_token),
+            "resume_file_exists": bool(candidate.resume_path and os.path.exists(candidate.resume_path)),
+            "heygen_api_configured": bool(os.getenv('HEYGEN_API_KEY')),
+            "job_title_available": bool(candidate.job_title),
+            "company_name_available": bool(getattr(candidate, 'company_name', None) or os.getenv('COMPANY_NAME'))
+        }
+        
+        # Try to extract resume content
+        resume_content = ""
+        if checks["resume_file_exists"]:
+            resume_content = extract_resume_content_enhanced(candidate.resume_path)
+            checks["resume_extractable"] = len(resume_content) > 0
+        else:
+            checks["resume_extractable"] = False
+        
+        # Check if KB already exists
+        checks["kb_already_exists"] = bool(candidate.knowledge_base_id)
+        
+        # Overall readiness
+        critical_checks = ["candidate_exists", "interview_token_exists", "heygen_api_configured", "job_title_available"]
+        all_critical_passed = all(checks[check] for check in critical_checks)
+        
+        return jsonify({
+            "candidate_id": candidate_id,
+            "candidate_name": candidate.name,
+            "ready_for_kb_creation": all_critical_passed,
+            "checks": checks,
+            "resume_content_length": len(resume_content),
+            "existing_kb_id": candidate.knowledge_base_id,
+            "recommendations": generate_kb_recommendations(checks)
+        }), 200
+        
+    finally:
+        session.close()
+
+
+def generate_kb_recommendations(checks):
+    """Generate recommendations based on validation checks"""
+    recommendations = []
+    
+    if not checks.get("heygen_api_configured"):
+        recommendations.append("Set HEYGEN_API_KEY environment variable")
+    
+    if not checks.get("resume_file_exists"):
+        recommendations.append("Upload candidate resume file")
+    elif not checks.get("resume_extractable"):
+        recommendations.append("Resume file exists but content extraction failed - check file format")
+    
+    if not checks.get("interview_token_exists"):
+        recommendations.append("Generate interview token for candidate")
+    
+    if not checks.get("company_name_available"):
+        recommendations.append("Set COMPANY_NAME environment variable or add company to candidate record")
+    
+    if checks.get("kb_already_exists"):
+        recommendations.append("Knowledge base already exists - consider updating instead of recreating")
+    
+    return recommendations
+
+
+# 6. Add test endpoint for KB creation
+@app.route('/api/test-kb-creation/<int:candidate_id>', methods=['POST', 'OPTIONS'])
+def test_kb_creation(candidate_id):
+    """Test knowledge base creation for debugging"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        # Step 1: Validate candidate
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+            if not candidate:
+                return jsonify({"error": "Candidate not found"}), 404
+            
+            test_results = {
+                "candidate_info": {
+                    "id": candidate.id,
+                    "name": candidate.name,
+                    "email": candidate.email,
+                    "job_title": candidate.job_title
+                }
+            }
+            
+            # Step 2: Test resume extraction
+            resume_content = ""
+            if candidate.resume_path:
+                resume_content = extract_resume_content_enhanced(candidate.resume_path)
+                test_results["resume_extraction"] = {
+                    "success": len(resume_content) > 0,
+                    "content_length": len(resume_content),
+                    "file_path": candidate.resume_path,
+                    "preview": resume_content[:200] + "..." if resume_content else "No content"
+                }
+            
+            # Step 3: Test HeyGen API connection
+            heygen_key = os.getenv('HEYGEN_API_KEY')
+            if heygen_key:
+                try:
+                    # Test with a simple knowledge base
+                    test_kb_content = f"Test knowledge base for {candidate.name}"
+                    
+                    test_response = requests.post(
+                        'https://api.heygen.com/v1/streaming/knowledge_base',
+                        headers={
+                            'X-Api-Key': heygen_key,
+                            'Content-Type': 'application/json'
+                        },
+                        json={
+                            'name': f'Test_KB_{candidate.id}_{int(time.time())}',
+                            'description': 'Test knowledge base',
+                            'content': test_kb_content
+                        },
+                        timeout=30
+                    )
+                    
+                    test_results["heygen_api_test"] = {
+                        "success": test_response.ok,
+                        "status_code": test_response.status_code,
+                        "response_preview": test_response.text[:500]
+                    }
+                    
+                    if test_response.ok:
+                        kb_data = test_response.json()
+                        test_kb_id = kb_data.get('data', {}).get('knowledge_base_id')
+                        if test_kb_id:
+                            test_results["heygen_api_test"]["kb_id_created"] = test_kb_id
+                
+                except Exception as e:
+                    test_results["heygen_api_test"] = {
+                        "success": False,
+                        "error": str(e)
+                    }
+            else:
+                test_results["heygen_api_test"] = {
+                    "success": False,
+                    "error": "HEYGEN_API_KEY not configured"
+                }
+            
+            return jsonify({
+                "success": True,
+                "test_results": test_results,
+                "ready_for_production": (
+                    test_results.get("heygen_api_test", {}).get("success", False) and
+                    test_results.get("resume_extraction", {}).get("success", False)
+                )
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"KB creation test failed: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/interview/question/add', methods=['POST', 'OPTIONS'])
+@rate_limit(max_calls=50, time_window=60)
+def add_interview_question():
+    """Add a question asked by the avatar during interview"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        question_data = data.get('question_data', {})
+        
+        if not session_id or not question_data.get('text'):
+            return jsonify({"success": False, "message": "session_id and question_data.text are required"}), 400
+        
+        # Import session manager
+        from interview_session_manager import interview_session_manager
+        
+        # Add question to session
+        question_id = interview_session_manager.add_interview_question(session_id, question_data)
+        
+        if question_id:
+            return jsonify({
+                "success": True,
+                "question_id": question_id,
+                "message": "Question added successfully"
+            }), 200
+        else:
+            return jsonify({"success": False, "message": "Failed to add question"}), 500
+            
+    except Exception as e:
+        logger.error(f"Error adding interview question: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/interview/answer/add', methods=['POST', 'OPTIONS'])
+@rate_limit(max_calls=50, time_window=60)
+def add_interview_answer():
+    """Add a candidate's answer during interview"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        question_id = data.get('question_id')
+        answer_data = data.get('answer_data', {})
+        
+        if not session_id or not question_id or not answer_data.get('text'):
+            return jsonify({"success": False, "message": "session_id, question_id, and answer_data.text are required"}), 400
+        
+        # Import session manager
+        from interview_session_manager import interview_session_manager
+        
+        # Add answer to session
+        answer_id = interview_session_manager.add_interview_answer(session_id, question_id, answer_data)
+        
+        if answer_id:
+            return jsonify({
+                "success": True,
+                "answer_id": answer_id,
+                "message": "Answer added successfully"
+            }), 200
+        else:
+            return jsonify({"success": False, "message": "Failed to add answer"}), 500
+            
+    except Exception as e:
+        logger.error(f"Error adding interview answer: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/interview/session/end', methods=['POST', 'OPTIONS'])
+def end_interview_session():
+    """End the interview session"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        
+        if not session_id:
+            return jsonify({"error": "session_id is required"}), 400
+        
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(
+                interview_session_id=session_id
+            ).first()
+            
+            if not candidate:
+                return jsonify({"error": "Session not found"}), 404
+            
+            # Update session status
+            candidate.interview_completed_at = datetime.now()
+            candidate.interview_status = 'completed'
+            
+            # Calculate duration
+            if candidate.interview_started_at:
+                duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
+                candidate.interview_duration = int(duration)
+            
+            session.commit()
+            
+            # Clear caches
+            cache.delete_memoized(get_cached_candidates)
+            
+            logger.info(f"✅ Interview session ended: {session_id}")
+            
+            return jsonify({
+                "success": True,
+                "message": "Interview session ended successfully",
+                "session_id": session_id,
+                "duration": getattr(candidate, 'interview_duration', 0)
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Error ending interview session: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# @app.route('/api/interview/session/<session_id>', methods=['GET'])
+# def get_interview_session_data(session_id):
+    # """Get complete interview session data"""
+    # try:
+        # Import session manager
+        # from interview_session_manager import interview_session_manager
+        # 
+        # Get session data
+        # session_data = interview_session_manager.get_session_data(session_id)
+        # 
+        # if session_data:
+            # return jsonify({
+                # "success": True,
+                # "session_data": session_data
+            # }), 200
+        # else:
+            # return jsonify({"success": False, "message": "Session not found"}), 404
+            # 
+    # except Exception as e:
+        # logger.error(f"Error getting session data: {e}")
+        # return jsonify({"success": False, "message": str(e)}), 500
+# 
+
+@app.route('/api/interview/analysis/<int:candidate_id>', methods=['GET'])
+def get_interview_analysis(candidate_id):
+    """Get AI analysis results for a candidate's interview"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        analysis_data = {
+            "technical_score": candidate.interview_ai_technical_score,
+            "communication_score": candidate.interview_ai_communication_score,
+            "problem_solving_score": candidate.interview_ai_problem_solving_score,
+            "cultural_fit_score": candidate.interview_ai_cultural_fit_score,
+            "overall_score": candidate.interview_ai_score,
+            "overall_feedback": candidate.interview_ai_overall_feedback,
+            "question_analysis": json.loads(candidate.interview_ai_questions_analysis) if candidate.interview_ai_questions_analysis else [],
+            "analysis_status": candidate.interview_ai_analysis_status,
+            "final_status": candidate.interview_final_status
+        }
+        
+        return jsonify({
+            "success": True,
+            "candidate_id": candidate_id,
+            "analysis": analysis_data
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting interview analysis: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        session.close()
+
+# Add this to your backend.py to properly create knowledge base from resume/job
+
+@app.route('/api/create-interview-knowledge-base', methods=['POST', 'OPTIONS'])
+def create_interview_knowledge_base():
+    """Create HeyGen knowledge base from candidate's resume and job description"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        candidate_id = data.get('candidate_id')
+        
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+            if not candidate:
+                return jsonify({"error": "Candidate not found"}), 404
+            
+            # Extract resume content
+            resume_content = ""
+            if candidate.resume_path and os.path.exists(candidate.resume_path):
+                resume_content = extract_resume_content(candidate.resume_path)
+            
+            # Get job description
+            job_description = candidate.job_description or f"Position: {candidate.job_title}"
+            
+            # Create knowledge base content
+            kb_content = f"""
+            CANDIDATE INFORMATION:
+            Name: {candidate.name}
+            Email: {candidate.email}
+            Position Applied: {candidate.job_title}
+            
+            RESUME CONTENT:
+            {resume_content}
+            
+            JOB DESCRIPTION:
+            {job_description}
+            
+            INTERVIEW INSTRUCTIONS:
+            - Ask questions based on the candidate's experience mentioned in resume
+            - Focus on skills required for {candidate.job_title}
+            - Assess technical competence based on job requirements
+            - Ask behavioral questions related to their past experiences
+            """
+            
+            # Call HeyGen API to create knowledge base
+            heygen_key = os.getenv('HEYGEN_API_KEY')
+            if heygen_key:
+                response = requests.post(
+                    'https://api.heygen.com/v1/streaming/knowledge_base',
+                    headers={
+                        'X-Api-Key': heygen_key,
+                        'Content-Type': 'application/json'
+                    },
+                    json={
+                        'name': f"Interview_{candidate.name}_{candidate.job_title}",
+                        'content': kb_content,
+                        'custom_prompt': generate_custom_interview_prompt(candidate, resume_content, job_description)
+                    }
+                )
+                
+                if response.ok:
+                    kb_data = response.json()
+                    kb_id = kb_data['data']['knowledge_base_id']
+                    
+                    # Update candidate record
+                    candidate.knowledge_base_id = kb_id
+                    candidate.interview_kb_id = kb_id
+                    session.commit()
+                    
+                    return jsonify({
+                        "success": True,
+                        "knowledge_base_id": kb_id
+                    }), 200
+            
+            # Fallback if HeyGen unavailable
+            fallback_kb_id = f"kb_{candidate_id}_{int(time.time())}"
+            candidate.knowledge_base_id = fallback_kb_id
+            session.commit()
+            
+            return jsonify({
+                "success": True,
+                "knowledge_base_id": fallback_kb_id,
+                "fallback": True
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Error creating knowledge base: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+def generate_custom_interview_prompt(candidate, resume_content, job_description):
+    """Generate custom interview prompt based on resume and job"""
+    return f"""
+    You are interviewing {candidate.name} for {candidate.job_title} position.
+    
+    Based on their resume, ask questions about:
+    1. Their experience with technologies mentioned in their resume
+    2. Projects they've worked on
+    3. Challenges they've faced
+    4. Their approach to problem-solving
+    
+    Based on the job requirements, assess:
+    1. Technical skills required for the role
+    2. Soft skills and communication
+    3. Cultural fit
+    4. Career goals alignment
+    
+    Keep the interview conversational and professional.
+    Ask follow-up questions based on their responses.
+    """
+
+
+# 2. Enhanced resume extraction function with better error handling
+def extract_resume_content(resume_path):
+    """Extract text content from resume with better error handling"""
+    try:
+        if not os.path.exists(resume_path):
+            logger.error(f"Resume file not found: {resume_path}")
+            return ""
+        
+        file_ext = os.path.splitext(resume_path)[1].lower()
+        logger.info(f"Extracting resume: {resume_path} (type: {file_ext})")
+        
+        resume_text = ""
+        
+        if file_ext == '.pdf':
+            # Try PyPDF2 first
+            try:
+                import PyPDF2
+                with open(resume_path, 'rb') as file:
+                    pdf_reader = PyPDF2.PdfReader(file)
+                    for page in pdf_reader.pages:
+                        resume_text += page.extract_text() + "\n"
+                
+                if resume_text.strip():
+                    logger.info(f"✅ PDF extracted with PyPDF2: {len(resume_text)} chars")
+                    return resume_text.strip()
+            except Exception as e:
+                logger.warning(f"PyPDF2 failed: {e}")
+            
+            # Try pdfplumber as fallback
+            try:
+                import pdfplumber
+                with pdfplumber.open(resume_path) as pdf:
+                    for page in pdf.pages:
+                        page_text = page.extract_text()
+                        if page_text:
+                            resume_text += page_text + "\n"
+                
+                if resume_text.strip():
+                    logger.info(f"✅ PDF extracted with pdfplumber: {len(resume_text)} chars")
+                    return resume_text.strip()
+            except Exception as e:
+                logger.warning(f"pdfplumber failed: {e}")
+                    
+        elif file_ext in ['.docx', '.doc']:
+            try:
+                from docx import Document
+                doc = Document(resume_path)
+                resume_text = "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
+                logger.info(f"✅ DOCX extracted: {len(resume_text)} chars")
+                return resume_text.strip()
+            except Exception as e:
+                logger.error(f"DOCX extraction error: {e}")
+                
+        elif file_ext == '.txt':
+            try:
+                with open(resume_path, 'r', encoding='utf-8') as file:
+                    resume_text = file.read()
+                logger.info(f"✅ TXT extracted: {len(resume_text)} chars")
+                return resume_text.strip()
+            except UnicodeDecodeError:
+                with open(resume_path, 'r', encoding='latin-1') as file:
+                    resume_text = file.read()
+                return resume_text.strip()
+        
+        # If we couldn't extract anything, return empty string
+        if not resume_text:
+            logger.error(f"Failed to extract any text from {resume_path}")
+            
+    except Exception as e:
+        logger.error(f"Resume extraction failed: {e}", exc_info=True)
+    
+    return ""
+
+@app.route('/api/verify-kb-creation/<int:candidate_id>', methods=['GET'])
+def verify_kb_creation(candidate_id):
+    """Verify knowledge base creation for a candidate"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        # Check if we can extract resume
+        resume_content = ""
+        if candidate.resume_path and os.path.exists(candidate.resume_path):
+            resume_content = extract_resume_content(candidate.resume_path)
+        
+        return jsonify({
+            "candidate_id": candidate.id,
+            "name": candidate.name,
+            "resume_path": candidate.resume_path,
+            "resume_exists": bool(candidate.resume_path and os.path.exists(candidate.resume_path)),
+            "resume_content_length": len(resume_content),
+            "resume_preview": resume_content[:500] + "..." if resume_content else "No content",
+            "knowledge_base_id": candidate.knowledge_base_id,
+            "interview_scheduled": candidate.interview_scheduled,
+            "job_description_available": bool(candidate.job_description)
+        }), 200
+    finally:
+        session.close()
+
+
+@app.route('/api/interview/recording/<int:candidate_id>', methods=['GET'])
+def get_interview_recording_info(candidate_id):
+    """Get interview recording information"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        recording_info = {
+            "recording_file": candidate.interview_recording_file,
+            "recording_duration": candidate.interview_recording_duration,
+            "recording_size": candidate.interview_recording_size,
+            "recording_format": candidate.interview_recording_format,
+            "recording_quality": candidate.interview_recording_quality,
+            "recording_status": candidate.interview_recording_status,
+            "session_id": candidate.interview_session_id,
+            "started_at": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+            "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None
+        }
+        
+        return jsonify({
+            "success": True,
+            "candidate_id": candidate_id,
+            "recording_info": recording_info
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting recording info: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        session.close()
+
+@app.route('/api/routes', methods=['GET'])
+def list_routes():
+    """Debug endpoint to list all available routes"""
+    routes = []
+    for rule in app.url_map.iter_rules():
+        if rule.endpoint != 'static':
+            routes.append({
+                'endpoint': rule.endpoint,
+                'methods': list(rule.methods),
+                'rule': str(rule)
+            })
+    return jsonify({
+        "total_routes": len(routes),
+        "routes": sorted(routes, key=lambda x: x['rule'])
+    }), 200
+
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        "error": "Endpoint not found",
+        "available_endpoints": [
+            "/",
+            "/api/jobs",
+            "/api/candidates",
+            "/api/run_full_pipeline",
+            "/api/pipeline_status",
+            "/api/recruitment-stats",
+            "/secure-interview/<token>",
+            "/health",
+            "/api/routes"
+        ]
+    }), 404
+
+def run_bulk_scraping_with_monitoring():
+    """Wrapper to run bulk scraping with monitoring"""
+    start_time = time.time()
+    
+    try:
+        logger.info("Starting bulk scraping for all pending assessments")
+        
+        # Import and run the bulk scraping function
+        try:
+            from testlify_results_scraper import scrape_all_pending_assessments
+        except ImportError as e:
+            logger.error(f"Failed to import scraper: {e}")
+            notify_admin(
+                "Scraper Import Error",
+                f"Could not import results scraper: {str(e)}. Please ensure testlify_results_scraper.py is available."
+            )
+            return
+        
+        # Run the async scraping function
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            results_summary = loop.run_until_complete(scrape_all_pending_assessments())
+        finally:
+            loop.close()
+        
+        duration = time.time() - start_time
+        total_candidates = sum(results_summary.values()) if isinstance(results_summary, dict) else 0
+        
+        logger.info(f"Bulk scraping completed in {duration:.2f} seconds. Processed {len(results_summary)} assessments, {total_candidates} candidates.")
+        
+        # Send success notification
+        if isinstance(results_summary, dict):
+            summary_text = "\n".join([f"- {assessment}: {count} candidates" for assessment, count in results_summary.items()])
+        else:
+            summary_text = f"Processed {total_candidates} total candidates"
+            
+        notify_admin(
+            "Bulk Assessment Results Scraping Completed",
+            f"Assessments processed: {len(results_summary) if isinstance(results_summary, dict) else 'Unknown'}\nTotal candidates: {total_candidates}\nDuration: {duration:.2f} seconds\n\nBreakdown:\n{summary_text}"
+        )
+        
+    except Exception as e:
+        duration = time.time() - start_time
+        error_msg = f"Bulk scraping failed after {duration:.2f} seconds"
+        logger.error(error_msg, exc_info=True)
+        
+        # Send failure notification
+        notify_admin(
+            "Bulk Assessment Results Scraping Failed",
+            error_msg,
+            error_details=traceback.format_exc()
+        )
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Enhanced health check endpoint with system status"""
+    health_status = {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "version": "2.1.0",
+        "checks": {},
+        "performance": {
+            "avg_response_time": f"{request_metrics['avg_response_time']:.3f}s",
+            "total_requests": request_metrics['total_requests'],
+            "slow_requests": request_metrics['slow_requests']
+        }
+    }
+    
+    # Check database
+    try:
+        session = SessionLocal()
+        session.execute("SELECT 1")
+        session.close()
+        health_status["checks"]["database"] = "healthy"
+    except Exception as e:
+        health_status["checks"]["database"] = f"unhealthy: {str(e)}"
+        health_status["status"] = "degraded"
+    
+    # Check cache
+    try:
+        cache.set('health_check', 'ok', timeout=1)
+        if cache.get('health_check') == 'ok':
+            health_status["checks"]["cache"] = "healthy"
+        else:
+            health_status["checks"]["cache"] = "unhealthy"
+            health_status["status"] = "degraded"
+    except Exception as e:
+        health_status["checks"]["cache"] = f"unhealthy: {str(e)}"
+        health_status["status"] = "degraded"
+    
+    # Check thread pool
+    try:
+        if hasattr(executor, '_threads'):
+            active_threads = len([t for t in executor._threads if t.is_alive()])
+            health_status["checks"]["thread_pool"] = f"healthy ({active_threads} active threads)"
+        else:
+            health_status["checks"]["thread_pool"] = "healthy"
+    except Exception as e:
+        health_status["checks"]["thread_pool"] = f"degraded: {str(e)}"
+    
+    return jsonify(health_status), 200 if health_status["status"] == "healthy" else 503
+
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Endpoint not found","available_endpoints":["/","/api/jobs","/api/candidates","/api/secure_interview/<token>","/heath"]}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error: {error}")
+    return jsonify({"error": "Internal server error"}), 500
+
+@app.errorhandler(429)
+def rate_limit_exceeded(error):
+    return jsonify({"error": "Rate limit exceeded. Please try again later."}), 429
+
+# Request logging
+@app.before_request
+def log_request_info():
+    """Log incoming requests"""
+    logger.info(f"🌐 {request.method} {request.path} from {request.remote_addr}")
+
+def test_routes():
+    """Test if routes are properly registered"""
+    print("📋 Registered Routes:")
+    for rule in app.url_map.iter_rules():
+        print(f"  {rule.methods} {rule.rule} -> {rule.endpoint}")
+
+
+
+
+# Cleanup on shutdown
+import atexit
+
+def cleanup():
+    """Cleanup resources on shutdown"""
+    logger.info("Shutting down TalentFlow AI Backend...")
+    executor.shutdown(wait=True)
+    
+atexit.register(cleanup)
+
+if __name__ == "__main__":
+    print("🚀 Starting TalentFlow AI Backend (Optimized Version)...")
+    print("📍 Server running at http://127.0.0.1:5000")
+    print("📍 Logging to: logs/talentflow.log")
+    print("⚡ Performance optimizations enabled")
+    print("💾 Caching enabled")
+    print("🔄 Pipeline status tracking enabled")
+
+    print("🤖 Starting Interview Automation System...")
+    start_interview_automation()
+    print("✅ Interview automation running (checking every 30 minutes)")
+
+
+    with app.app_context():
+        print("\n📋 Registered Routes:")
+        for rule in app.url_map.iter_rules():
+            print(f"  {list(rule.methods)} {rule.rule} -> {rule.endpoint}")
+
+    try:
+        try: 
+            print("\n🤖 Starting Interview Automation System...")
+            start_interview_automation()
+            print("✅ Interview automation running (checking every 30 minutes)")
+        except Exception as e:
+            print(f"⚠️  Interview automation not available: {e}")
+            
+
+
+        app.run(
+            host='0.0.0.0',
+            port=5000,
+            debug=os.getenv('FLASK_ENV') == 'development',
+            use_reloader=False,
+            threaded=True
+        )
+    finally:
+        print("Shutting down interview automation...")
+        stop_interview_automation()

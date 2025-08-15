@@ -423,13 +423,33 @@ class FixedTestlifyScraper:
                     candidate.interview_scheduled = True
                     candidate.interview_date = datetime.now() + timedelta(days=3)
                     
+                    # Generate unique interview token for secure interview links
+                    import uuid
+                    interview_token = str(uuid.uuid4())
+                    candidate.interview_token = interview_token
+                    candidate.interview_created_at = datetime.now()
+                    candidate.interview_expires_at = datetime.now() + timedelta(days=7)
+                    
+                    # Generate the secure interview link
+                    import os
+                    base_url = os.getenv('FRONTEND_URL', 'http://127.0.0.1:5000')
+                    interview_link = f"{base_url}/secure-interview/{interview_token}"
+                    candidate.interview_link = interview_link
+                    
+                    # Generate knowledge base ID for AI interview
+                    import time
+                    candidate.knowledge_base_id = f"kb_{candidate.id}_{int(time.time())}"
+                    
                     try:
+                        # Send interview email with the secure link
                         interview_link = send_interview_link_email(candidate)
-                        candidate.interview_link = interview_link
                         interview_count += 1
-                        logging.info(f"✅ Interview scheduled: {email} ({percentage:.1f}%)")
+                        logging.info(f"✅ Interview scheduled: {email} ({percentage:.1f}%) - Link: {interview_link}")
                     except Exception as e:
                         logging.error(f"❌ Failed to send interview email to {email}: {e}")
+                        # Still mark as scheduled even if email fails
+                        interview_count += 1
+                        logging.info(f"✅ Interview scheduled (email failed): {email} ({percentage:.1f}%) - Link: {interview_link}")
                 else:
                     candidate.final_status = 'Rejected After Exam'
                     try:

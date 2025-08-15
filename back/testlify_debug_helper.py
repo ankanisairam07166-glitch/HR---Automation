@@ -26,7 +26,8 @@ async def debug_testlify_structure(assessment_name: str):
             print("=" * 50)
             
             # Navigate to assessments
-            await page.goto("https://app.testlify.com/assessments", wait_until="networkidle")
+            await page.goto("https://app.testlify.com/assessments", wait_until="networkidle", timeout=90000)
+
             await asyncio.sleep(3)
             
             # Check login

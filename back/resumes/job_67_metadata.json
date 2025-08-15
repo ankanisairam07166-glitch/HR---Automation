@@ -1,48 +1,257 @@
 {
-  "job_id": "67",
-  "scraped_at": "2025-06-13T17:07:47.992610",
-  "total_candidates": 8,
+  "job_id": 67,
+  "scraped_at": "2025-08-12T19:41:07.709564",
+  "total_candidates": 50,
   "candidates": [
     {
-      "id": "1674",
+      "id": "1839",
+      "name": "HARSHA ANDRA",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1839?list_type=jobs"
+    },
+    {
+      "id": "1834",
+      "name": "ALEX MCVAY",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1834?list_type=jobs"
+    },
+    {
+      "id": "1833",
+      "name": "Pronob Barman",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1833?list_type=jobs"
+    },
+    {
+      "id": "1832",
+      "name": "Harikrishna Marampelly",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1832?list_type=jobs"
+    },
+    {
+      "id": "1831",
+      "name": "Triveni Masimukku",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1831?list_type=jobs"
+    },
+    {
+      "id": "1829",
+      "name": "Andy Tran",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1829?list_type=jobs"
+    },
+    {
+      "id": "1828",
+      "name": "Shyam Mehta",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1828?list_type=jobs"
+    },
+    {
+      "id": "1827",
+      "name": "Harikrishna Marampelly",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1827?list_type=jobs"
+    },
+    {
+      "id": "1826",
+      "name": "Chandana Pamidi",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1826?list_type=jobs"
+    },
+    {
+      "id": "1825",
+      "name": "Anil Kudumula",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1825?list_type=jobs"
+    },
+    {
+      "id": "1823",
+      "name": "Phil Livsey",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1823?list_type=jobs"
+    },
+    {
+      "id": "1822",
+      "name": "Pruthvi Doddi Reddy",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1822?list_type=jobs"
+    },
+    {
+      "id": "1820",
+      "name": "ACHYUTH KUMAR MIRYALA",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1820?list_type=jobs"
+    },
+    {
+      "id": "1819",
+      "name": "Venkateshh Miryalkar",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1819?list_type=jobs"
+    },
+    {
+      "id": "1809",
+      "name": "Yutong Xue",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1809?list_type=jobs"
+    },
+    {
+      "id": "1808",
+      "name": "Apurva Ravikar Chavan",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1808?list_type=jobs"
+    },
+    {
+      "id": "1805",
+      "name": "sai nithis",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1805?list_type=jobs"
+    },
+    {
+      "id": "1765",
+      "name": "Ravi teja",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1765?list_type=jobs"
+    },
+    {
+      "id": "1719",
+      "name": "Aravinth Ananth",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1719?list_type=jobs"
+    },
+    {
+      "id": "1718",
+      "name": "Cameron DeChristopher",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1718?list_type=jobs"
+    },
+    {
+      "id": "1717",
+      "name": "Saptarshi Bhowmik",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1717?list_type=jobs"
+    },
+    {
+      "id": "1716",
+      "name": "BHARGAV KOTIPALLI",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1716?list_type=jobs"
+    },
+    {
+      "id": "1715",
+      "name": "Shiva Polla",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1715?list_type=jobs"
+    },
+    {
+      "id": "1714",
+      "name": "Mohamed Alpha Kamara",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1714?list_type=jobs"
+    },
+    {
+      "id": "1713",
+      "name": "Adam Richman",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1713?list_type=jobs"
+    },
+    {
+      "id": "1711",
       "name": "Monish Suresh",
-      "url": "/hiring/candidates/1674?list_type=job-openings"
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1711?list_type=jobs"
     },
     {
-      "id": "1673",
-      "name": "Spandana Potti",
-      "url": "/hiring/candidates/1673?list_type=job-openings"
+      "id": "1709",
+      "name": "Yifan He",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1709?list_type=jobs"
     },
     {
-      "id": "1672",
-      "name": "Nabina Singh",
-      "url": "/hiring/candidates/1672?list_type=job-openings"
+      "id": "1707",
+      "name": "Louis zeng",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1707?list_type=jobs"
     },
     {
-      "id": "1671",
-      "name": "Mohammed Zubair",
-      "url": "/hiring/candidates/1671?list_type=job-openings"
+      "id": "1706",
+      "name": "Sana Muthaharunnisa Shaik",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1706?list_type=jobs"
     },
     {
-      "id": "1669",
-      "name": "Jackson Hyde",
-      "url": "/hiring/candidates/1669?list_type=job-openings"
+      "id": "1705",
+      "name": "Vinaya Varshini Ravichandran",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1705?list_type=jobs"
     },
     {
-      "id": "1666",
-      "name": "Elamparithi Elango",
-      "url": "/hiring/candidates/1666?list_type=job-openings"
+      "id": "1703",
+      "name": "Rahul Krishna Pallath",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1703?list_type=jobs"
     },
     {
-      "id": "1659",
-      "name": "nitish sai",
-      "url": "/hiring/candidates/1659?list_type=job-openings"
+      "id": "1702",
+      "name": "Tharun Kumar Reddy Byreddy",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1702?list_type=jobs"
     },
     {
-      "id": "1657",
-      "name": "NTR sai",
-      "url": "/hiring/candidates/1657?list_type=job-openings"
+      "id": "1701",
+      "name": "Eren Sonmez",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1701?list_type=jobs"
+    },
+    {
+      "id": "1700",
+      "name": "bhavesh kurella",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1700?list_type=jobs"
+    },
+    {
+      "id": "1699",
+      "name": "Venkata Akhil Mettu",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1699?list_type=jobs"
+    },
+    {
+      "id": "1698",
+      "name": "Deekshith Reddy Dade",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1698?list_type=jobs"
+    },
+    {
+      "id": "1697",
+      "name": "Maneesh Gembali",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1697?list_type=jobs"
+    },
+    {
+      "id": "1696",
+      "name": "Thrinath Reddy",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1696?list_type=jobs"
+    },
+    {
+      "id": "1695",
+      "name": "MD RAFAT HOSSAIN",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1695?list_type=jobs"
+    },
+    {
+      "id": "1694",
+      "name": "Nakia Gilmore",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1694?list_type=jobs"
+    },
+    {
+      "id": "1693",
+      "name": "Shazid Shaik",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1693?list_type=jobs"
+    },
+    {
+      "id": "1692",
+      "name": "Mounikesh Goud",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1692?list_type=jobs"
+    },
+    {
+      "id": "1691",
+      "name": "Karan Narula",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1691?list_type=jobs"
+    },
+    {
+      "id": "1690",
+      "name": "Sai Karthik Naladala",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1690?list_type=jobs"
+    },
+    {
+      "id": "1689",
+      "name": "Lingji Kong",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1689?list_type=jobs"
+    },
+    {
+      "id": "1688",
+      "name": "Rakul A Venkatesan",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1688?list_type=jobs"
+    },
+    {
+      "id": "1687",
+      "name": "Swarna Ravula",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1687?list_type=jobs"
+    },
+    {
+      "id": "1686",
+      "name": "Ashraf Syed",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1686?list_type=jobs"
+    },
+    {
+      "id": "1685",
+      "name": "Sai Charan Doniparthi",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1685?list_type=jobs"
+    },
+    {
+      "id": "1684",
+      "name": "Sai Prasanth Grandhisiri",
+      "url": "https://greenoceanpm.bamboohr.com/hiring/candidates/1684?list_type=jobs"
     }
-  ],
-  "scraper_version": "2.0.0_with_session_persistence"
+  ]
 }

@@ -26,7 +26,7 @@ BAMBOOHR_API_KEY=your_bamboohr_api_key_here
 BAMBOOHR_SUBDOMAIN=greenoceanpm
 
 # OpenAI Configuration
-OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_API_KEY=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
 
 # Testlify Configuration
 TESTLIFY_EMAIL=jlau@knlrealty.com
@@ -36,8 +36,8 @@ TESTLIFY_API_KEY=67593101297393632845404167993723
 # Email Configuration
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
-SENDER_EMAIL=your_email@gmail.com
-SENDER_PASSWORD=your_app_password_here
+SENDER_EMAIL=dnnithis@gmail.com
+SENDER_PASSWORD=nnlh vsfj yxbj xbto
 COMPANY_NAME=Green Ocean Property Management
 
 # Application Settings
@@ -50,7 +50,7 @@ MAX_RETRIES=3
 RETRY_DELAY=2
 
 # Admin Notifications
-ADMIN_EMAIL=admin@yourcompany.com
+ADMIN_EMAIL=mg3labs@gmail.com
 
 # Flask Environment
 FLASK_ENV=development

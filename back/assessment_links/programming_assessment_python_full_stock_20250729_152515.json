@@ -1,0 +1,22 @@
+{
+  "job_title": "python full stock",
+  "selected_role": "Python Full Stock",
+  "programming_tests_added": 3,
+  "total_tests_attempted": 3,
+  "gpt_suggested_tests": [
+    "Python",
+    "Data Structures",
+    "Database"
+  ],
+  "actual_added_tests": [
+    "15\u00a0mins",
+    "15\u00a0mins",
+    "20\u00a0mins"
+  ],
+  "candidate_invite_link": "https://app.testlify.com/assessments\">",
+  "assessment_url": "https://app.testlify.com/assessments",
+  "created_at": "2025-07-29T15:25:15.813066",
+  "success": true,
+  "diversity_achieved": false,
+  "assessment_type": "Programming Assessment with Diversity Focus"
+}

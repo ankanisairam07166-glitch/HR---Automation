@@ -1,0 +1,129 @@
+{
+  "environment": {
+    "HEYGEN_API_KEY": {
+      "exists": true,
+      "length": 60,
+      "format_valid": true
+    },
+    "DATABASE_URL": {
+      "exists": true,
+      "value": "sqlite:///hr_frontend.db..."
+    },
+    "COMPANY_NAME": {
+      "exists": true,
+      "value": "MG3Labs"
+    }
+  },
+  "database_schema": {
+    "knowledge_base_id": {
+      "exists": true,
+      "has_data": false,
+      "sample_value": "NULL"
+    },
+    "interview_token": {
+      "exists": true,
+      "has_data": false,
+      "sample_value": "NULL"
+    },
+    "interview_session_id": {
+      "exists": true,
+      "has_data": false,
+      "sample_value": "NULL"
+    },
+    "company_name": {
+      "exists": true,
+      "has_data": false,
+      "sample_value": "NULL"
+    },
+    "job_description": {
+      "exists": true,
+      "has_data": false,
+      "sample_value": "NULL"
+    },
+    "resume_path": {
+      "exists": true,
+      "has_data": true,
+      "sample_value": "D:\\projects-2\\project\\Phase1-3 - Copy (2)\\back\\res..."
+    }
+  },
+  "heygen_api": {
+    "https://api.heygen.com/v1/streaming_avatar.knowledge_base": {
+      "status_code": 404,
+      "success": false,
+      "response_size": 232,
+      "headers": {
+        "Date": "Sun, 10 Aug 2025 17:51:31 GMT",
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Length": "232",
+        "Connection": "keep-alive",
+        "Server": "gunicorn"
+      },
+      "response_preview": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check y..."
+    },
+    "https://api.heygen.com/v1/streaming/knowledge_base": {
+      "status_code": 404,
+      "success": false,
+      "response_size": 232,
+      "headers": {
+        "Date": "Sun, 10 Aug 2025 17:51:34 GMT",
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Length": "232",
+        "Connection": "keep-alive",
+        "Server": "gunicorn"
+      },
+      "response_preview": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check y..."
+    },
+    "https://api.heygen.com/v1/knowledge_base": {
+      "status_code": 404,
+      "success": false,
+      "response_size": 232,
+      "headers": {
+        "Date": "Sun, 10 Aug 2025 17:51:36 GMT",
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Length": "232",
+        "Connection": "keep-alive",
+        "Server": "gunicorn"
+      },
+      "response_preview": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check y..."
+    }
+  },
+  "resume_extraction": {
+    "error": "f-string expression part cannot include a backslash (backend.py, line 2010)"
+  },
+  "end_to_end": {
+    "error": "f-string expression part cannot include a backslash (backend.py, line 2010)"
+  },
+  "frontend_integration": {
+    "http://localhost:5000/api/create-knowledge-base": {
+      "reachable": true,
+      "status_code": 405
+    },
+    "http://localhost:5000/api/get-access-token": {
+      "reachable": true,
+      "status_code": 500
+    },
+    "http://localhost:5000/api/get-interview/test-token": {
+      "reachable": true,
+      "status_code": 404
+    },
+    "http://localhost:3001/api/create-knowledge-base": {
+      "reachable": true,
+      "status_code": 500
+    },
+    "http://localhost:3001/api/get-access-token": {
+      "reachable": true,
+      "status_code": 200
+    }
+  },
+  "summary": {
+    "issues": [
+      "\u274c No working HeyGen API endpoints",
+      "\u274c Resume extraction failed"
+    ],
+    "recommendations": [
+      "3. Check HeyGen API key and network connection",
+      "4. Check resume file format and extraction libraries"
+    ],
+    "overall_status": "needs_fixes"
+  }
+}
