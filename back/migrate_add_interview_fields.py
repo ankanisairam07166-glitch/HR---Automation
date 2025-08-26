@@ -117,6 +117,9 @@ def migrate_database():
         ('reminder_sent', 'BOOLEAN DEFAULT FALSE'),
         ('reminder_sent_date', 'TIMESTAMP'),
         ('company_name', 'VARCHAR(200)'),
+        ('interview_auto_score_triggered', 'BOOLEAN DEFAULT FALSE')
+        ('interview_analysis_started_at', 'TIMESTAMP'),
+        ('interview_analysis_completed_at', 'TIMESTAMP'),
     ]
     
     # Add each column

@@ -146,7 +146,25 @@ class Candidate(Base):
     interview_ai_communication_score = Column(Float)  # Communication score (0-100)
     interview_ai_problem_solving_score = Column(Float)  # Problem solving score (0-100)
     interview_ai_cultural_fit_score = Column(Float)  # Cultural fit score (0-100)
-    
+
+    # Add these columns for better tracking
+    interview_ai_strengths = Column(Text)  # JSON array of strengths
+    interview_ai_weaknesses = Column(Text)  # JSON array of weaknesses
+    interview_confidence_score = Column(Float)  # Confidence in scoring (0-1)
+    interview_scoring_method = Column(String(50))  # 'ai' or 'rule-based'
+    # Add these columns to Candidate class
+    interview_conversation = Column(Text)  # JSON - Full conversation format
+    interview_progress_percentage = Column(Float, default=0.0)
+    interview_last_activity = Column(DateTime)
+    interview_answered_questions = Column(Integer, default=0)  # Add this if missing
+    interview_qa_pairs = Column(Text, default='[]')
+    interview_duration = Column(Integer)
+    interview_link_clicked = Column(Boolean, default=False)
+    interview_link_clicked_at = Column(DateTime)
+    interview_status = Column(String(50))
+    interview_voice_transcripts = Column(Text)
+
+
     # Interview Session Details (NEW)
     interview_browser_info = Column(String(500))  # Browser and device info
     interview_network_quality = Column(String(100))  # Network quality during interview
@@ -161,14 +179,15 @@ class Candidate(Base):
     interview_ai_analysis_status = Column(String(50))  # pending/processing/completed/failed
     interview_final_status = Column(String(50))  # passed/failed/needs_review
 
-
     # In your Candidate class in db.py, add these columns if missing:
     interview_token = Column(String(255), unique=True, nullable=True)
     interview_time_slot = Column(String(100), nullable=True)
     interview_email_sent = Column(Boolean, default=False)
     interview_email_sent_date = Column(DateTime, nullable=True)
     interview_email_attempts = Column(Integer, default=0)
-
+    interview_auto_score_triggered = Column(Boolean, default=False)  # Default to False
+    interview_analysis_started_at = Column(DateTime, nullable=True)
+    interview_analysis_completed_at = Column(DateTime, nullable=True)
 # Also add this migration function to your db.py file:
 
 def add_interview_automation_fields():
@@ -393,6 +412,7 @@ def run_migrations():
             ('candidates', 'interview_email_attempts', 'INTEGER DEFAULT 0'),
             ('candidates', 'company_name', 'VARCHAR(200)'),
             ('candidates', 'job_description', 'TEXT'),
+            ('candidates', 'interview_auto_score_triggered', 'BOOLEAN DEFAULT FALSE')
         ]
         
         for table, column, col_type in migrations:

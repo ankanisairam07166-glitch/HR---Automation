@@ -9,319 +9,10 @@ from datetime import datetime
 import re
 import openai
 
+
+
 # OpenAI Configuration
-openai.api_key = "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"  # Replace with your actual API key
-
-# =================== POPUP HANDLING SECTIONS ===================
-
-async def handle_cookie_consent_popup(page):
-    """Handle cookie consent popups"""
-    try:
-        cookie_selectors = [
-            "button:has-text('Accept')",
-            "button:has-text('Accept All')",
-            "button:has-text('Accept Cookies')",
-            "button:has-text('Allow All')",
-            "#accept-cookies",
-            ".cookie-accept",
-            "[data-testid*='cookie'][data-testid*='accept']",
-            "button[aria-label*='Accept']"
-        ]
-        
-        for selector in cookie_selectors:
-            try:
-                element = await page.wait_for_selector(selector, timeout=2000)
-                if element and await element.is_visible():
-                    await element.click()
-                    logging.info(f"✅ Handled cookie consent popup with selector: {selector}")
-                    await asyncio.sleep(1)
-                    return True
-            except:
-                continue
-                
-    except Exception as e:
-        logging.debug(f"Cookie consent handling: {e}")
-    
-    return False
-
-async def handle_modal_popups(page):
-    """Handle general modal popups"""
-    try:
-        modal_close_selectors = [
-            "button[aria-label='Close']",
-            "button[aria-label='close']",
-            ".modal-close",
-            ".close-button",
-            ".modal-header button",
-            "[data-dismiss='modal']",
-            "button:has-text('✕')",
-            "button:has-text('×')",
-            ".close",
-            "[role='button'][aria-label*='close']"
-        ]
-        
-        for selector in modal_close_selectors:
-            try:
-                element = await page.wait_for_selector(selector, timeout=1500)
-                if element and await element.is_visible():
-                    await element.click()
-                    logging.info(f"✅ Closed modal popup with selector: {selector}")
-                    await asyncio.sleep(1)
-                    return True
-            except:
-                continue
-                
-    except Exception as e:
-        logging.debug(f"Modal popup handling: {e}")
-    
-    return False
-
-async def handle_notification_popups(page):
-    """Handle notification permission popups"""
-    try:
-        notification_selectors = [
-            "button:has-text('Block')",
-            "button:has-text('Not now')",
-            "button:has-text('Maybe later')",
-            "button:has-text('No thanks')",
-            "button:has-text('Dismiss')",
-            "[data-testid*='notification'][data-testid*='deny']",
-            ".notification-deny",
-            ".notification-close"
-        ]
-        
-        for selector in notification_selectors:
-            try:
-                element = await page.wait_for_selector(selector, timeout=1500)
-                if element and await element.is_visible():
-                    await element.click()
-                    logging.info(f"✅ Handled notification popup with selector: {selector}")
-                    await asyncio.sleep(1)
-                    return True
-            except:
-                continue
-                
-    except Exception as e:
-        logging.debug(f"Notification popup handling: {e}")
-    
-    return False
-
-async def handle_promotional_popups(page):
-    """Handle promotional/marketing popups"""
-    try:
-        promo_close_selectors = [
-            "button:has-text('Skip')",
-            "button:has-text('Skip for now')",
-            "button:has-text('No thanks')",
-            "button:has-text('Later')",
-            "button:has-text('Maybe later')",
-            "button:has-text('I understand')",
-            ".promo-close",
-            ".offer-close",
-            ".marketing-close",
-            "[data-testid*='promo'][data-testid*='close']",
-            "[data-testid*='offer'][data-testid*='skip']"
-        ]
-        
-        for selector in promo_close_selectors:
-            try:
-                element = await page.wait_for_selector(selector, timeout=1500)
-                if element and await element.is_visible():
-                    await element.click()
-                    logging.info(f"✅ Closed promotional popup with selector: {selector}")
-                    await asyncio.sleep(1)
-                    return True
-            except:
-                continue
-                
-    except Exception as e:
-        logging.debug(f"Promotional popup handling: {e}")
-    
-    return False
-
-async def handle_tutorial_popups(page):
-    """Handle tutorial/onboarding popups"""
-    try:
-        tutorial_selectors = [
-            "button:has-text('Skip tutorial')",
-            "button:has-text('Skip')",  
-            "button:has-text('Skip tour')",
-            "button:has-text('Got it')",
-            "button:has-text('Okay')",
-            "button:has-text('Next time')",
-            "button:has-text('I understand')",
-            ".tutorial-skip",
-            ".onboarding-skip",
-            ".tour-skip",
-            "[data-testid*='tutorial'][data-testid*='skip']",
-            "[data-testid*='onboarding'][data-testid*='skip']"
-        ]
-        
-        for selector in tutorial_selectors:
-            try:
-                element = await page.wait_for_selector(selector, timeout=1500)
-                if element and await element.is_visible():
-                    await element.click()
-                    logging.info(f"✅ Skipped tutorial popup with selector: {selector}")
-                    await asyncio.sleep(1)
-                    return True
-            except:
-                continue
-                
-    except Exception as e:
-        logging.debug(f"Tutorial popup handling: {e}")
-    
-    return False
-
-async def handle_alert_dialogs(page):
-    """Handle JavaScript alert dialogs"""
-    try:
-        # Set up dialog handler
-        def dialog_handler(dialog):
-            logging.info(f"✅ Handling dialog: {dialog.message}")
-            dialog.accept()
-        
-        page.on("dialog", dialog_handler)
-        return True
-        
-    except Exception as e:
-        logging.debug(f"Alert dialog handling setup: {e}")
-    
-    return False
-
-async def handle_terms_and_conditions_popups(page):
-    """Handle terms of service / privacy policy popups"""
-    try:
-        terms_selectors = [
-            "button:has-text('Accept Terms')",
-            "button:has-text('I Agree')",
-            "button:has-text('Agree')",
-            "button:has-text('Continue')",
-            "button:has-text('I understand')",
-            "input[type='checkbox'][name*='terms']",
-            "input[type='checkbox'][name*='agree']",
-            ".terms-accept",
-            ".privacy-accept",
-            "[data-testid*='terms'][data-testid*='accept']"
-        ]
-        
-        for selector in terms_selectors:
-            try:
-                element = await page.wait_for_selector(selector, timeout=1500)
-                if element and await element.is_visible():
-                    if element.tag_name.lower() == 'input':
-                        await element.check()
-                    else:
-                        await element.click()
-                    logging.info(f"✅ Accepted terms popup with selector: {selector}")
-                    await asyncio.sleep(1)
-                    return True
-            except:
-                continue
-                
-    except Exception as e:
-        logging.debug(f"Terms popup handling: {e}")
-    
-    return False
-
-async def handle_loading_overlays(page):
-    """Handle loading overlays that might block interactions"""
-    try:
-        loading_selectors = [
-            ".loading-overlay",
-            ".spinner-overlay",
-            ".loading-mask",
-            "[data-testid*='loading']",
-            ".el-loading-mask"
-        ]
-        
-        for selector in loading_selectors:
-            try:
-                # Wait for loading overlay to disappear
-                await page.wait_for_selector(selector, state="hidden", timeout=5000)
-                logging.info(f"✅ Loading overlay disappeared: {selector}")
-                return True
-            except:
-                continue
-                
-    except Exception as e:
-        logging.debug(f"Loading overlay handling: {e}")
-    
-    return False
-
-async def handle_subscription_popups(page):
-    """Handle subscription/upgrade popups"""
-    try:
-        subscription_selectors = [
-            "button:has-text('Continue with Free')",
-            "button:has-text('Skip upgrade')",
-            "button:has-text('Not now')",
-            "button:has-text('Maybe later')",
-            ".subscription-skip",
-            ".upgrade-skip",
-            "[data-testid*='subscription'][data-testid*='skip']",
-            "[data-testid*='upgrade'][data-testid*='later']"
-        ]
-        
-        for selector in subscription_selectors:
-            try:
-                element = await page.wait_for_selector(selector, timeout=1500)
-                if element and await element.is_visible():
-                    await element.click()
-                    logging.info(f"✅ Skipped subscription popup with selector: {selector}")
-                    await asyncio.sleep(1)
-                    return True
-            except:
-                continue
-                
-    except Exception as e:
-        logging.debug(f"Subscription popup handling: {e}")
-    
-    return False
-
-async def handle_all_popups(page):
-    """Master function to handle all types of popups"""
-    try:
-        logging.info("🔍 Checking for popups...")
-        
-        # Handle JavaScript dialogs first
-        await handle_alert_dialogs(page)
-        
-        # Handle different types of popups in order of priority
-        popup_handlers = [
-            handle_loading_overlays,
-            handle_cookie_consent_popup,
-            handle_notification_popups,
-            handle_modal_popups, 
-            handle_promotional_popups,
-            handle_tutorial_popups,
-            handle_terms_and_conditions_popups,
-            handle_subscription_popups
-        ]
-        
-        popups_handled = 0
-        for handler in popup_handlers:
-            try:
-                result = await handler(page)
-                if result:
-                    popups_handled += 1
-                    await asyncio.sleep(0.5)  # Small delay between handling different popups
-            except Exception as e:
-                logging.debug(f"Popup handler error: {e}")
-                continue
-        
-        if popups_handled > 0:
-            logging.info(f"✅ Handled {popups_handled} popup(s)")
-            await asyncio.sleep(1)  # Allow page to settle after popup handling
-        
-        return popups_handled
-        
-    except Exception as e:
-        logging.error(f"Error in popup handling: {e}")
-    
-    return 0
-
-# =================== END POPUP HANDLING SECTIONS ===================
+openai.api_key = "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"  # Replace with your actual API key
 
 async def get_gpt_test_suggestions(job_title, job_desc=""):
     """Get test suggestions from GPT for any job role"""
@@ -397,9 +88,6 @@ async def get_gpt_test_suggestions(job_title, job_desc=""):
 
 async def select_best_test_with_gpt(page, search_term, job_title, job_desc=""):
     """Use GPT to select the best test from search results"""
-    
-    # Handle popups before processing test cards
-    await handle_all_popups(page)
     
     # Get all visible test cards
     test_cards = await page.query_selector_all(".test-card, div[class*='card']")
@@ -495,9 +183,6 @@ async def handle_job_role_dropdown(page, target_role, fallback_roles, attempt_nu
     try:
         logging.info(f"Job role selection - Attempt {attempt_number}/{max_attempts}")
         
-        # Handle popups before dropdown interaction
-        await handle_all_popups(page)
-        
         # Wait for page stability
         await page.wait_for_load_state("networkidle")
         await asyncio.sleep(2)
@@ -551,9 +236,6 @@ async def handle_job_role_dropdown(page, target_role, fallback_roles, attempt_nu
         for wait_attempt in range(5):  # Try 5 times with increasing wait
             try:
                 await asyncio.sleep(1 + wait_attempt * 0.5)  # Progressive wait
-                
-                # Handle any popups that might appear during dropdown loading
-                await handle_all_popups(page)
                 
                 # Check for dropdown
                 dropdown = await page.query_selector(".el-select-dropdown:visible")
@@ -640,9 +322,6 @@ async def handle_job_role_dropdown(page, target_role, fallback_roles, attempt_nu
                     if click_success:
                         await asyncio.sleep(2)
                         
-                        # Handle any popups after selection
-                        await handle_all_popups(page)
-                        
                         # Verify selection worked
                         dropdown_gone = not await page.query_selector(".el-select-dropdown:visible")
                         if dropdown_gone:
@@ -682,9 +361,6 @@ async def add_tests_with_gpt_selection(page, tests, job_title, job_desc=""):
     added_count = 0
     
     try:
-        # Handle popups before starting test addition
-        await handle_all_popups(page)
-        
         # Wait for tests page to load
         await page.wait_for_load_state("networkidle")
         await asyncio.sleep(3)
@@ -711,9 +387,6 @@ async def add_tests_with_gpt_selection(page, tests, job_title, job_desc=""):
         if search_input:
             for test_name in tests:
                 try:
-                    # Handle popups before each test search
-                    await handle_all_popups(page)
-                    
                     # Clear search and type test name
                     await search_input.click()
                     await search_input.fill("")
@@ -727,9 +400,6 @@ async def add_tests_with_gpt_selection(page, tests, job_title, job_desc=""):
                     results_loaded = False
                     for wait_attempt in range(5):
                         await asyncio.sleep(1.5)
-                        
-                        # Handle popups during search loading
-                        await handle_all_popups(page)
                         
                         test_cards = await page.query_selector_all(".test-card, .assessment-card, [class*='card'], .test-item")
                         if test_cards:
@@ -751,9 +421,6 @@ async def add_tests_with_gpt_selection(page, tests, job_title, job_desc=""):
                     best_test = await select_best_test_with_gpt(page, test_name, job_title, job_desc)
                     
                     if best_test and best_test["add_button"]:
-                        # Handle popups before clicking Add button
-                        await handle_all_popups(page)
-                        
                         # Click the Add button
                         await best_test["add_button"].click()
                         added_count += 1
@@ -761,9 +428,6 @@ async def add_tests_with_gpt_selection(page, tests, job_title, job_desc=""):
                         
                         # Wait for UI to update
                         await asyncio.sleep(2)
-                        
-                        # Handle any popups after adding test
-                        await handle_all_popups(page)
                         
                         # Verify the test was added
                         new_add_buttons = await page.query_selector_all("button:has-text('Add')")
@@ -789,7 +453,7 @@ async def add_tests_with_gpt_selection(page, tests, job_title, job_desc=""):
     return added_count
 
 async def automate_testlify_robust(job_title, job_desc=""):
-    """Main automation function with GPT integration and comprehensive popup handling"""
+    """Main automation function with GPT integration"""
     
     # Get test suggestions from GPT
     logging.info("Getting test suggestions from GPT...")
@@ -822,25 +486,17 @@ async def automate_testlify_robust(job_title, job_desc=""):
             await page.goto("https://app.testlify.com/assessments", wait_until="networkidle")
             await asyncio.sleep(2)
             
-            # Handle initial popups
-            await handle_all_popups(page)
-            
             # Check for login
             if await page.query_selector("input[type='email']"):
                 print("⚠️  Please log in manually...")
                 input("Press ENTER after logging in: ")
                 await page.wait_for_load_state("networkidle")
-                # Handle popups after login
-                await handle_all_popups(page)
             
             # Click Create Assessment button
             create_btn = await page.wait_for_selector("button:has-text('Create assessment')", timeout=10000)
             await create_btn.click()
             logging.info("Clicked Create Assessment")
             await asyncio.sleep(3)
-            
-            # Handle popups after creating assessment
-            await handle_all_popups(page)
             
             # Handle job role selection with retry mechanism
             success, selected_role = await handle_job_role_dropdown(page, suggested_role, [job_title])
@@ -853,9 +509,6 @@ async def automate_testlify_robust(job_title, job_desc=""):
                 print("3. Press ENTER when done")
                 input("Press ENTER to continue: ")
                 selected_role = job_title
-            
-            # Handle popups after job role selection
-            await handle_all_popups(page)
             
             # Ensure assessment name is filled
             await asyncio.sleep(2)
@@ -872,9 +525,6 @@ async def automate_testlify_robust(job_title, job_desc=""):
             logging.info("Navigated to Tests page")
             await asyncio.sleep(3)
             
-            # Handle popups on tests page
-            await handle_all_popups(page)
-            
             # Add tests with GPT selection
             added_count = await add_tests_with_gpt_selection(page, tests[:5], job_title, job_desc)
             
@@ -883,33 +533,20 @@ async def automate_testlify_robust(job_title, job_desc=""):
             for step in steps:
                 try:
                     await asyncio.sleep(2)
-                    # Handle popups before each step
-                    await handle_all_popups(page)
-                    
                     next_btn = await page.wait_for_selector("button:has-text('Next'):visible", timeout=5000)
                     if next_btn and await next_btn.is_enabled():
                         await next_btn.click()
                         logging.info(f"Completed: {step}")
                         await asyncio.sleep(2)
-                        
-                        # Handle popups after each step
-                        await handle_all_popups(page)
                 except Exception as e:
                     logging.warning(f"Could not complete {step}: {e}")
             
             # Save assessment
             try:
-                # Handle popups before saving
-                await handle_all_popups(page)
-                
                 save_btn = await page.wait_for_selector("button:has-text('Save'):visible", timeout=10000)
                 await save_btn.click()
                 logging.info("Assessment saved!")
                 await asyncio.sleep(3)
-                
-                # Handle popups after saving
-                await handle_all_popups(page)
-                
             except:
                 logging.error("Could not find Save button")
             
@@ -919,9 +556,6 @@ async def automate_testlify_robust(job_title, job_desc=""):
                 # Wait for the page to load after save
                 await page.wait_for_load_state("networkidle")
                 await asyncio.sleep(3)
-                
-                # Handle any final popups
-                await handle_all_popups(page)
                 
                 # Your existing invite link extraction logic here...
                 # (I'm keeping it as is from your original code)
@@ -1021,7 +655,7 @@ def run_recruitment_with_invite_link(job_title, job_desc=""):
         return None
 
 if __name__ == "__main__":
-    print("🚀 Testlify Assessment Automation with GPT and Popup Handling")
+    print("🚀 Testlify Assessment Automation with GPT")
     print("-" * 40)
     job_title = input("Enter job title: ").strip()
     job_desc = input("Enter job description (optional): ").strip()

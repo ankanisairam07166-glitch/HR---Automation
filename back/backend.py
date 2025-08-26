@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, redirect, render_template_string, sen
 from flask_cors import CORS
 from datetime import datetime, timedelta, timezone
 from db import Candidate, SessionLocal
+from flask_cors import cross_origin
 import threading
 import asyncio
 import time
@@ -24,7 +25,21 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from interview_automation import start_interview_automation, stop_interview_automation
 from werkzeug.utils import secure_filename
+from interview_analysis_service_production import interview_analysis_service, AnalysisStatus
+# from flask_caching import Cache
+import atexit
+# from dynamic_analysis import analyzer
+if 'executor' not in globals():
+    executor = ThreadPoolExecutor(max_workers=4)
 
+
+# interview_analysis_service.cache = Cache(app, config=cache_config)
+
+# Start service on app startup
+print("🚀 Starting Production Interview Analysis Service...")
+interview_analysis_service.start()
+print("✅ Interview Analysis Service running")
+ 
 # Import your existing modules
 try:
     from scraper import scrape_job
@@ -381,7 +396,6 @@ def get_cached_candidates(job_id=None, status_filter=None):
         if status_filter:
             query = query.filter_by(status=status_filter)
         
-        # Optimize query - only get needed fields for list view
         candidates = query.all()
         
         result = []
@@ -410,6 +424,7 @@ def get_cached_candidates(job_id=None, status_filter=None):
                     "github": c.github,
                     "phone": getattr(c, 'phone', None),
                     "resume_path": c.resume_path,
+                    "resume_url": c.resume_path,  # Add this for frontend compatibility
                     "processed_date": c.processed_date.isoformat() if c.processed_date else None,
                     "score_reasoning": c.score_reasoning,
                     
@@ -421,14 +436,39 @@ def get_cached_candidates(job_id=None, status_filter=None):
                     "exam_completed_date": c.exam_completed_date.isoformat() if c.exam_completed_date else None,
                     "link_expired": link_expired,
                     "time_remaining_hours": time_remaining,
-                    
-                    # Exam results
                     "exam_percentage": float(c.exam_percentage) if c.exam_percentage else None,
                     
-                    # Interview fields
+                    # Interview scheduling fields
                     "interview_scheduled": bool(c.interview_scheduled),
                     "interview_date": c.interview_date.isoformat() if c.interview_date else None,
                     "interview_link": c.interview_link,
+                    "interview_token": c.interview_token,
+                    
+                    # Interview progress fields
+                    "interview_started_at": c.interview_started_at.isoformat() if c.interview_started_at else None,
+                    "interview_completed_at": c.interview_completed_at.isoformat() if c.interview_completed_at else None,
+                    "interview_duration": c.interview_duration or 0,
+                    "interview_progress": c.interview_progress_percentage or 0,
+                    "interview_questions_answered": c.interview_answered_questions or 0,
+                    "interview_total_questions": c.interview_total_questions or 0,
+                    
+                    # Interview AI analysis fields
+                    "interview_ai_score": c.interview_ai_score,
+                    "interview_ai_technical_score": c.interview_ai_technical_score,
+                    "interview_ai_communication_score": c.interview_ai_communication_score,
+                    "interview_ai_problem_solving_score": c.interview_ai_problem_solving_score,
+                    "interview_ai_cultural_fit_score": c.interview_ai_cultural_fit_score,
+                    "interview_ai_overall_feedback": c.interview_ai_overall_feedback,
+                    "interview_ai_analysis_status": c.interview_ai_analysis_status,
+                    "interview_final_status": c.interview_final_status,
+                    
+                    # Interview insights
+                    "strengths": json.loads(c.interview_ai_strengths or '[]') if c.interview_ai_strengths else [],
+                    "weaknesses": json.loads(c.interview_ai_weaknesses or '[]') if c.interview_ai_weaknesses else [],
+                    "recommendations": json.loads(c.interview_recommendations or '[]') if hasattr(c, 'interview_recommendations') and c.interview_recommendations else [],
+                    
+                    # Interview recording
+                    "interview_recording_url": c.interview_recording_url,
                     
                     # Status fields
                     "final_status": c.final_status,
@@ -886,56 +926,117 @@ def api_assessments():
 # 1. Update the secure_interview_page function to handle reconnections
 @app.route('/secure-interview/<token>', methods=['GET'])
 def secure_interview_page(token):
-    """Serve the secure interview page with proper session data and reconnection support"""
+    """Serve the interview page ONLY if interview is not completed"""
+    session = SessionLocal()
     try:
-        session = SessionLocal()
-        try:
-            candidate = session.query(Candidate).filter_by(interview_token=token).first()
-            if not candidate:
-                return create_error_page(token, "Interview not found"), 404
-
-            # Optional expiry extension logic omitted for brevity
-            is_reconnection = bool(getattr(candidate, 'interview_started_at', None))
-
-            company_name = os.getenv('COMPANY_NAME', 'Our Company')
-            if getattr(candidate, 'company_name', None):
-                company_name = candidate.company_name
-
-            job_description = getattr(candidate, 'job_description', f'Interview for {candidate.job_title} position')
-
-            interview_data = {
-                'token': token,
-                'candidateId': candidate.id,
-                'candidateName': candidate.name,
-                'candidateEmail': candidate.email,
-                'position': candidate.job_title,
-                'company': company_name,
-                'knowledgeBaseId': getattr(candidate, 'knowledge_base_id', None),
-                'sessionId': getattr(candidate, 'interview_session_id', None),
-                'status': 'active',
-                'jobDescription': job_description,
-                'atsScore': candidate.ats_score,
-                'resumePath': candidate.resume_path,
-                'isReconnection': is_reconnection,
-                'previousSessionData': {
-                    'questionsAsked': getattr(candidate, 'interview_total_questions', 0),
-                    'questionsAnswered': getattr(candidate, 'interview_answered_questions', 0),
-                    'duration': getattr(candidate, 'interview_duration', 0)
-                }
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+        if not candidate:
+            return create_error_page(token, "Interview not found"), 404
+        
+        # BLOCK if completed
+        if getattr(candidate, 'interview_completed_at', None):
+            completed_time = candidate.interview_completed_at.strftime('%B %d, %Y at %I:%M %p')
+            return f"""<!DOCTYPE html>
+            <html>
+            <head>
+                <title>Interview Completed</title>
+                <style>
+                    body {{ 
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        min-height: 100vh;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin: 0;
+                    }}
+                    .container {{
+                        background: white;
+                        padding: 3rem;
+                        border-radius: 15px;
+                        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                        text-align: center;
+                        max-width: 500px;
+                    }}
+                    h1 {{ color: #28a745; }}
+                    .icon {{ font-size: 4rem; margin-bottom: 1rem; }}
+                    .details {{ 
+                        background: #f8f9fa;
+                        padding: 1rem;
+                        border-radius: 8px;
+                        margin: 1rem 0;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="icon">✅</div>
+                    <h1>Interview Already Completed</h1>
+                    <div class="details">
+                        <p><strong>Candidate:</strong> {candidate.name}</p>
+                        <p><strong>Position:</strong> {candidate.job_title}</p>
+                        <p><strong>Completed on:</strong> {completed_time}</p>
+                    </div>
+                    <p>Thank you for completing your interview. Your responses have been submitted for review.</p>
+                    <p>The interview link cannot be used again for security reasons.</p>
+                    <p style="color: #666; font-size: 0.9em; margin-top: 2rem;">
+                        If you have any questions, please contact our HR department.
+                    </p>
+                </div>
+            </body>
+            </html>""", 200
+        
+        # BLOCK if expired
+        expires_at = getattr(candidate, 'interview_expires_at', None)
+        if expires_at and expires_at < datetime.now():
+            return create_expired_interview_page(token), 403
+        
+        # NOW ADD THE NORMAL INTERVIEW PAGE CODE (from your first code)
+        # This only runs if NOT completed and NOT expired
+        
+        is_reconnection = bool(getattr(candidate, 'interview_started_at', None))
+        
+        company_name = os.getenv('COMPANY_NAME', 'Our Company')
+        if getattr(candidate, 'company_name', None):
+            company_name = candidate.company_name
+        
+        job_description = getattr(candidate, 'job_description', f'Interview for {candidate.job_title} position')
+        
+        interview_data = {
+            'token': token,
+            'candidateId': candidate.id,
+            'candidateName': candidate.name,
+            'candidateEmail': candidate.email,
+            'position': candidate.job_title,
+            'company': company_name,
+            'knowledgeBaseId': getattr(candidate, 'knowledge_base_id', None),
+            'sessionId': getattr(candidate, 'interview_session_id', None),
+            'status': 'active',
+            'jobDescription': job_description,
+            'atsScore': candidate.ats_score,
+            'resumePath': candidate.resume_path,
+            'isReconnection': is_reconnection,
+            'previousSessionData': {
+                'questionsAsked': getattr(candidate, 'interview_total_questions', 0),
+                'questionsAnswered': getattr(candidate, 'interview_answered_questions', 0),
+                'duration': getattr(candidate, 'interview_duration', 0)
             }
-
-            return create_interview_landing_page(interview_data, token), 200
-        finally:
-            session.close()
+        }
+        
+        return create_interview_landing_page(interview_data, token), 200
+        
     except Exception as e:
         logger.exception("Error in interview route")
         return create_error_page(token, str(e)), 500
+    finally:
+        session.close()
 
 
 # 2. Add a new endpoint to validate and refresh interview tokens
 @app.route('/api/interview/validate-token/<token>', methods=['GET', 'POST'])
 def validate_interview_token(token):
-    """Validate interview token and extend expiration if needed"""
+    """Validate interview token - PREVENT access after completion"""
     session = SessionLocal()
     try:
         candidate = session.query(Candidate).filter_by(interview_token=token).first()
@@ -943,36 +1044,59 @@ def validate_interview_token(token):
         if not candidate:
             return jsonify({"valid": False, "error": "Invalid token"}), 404
         
-        # Check expiration
-        is_expired = False
-        if hasattr(candidate, 'interview_expires_at') and candidate.interview_expires_at:
-            if candidate.interview_expires_at < datetime.now():
-                # Allow grace period of 24 hours
-                time_since_expiry = datetime.now() - candidate.interview_expires_at
-                if time_since_expiry.total_seconds() > 86400:
-                    is_expired = True
-                else:
-                    # Extend expiration
-                    candidate.interview_expires_at = datetime.now() + timedelta(days=7)
-                    session.commit()
+        # CHECK 1: If interview is already completed, DENY access
+        if getattr(candidate, 'interview_completed_at', None):
+            return jsonify({
+                "valid": False,
+                "error": "Interview already completed",
+                "completed_at": candidate.interview_completed_at.isoformat(),
+                "message": "This interview has been completed and cannot be accessed again"
+            }), 403
         
-        # Get session info
+        # CHECK 2: Check expiration (with proper getattr)
+        expires_at = getattr(candidate, 'interview_expires_at', None)
+        if expires_at and expires_at < datetime.now():
+            return jsonify({
+                "valid": False,
+                "error": "Interview link has expired",
+                "expired_at": expires_at.isoformat(),
+                "message": "This interview link has expired. Please contact HR for assistance."
+            }), 403
+        
+        # CHECK 3: If already started but abandoned for too long (optional)
+        started_at = getattr(candidate, 'interview_started_at', None)
+        if started_at:
+            time_since_start = datetime.now() - started_at
+            if time_since_start.total_seconds() > 7200:  # 2 hours
+                # Auto-complete abandoned interviews
+                candidate.interview_completed_at = datetime.now()
+                candidate.interview_ai_analysis_status = 'abandoned'
+                session.commit()
+                
+                return jsonify({
+                    "valid": False,
+                    "error": "Interview session timeout",
+                    "message": "This interview session has timed out after 2 hours."
+                }), 403
+        
+        # Only allow access if NOT completed and NOT expired
         session_info = {
-            "valid": not is_expired,
+            "valid": True,
             "candidate_name": candidate.name,
             "position": candidate.job_title,
-            "interview_started": bool(getattr(candidate, 'interview_started_at', None)),
-            "interview_completed": bool(getattr(candidate, 'interview_completed_at', None)),
+            "interview_started": bool(started_at),
+            "interview_completed": False,  # Always false here since we checked above
             "knowledge_base_id": getattr(candidate, 'knowledge_base_id', None),
-            "can_reconnect": True,
+            "can_continue": True,
             "questions_asked": getattr(candidate, 'interview_total_questions', 0),
             "questions_answered": getattr(candidate, 'interview_answered_questions', 0)
         }
         
+        # Update last accessed time
         if request.method == 'POST':
-            # Refresh session
-            candidate.last_accessed = datetime.now()
-            session.commit()
+            if hasattr(candidate, 'last_accessed'):
+                candidate.last_accessed = datetime.now()
+                session.commit()
         
         return jsonify(session_info), 200
         
@@ -2704,7 +2828,7 @@ REMEMBER: Ask these questions one at a time, wait for complete responses, and as
 
 # Add this helper endpoint to check interview status
 @app.route('/api/interview-status/<int:candidate_id>', methods=['GET'])
-def get_interview_status(candidate_id):
+def get_interview_v1_status(candidate_id):
     """Check if interview is already scheduled for a candidate"""
     session = SessionLocal()
     try:
@@ -2725,6 +2849,1713 @@ def get_interview_status(candidate_id):
         }), 200
     finally:
         session.close()
+
+interview_executor = ThreadPoolExecutor(max_workers=2)
+
+@app.route('/api/interview/track-link-click/<token>', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def track_interview_link_click(token):
+    """Track when a candidate clicks on their interview link"""
+    
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        logger.info(f"Tracking link click for token: {token}")
+        
+        # Import your models and db session
+        from models import Candidate, InterviewSession, db
+        
+        # Find the candidate
+        candidate = Candidate.query.filter_by(interview_token=token).first()
+        
+        if not candidate:
+            logger.error(f"No candidate found with token: {token}")
+            return jsonify({'error': 'Invalid interview token'}), 404
+        
+        logger.info(f"Found candidate: {candidate.id} - {candidate.name}")
+        
+        # Update the interview status from "Interview Scheduled" to "in_progress"
+        if candidate.interview_status == "Interview Scheduled":
+            candidate.interview_status = "in_progress"
+        
+        # Set the link clicked timestamp
+        if not hasattr(candidate, 'interview_link_clicked_at') or not candidate.interview_link_clicked_at:
+            candidate.interview_link_clicked_at = datetime.utcnow()
+        
+        # Also update the interview session if it exists
+        session = InterviewSession.query.filter_by(
+            candidate_id=candidate.id
+        ).order_by(InterviewSession.created_at.desc()).first()
+        
+        if session:
+            session.status = 'in_progress'
+            session.last_activity = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'candidate_id': candidate.id,
+            'message': 'Link click tracked successfully',
+            'interview_status': candidate.interview_status
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error tracking link click: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Update your force_complete_interview function with more logging
+@app.route('/api/interview/force-complete/<token>', methods=['POST'])
+def force_complete_interview(token):
+    """Force complete an interview regardless of Q&A count"""
+    session = SessionLocal()
+    try:
+        logger.info(f"Force completing interview for token: {token}")
+        
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        if not candidate:
+            logger.error(f"No candidate found with token: {token}")
+            return jsonify({"error": "Interview not found"}), 404
+        
+        logger.info(f"Found candidate: {candidate.id} - {candidate.name}")
+        logger.info(f"Current completed_at: {candidate.interview_completed_at}")
+        
+        # Force completion
+        if not candidate.interview_completed_at:
+            candidate.interview_completed_at = datetime.now()
+            candidate.interview_status = 'completed'
+            candidate.interview_progress_percentage = 100
+            
+            # Calculate duration
+            if candidate.interview_started_at:
+                duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
+                candidate.interview_duration = int(duration)
+            
+            # Mark for AI analysis
+            candidate.interview_ai_analysis_status = 'pending'
+            candidate.final_status = 'Interview Completed'
+            
+            # Log the changes before commit
+            logger.info(f"Setting completed_at to: {candidate.interview_completed_at}")
+            logger.info(f"Setting final_status to: {candidate.final_status}")
+            
+            # Commit the changes
+            session.commit()
+            logger.info("Changes committed to database")
+            
+            # Verify the commit worked
+            session.refresh(candidate)
+            logger.info(f"After commit - completed_at: {candidate.interview_completed_at}")
+            
+            # Trigger scoring
+            try:
+                trigger_auto_scoring(candidate.id)
+            except Exception as e:
+                logger.error(f"Failed to trigger auto-scoring: {e}")
+            
+        return jsonify({
+            "success": True,
+            "message": "Interview completed",
+            "candidate_id": candidate.id,
+            "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None
+        }), 200
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error force completing interview: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/api/interview/session/progress', methods=['POST', 'OPTIONS'])
+def update_session_progress():
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    data = request.json or {}
+    session_id = data.get('session_id')
+    progress = data.get('progress', 0)
+    status = data.get('status', 'in_progress')
+    
+    if not session_id:
+        return jsonify({"error": "session_id is required"}), 400
+    
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_session_id=session_id).first()
+        
+        if not candidate:
+            # Try splitting session_id and matching by candidate ID
+            parts = session_id.split('_')
+            if len(parts) >= 2 and parts[1].isdigit():
+                candidate_id = int(parts[1])
+                candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+                if candidate:
+                    # Update session_id if found
+                    candidate.interview_session_id = session_id
+        
+        if not candidate:
+            logger.warning(f"No candidate found for session_id: {session_id}")
+            return jsonify({"error": "Session not found"}), 404
+        
+        # Update progress fields
+        if hasattr(candidate, 'interview_progress_percentage'):
+            candidate.interview_progress_percentage = float(progress)
+        
+        if hasattr(candidate, 'interview_last_activity'):
+            candidate.interview_last_activity = datetime.now()
+        
+        # Handle completion status
+        if status == 'completed' or progress >= 100:
+            if hasattr(candidate, 'interview_completed_at'):
+                if not candidate.interview_completed_at:
+                    candidate.interview_completed_at = datetime.now()
+                    if hasattr(candidate, 'interview_status'):
+                        candidate.interview_status = 'completed'
+                    candidate.final_status = 'Interview Completed'
+                    
+                    if hasattr(candidate, 'interview_started_at') and candidate.interview_started_at:
+                        duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
+                        if hasattr(candidate, 'interview_duration'):
+                            candidate.interview_duration = int(duration)
+                    
+                    if hasattr(candidate, 'interview_ai_analysis_status'):
+                        candidate.interview_ai_analysis_status = 'pending'
+                    
+                    logger.info(f"Interview marked as completed for candidate {candidate.id}")
+                    # session.commit()
+
+                    try:
+                        if 'trigger_auto_scoring' in globals():
+                            trigger_auto_scoring(candidate.id)
+                        else:
+                            logger.warning("Auto-scoring function not found.")
+                    except Exception as e:
+                        logger.error(f"Error triggering auto-scoring: {e}")
+        
+        elif status == 'in_progress' and hasattr(candidate, 'interview_started_at'):
+            if not candidate.interview_started_at:
+                candidate.interview_started_at = datetime.now()
+                if hasattr(candidate, 'interview_status'):
+                    candidate.interview_status = 'in_progress'
+        
+        # if session.dirty:
+        session.commit()
+
+        cache.delete_memoized(get_cached_candidates)
+
+        return jsonify({
+            "success": True,
+            "progress": progress,
+            "status": status,
+            "candidate_id": candidate.id,
+            "candidate_name": candidate.name
+        }), 200
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error updating progress: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/api/interview/session/complete', methods=['POST', 'OPTIONS'])
+def complete_interview_session():
+    """Mark interview session as complete"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    data = request.json or {}
+    session_id = data.get('session_id')
+    interview_token = data.get('interview_token')
+    
+    session = SessionLocal()
+    try:
+        # Find candidate by session_id or token
+        candidate = None
+        if session_id:
+            candidate = session.query(Candidate).filter_by(
+                interview_session_id=session_id
+            ).first()
+        elif interview_token:
+            candidate = session.query(Candidate).filter_by(
+                interview_token=interview_token
+            ).first()
+        
+        if not candidate:
+            return jsonify({"error": "Session not found"}), 404
+        
+        # Mark as completed
+        candidate.interview_completed_at = datetime.now()
+        candidate.interview_progress_percentage = 100
+        candidate.final_status = 'Interview Completed - Pending Review'
+        
+        # Update interview status if it exists
+        if hasattr(candidate, 'interview_status'):
+            candidate.interview_status = 'completed'
+        
+        # Calculate interview duration if interview started
+        if candidate.interview_started_at:
+            duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
+            if hasattr(candidate, 'interview_duration'):
+                candidate.interview_duration = int(duration)
+        
+        # Update Q&A stats if interview_total_questions exists
+        if hasattr(candidate, 'interview_qa_completion_rate'):
+            if candidate.interview_total_questions and candidate.interview_total_questions > 0:
+                completion_rate = (candidate.interview_answered_questions / candidate.interview_total_questions) * 100
+                candidate.interview_qa_completion_rate = completion_rate
+        
+        # Set AI analysis status to pending if the attribute exists
+        if hasattr(candidate, 'interview_ai_analysis_status'):
+            candidate.interview_ai_analysis_status = 'pending'
+        
+        session.commit()
+        
+        logger.info(f"Interview completed for candidate {candidate.id} - {candidate.name}")
+        
+        # Trigger analysis in background (auto-scoring)
+        try:
+            if 'trigger_auto_scoring' in globals():
+                from concurrent.futures import ThreadPoolExecutor
+                executor = ThreadPoolExecutor(max_workers=2)
+                executor.submit(trigger_auto_scoring, candidate.id)
+        except Exception as e:
+            logger.error(f"Failed to trigger analysis: {e}")
+        
+        return jsonify({
+            "success": True,
+            "message": "Interview completed successfully",
+            "candidate_id": candidate.id,
+            "duration_seconds": candidate.interview_duration if hasattr(candidate, 'interview_duration') else None,
+            "next_step": "AI analysis in progress"
+        }), 200
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error completing interview session: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+# Add to backend.py
+def periodic_interview_completion_check():
+    """Periodically check for interviews that should be completed"""
+    while True:
+        try:
+            time.sleep(300)  # Check every 5 minutes
+            
+            session = SessionLocal()
+            try:
+                # Find uncompleted interviews
+                uncompleted = session.query(Candidate).filter(
+                    Candidate.interview_started_at.isnot(None),
+                    Candidate.interview_completed_at.is_(None)
+                ).all()
+                
+                for candidate in uncompleted:
+                    check_and_complete_interview(candidate.id)
+                    
+            finally:
+                session.close()
+                
+        except Exception as e:
+            logger.error(f"Error in periodic completion check: {e}")
+
+# Start this when the app starts
+completion_check_thread = threading.Thread(
+    target=periodic_interview_completion_check,
+    daemon=True
+)
+completion_check_thread.start()
+
+
+def check_and_update_expired_interviews():
+    """Automatically check and mark expired interviews"""
+    session = SessionLocal()
+    try:
+        now = datetime.now()
+        
+        # Find expired interviews
+        expired_candidates = session.query(Candidate).filter(
+            Candidate.interview_expires_at < now,
+            Candidate.interview_completed_at.is_(None),
+            Candidate.interview_status != 'expired'
+        ).all()
+        
+        for candidate in expired_candidates:
+            candidate.interview_status = 'expired'
+            candidate.final_status = 'Interview Link Expired'
+            logger.info(f"Marked interview as expired for {candidate.name}")
+        
+        # Find abandoned interviews (no activity for 2 hours)
+        two_hours_ago = now - timedelta(hours=2)
+        abandoned_candidates = session.query(Candidate).filter(
+            Candidate.interview_started_at.isnot(None),
+            Candidate.interview_completed_at.is_(None),
+            Candidate.interview_last_activity < two_hours_ago,
+            Candidate.interview_status != 'abandoned'
+        ).all()
+        
+        for candidate in abandoned_candidates:
+            candidate.interview_status = 'abandoned'
+            candidate.final_status = 'Interview Abandoned'
+            logger.info(f"Marked interview as abandoned for {candidate.name}")
+        
+        session.commit()
+        
+    except Exception as e:
+        logger.error(f"Error checking expired interviews: {e}")
+        session.rollback()
+    finally:
+        session.close()
+
+# # 1. LIGHTWEIGHT STATUS ENDPOINT (for frequent checks)
+@app.route('/api/interview/status/<token>', methods=['GET'])
+def get_interview_status(token):
+    """Get current interview status - LIGHTWEIGHT"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+        if not candidate:
+            return jsonify({"error": "Interview not found"}), 404
+        
+        # Determine current status
+        status = 'not_started'
+        if candidate.interview_completed_at:
+            status = 'completed'
+        elif hasattr(candidate, 'interview_status') and candidate.interview_status:
+            status = candidate.interview_status
+        elif candidate.interview_started_at:
+            status = 'in_progress'
+        elif candidate.link_clicked or (hasattr(candidate, 'interview_link_clicked') and candidate.interview_link_clicked):
+            status = 'link_clicked'
+        
+        # Return only essential data
+        return jsonify({
+            "status": status,
+            "progress": candidate.interview_progress_percentage if hasattr(candidate, 'interview_progress_percentage') else 0,
+            "started_at": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+            "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+            "expires_at": candidate.interview_expires_at.isoformat() if candidate.interview_expires_at else None
+        }), 200
+        
+    finally:
+        session.close()
+
+
+# 2. COMPREHENSIVE TRACKING ENDPOINT (for detailed information)
+# @app.route('/api/interview/status/<token>', methods=['GET'])
+# def get_interview_tracking_status(token):
+#     """Get comprehensive tracking status for an interview - DETAILED"""
+#     session = SessionLocal()
+#     try:
+#         candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+#         if not candidate:
+#             return jsonify({"error": "Interview not found"}), 404
+        
+#         # Calculate status
+#         status = 'not_started'
+#         if candidate.interview_completed_at:
+#             status = 'completed'
+#         elif candidate.interview_status == 'expired':
+#             status = 'expired'
+#         elif candidate.interview_status == 'abandoned':
+#             status = 'abandoned'
+#         elif candidate.interview_started_at:
+#             status = 'in_progress'
+#         elif candidate.interview_link_clicked:
+#             status = 'link_clicked'
+        
+#         # Time calculations
+#         time_remaining = None
+#         if candidate.interview_expires_at and not candidate.interview_completed_at:
+#             time_remaining = (candidate.interview_expires_at - datetime.now()).total_seconds()
+#             if time_remaining < 0:
+#                 time_remaining = 0
+        
+#         # Return comprehensive data
+#         tracking_data = {
+#             "candidate": {
+#                 "id": candidate.id,
+#                 "name": candidate.name,
+#                 "email": candidate.email,
+#                 "position": candidate.job_title
+#             },
+#             "status": status,
+#             "tracking": {
+#                 "link_clicked": bool(candidate.interview_link_clicked),
+#                 "link_clicked_at": candidate.interview_link_clicked_at.isoformat() if candidate.interview_link_clicked_at else None,
+#                 "started_at": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+#                 "last_activity": candidate.interview_last_activity.isoformat() if candidate.interview_last_activity else None,
+#                 "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+#                 "expires_at": candidate.interview_expires_at.isoformat() if candidate.interview_expires_at else None,
+#                 "time_remaining_seconds": time_remaining
+#             },
+#             "progress": {
+#                 "percentage": candidate.interview_progress_percentage or 0,
+#                 "total_questions": candidate.interview_total_questions or 0,
+#                 "answered_questions": candidate.interview_answered_questions or 0,
+#                 "qa_completion_rate": getattr(candidate, 'interview_qa_completion_rate', 0) or 0
+#             },
+#             "analysis": {
+#                 "status": candidate.interview_ai_analysis_status,
+#                 "score": candidate.interview_ai_score,
+#                 "recommendation": candidate.interview_final_status
+#             },
+#             "technical": {
+#                 "session_id": candidate.interview_session_id,
+#                 "browser_info": candidate.interview_browser_info,
+#                 "duration_seconds": candidate.interview_duration
+#             }
+#         }
+        
+#         return jsonify(tracking_data), 200
+        
+#     except Exception as e:
+#         logger.error(f"Error getting tracking status: {e}")
+#         return jsonify({"error": str(e)}), 500
+#     finally:
+#         session.close()
+
+@app.route('/api/interview/dashboard', methods=['GET'])
+def interview_tracking_dashboard():
+    """Get dashboard data for all interviews"""
+    session = SessionLocal()
+    try:
+        # Get all scheduled interviews
+        all_interviews = session.query(Candidate).filter(
+            Candidate.interview_scheduled == True
+        ).all()
+        
+        stats = {
+            "total_scheduled": len(all_interviews),
+            "not_started": 0,
+            "link_clicked": 0,
+            "in_progress": 0,
+            "completed": 0,
+            "expired": 0,
+            "abandoned": 0
+        }
+        
+        interviews = []
+        
+        for candidate in all_interviews:
+            # Determine status
+            if candidate.interview_completed_at:
+                status = 'completed'
+                stats['completed'] += 1
+            elif candidate.interview_status == 'expired':
+                status = 'expired'
+                stats['expired'] += 1
+            elif candidate.interview_status == 'abandoned':
+                status = 'abandoned'
+                stats['abandoned'] += 1
+            elif candidate.interview_started_at:
+                status = 'in_progress'
+                stats['in_progress'] += 1
+            elif candidate.interview_link_clicked:
+                status = 'link_clicked'
+                stats['link_clicked'] += 1
+            else:
+                status = 'not_started'
+                stats['not_started'] += 1
+            
+            interviews.append({
+                "id": candidate.id,
+                "name": candidate.name,
+                "email": candidate.email,
+                "position": candidate.job_title,
+                "status": status,
+                "scheduled_date": candidate.interview_date.isoformat() if candidate.interview_date else None,
+                "link_clicked": bool(candidate.interview_link_clicked),
+                "started_at": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+                "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+                "progress": candidate.interview_progress_percentage or 0,
+                "ai_score": candidate.interview_ai_score,
+                "final_status": candidate.final_status
+            })
+        
+        return jsonify({
+            "success": True,
+            "stats": stats,
+            "interviews": interviews,
+            "last_updated": datetime.now().isoformat()
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting dashboard data: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+def analyze_answer_quality(answer_text):
+    """Analyze individual answer quality"""
+    score = 50  # Base score
+    
+    # Length bonus
+    word_count = len(answer_text.split())
+    if word_count > 100:
+        score += 20
+    elif word_count > 50:
+        score += 10
+    elif word_count < 10:
+        score -= 20
+    
+    # Technical keywords bonus
+    tech_keywords = ['implemented', 'developed', 'designed', 'architecture', 
+                    'framework', 'database', 'algorithm', 'optimization']
+    for keyword in tech_keywords:
+        if keyword.lower() in answer_text.lower():
+            score += 5
+    
+    # STAR method indicators
+    star_keywords = ['situation', 'task', 'action', 'result', 'challenge', 'solution']
+    for keyword in star_keywords:
+        if keyword.lower() in answer_text.lower():
+            score += 3
+    
+    return min(100, max(0, score))
+
+# Add this improved scoring function to backend.py
+def analyze_interview_with_ai_enhanced(qa_pairs, candidate):
+    """Enhanced AI analysis with actual content evaluation"""
+    try:
+        # Check if OpenAI is available
+        openai_key = os.getenv('OPENAI_API_KEY')
+        if openai_key:
+            import openai
+            openai.api_key = openai_key
+            
+            # Prepare Q&A for analysis
+            qa_text = "\n".join([
+                f"Q: {qa.get('question', '')}\nA: {qa.get('answer', '')}" 
+                for qa in qa_pairs if qa.get('answer')
+            ])
+            
+            # Get AI analysis
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[{
+                    "role": "system",
+                    "content": f"You are evaluating interview responses for {candidate.job_title} position. Score each category 0-100."
+                }, {
+                    "role": "user", 
+                    "content": f"""Analyze these interview Q&As and provide scores:
+                    
+{qa_text}
+
+Return JSON with:
+- technical_score: (0-100)
+- communication_score: (0-100)  
+- problem_solving_score: (0-100)
+- cultural_fit_score: (0-100)
+- overall_score: (0-100)
+- feedback: (detailed text feedback)
+- strengths: (list of strengths)
+- weaknesses: (list of areas to improve)"""
+                }],
+                temperature=0.3
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            return result
+            
+        else:
+            # Fallback to enhanced rule-based scoring
+            return analyze_with_enhanced_rules(qa_pairs, candidate)
+            
+    except Exception as e:
+        logger.error(f"AI analysis failed: {e}")
+        return analyze_with_enhanced_rules(qa_pairs, candidate)
+
+def analyze_with_enhanced_rules(qa_pairs, candidate):
+    """Enhanced rule-based scoring with better metrics"""
+    if not qa_pairs:
+        return {
+            'technical_score': 0,
+            'communication_score': 0,
+            'problem_solving_score': 0,
+            'cultural_fit_score': 0,
+            'overall_score': 0,
+            'confidence': 0,
+            'feedback': 'No interview data available'
+        }
+    
+    # Calculate metrics
+    answered = sum(1 for qa in qa_pairs if qa.get('answer'))
+    total = len(qa_pairs)
+    completion_rate = (answered / total * 100) if total > 0 else 0
+    
+    # Calculate answer quality metrics
+    answer_lengths = [len(qa.get('answer', '')) for qa in qa_pairs if qa.get('answer')]
+    avg_length = sum(answer_lengths) / len(answer_lengths) if answer_lengths else 0
+    
+    # Response times
+    response_times = [qa.get('response_time', 0) for qa in qa_pairs if qa.get('response_time')]
+    avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+    
+    # Calculate scores with better logic
+    technical_score = min(100, max(0, 
+        50 + # Base score
+        (completion_rate * 0.2) + # 20% from completion
+        (min(avg_length / 10, 30)) # Up to 30 points for detailed answers
+    ))
+    
+    communication_score = min(100, max(0,
+        40 + # Base score
+        (completion_rate * 0.3) + # 30% from completion
+        (30 if avg_response_time < 30 else 15) # Quick responses
+    ))
+    
+    problem_solving_score = min(100, max(0,
+        45 + # Base score
+        (completion_rate * 0.25) + # 25% from completion
+        (min(avg_length / 8, 30)) # Detail in answers
+    ))
+    
+    cultural_fit_score = min(100, max(0,
+        50 + # Base score
+        (completion_rate * 0.3) + # 30% from completion
+        (20 if answered >= total * 0.8 else 0) # Bonus for high completion
+    ))
+    
+    overall_score = (
+        technical_score * 0.35 +
+        communication_score * 0.25 +
+        problem_solving_score * 0.25 +
+        cultural_fit_score * 0.15
+    )
+
+     # Generate strengths and weaknesses
+    strengths = []
+    weaknesses = []
+    
+    if completion_rate >= 80:
+        strengths.append("High completion rate")
+    else:
+        weaknesses.append("Low completion rate")
+    
+    if avg_length > 150:
+        strengths.append("Detailed responses")
+    elif avg_length < 50:
+        weaknesses.append("Brief responses")
+    
+    if avg_response_time < 15:
+        strengths.append("Quick response time")
+    elif avg_response_time > 30:
+        weaknesses.append("Slow response time")
+    
+    return {
+        'technical_score': round(technical_score),
+        'communication_score': round(communication_score),
+        'problem_solving_score': round(problem_solving_score),
+        'cultural_fit_score': round(cultural_fit_score),
+        'overall_score': round(overall_score),
+        'confidence': 0.75,
+        'feedback': f"""
+Interview Analysis (Rule-Based):
+- Completion Rate: {completion_rate:.1f}%
+- Questions Answered: {answered}/{total}
+- Average Response Detail: {'Detailed' if avg_length > 150 else 'Brief' if avg_length > 50 else 'Very Brief'}
+- Response Speed: {'Quick' if avg_response_time < 15 else 'Moderate' if avg_response_time < 30 else 'Thoughtful'}
+
+Overall: {'Strong candidate' if overall_score >= 70 else 'Potential candidate' if overall_score >= 50 else 'Needs improvement'}
+"""
+    }
+
+# Update the trigger_auto_scoring function in backend.py:
+def trigger_auto_scoring(candidate_id):
+    """Automatically trigger AI scoring when interview completes"""
+    def run_scoring():
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+            if not candidate:
+                logger.error(f"Candidate {candidate_id} not found for scoring")
+                return
+            
+            # Update status to processing
+            candidate.interview_ai_analysis_status = 'processing'
+            session.commit()
+            
+            # Parse Q&A data
+            qa_pairs = []
+            try:
+                # Try to parse Q&A pairs
+                if candidate.interview_qa_pairs:
+                    qa_pairs = json.loads(candidate.interview_qa_pairs)
+                elif candidate.interview_questions_asked and candidate.interview_answers_given:
+                    # Build Q&A pairs from separate fields
+                    questions = json.loads(candidate.interview_questions_asked or '[]')
+                    answers = json.loads(candidate.interview_answers_given or '[]')
+                    
+                    for i, question in enumerate(questions):
+                        qa_pair = {
+                            'question': question.get('text', ''),
+                            'answer': answers[i].get('text', '') if i < len(answers) else '',
+                            'timestamp': question.get('timestamp', None)
+                        }
+                        qa_pairs.append(qa_pair)
+            except Exception as e:
+                logger.error(f"Failed to parse Q&A data: {e}")
+                qa_pairs = []
+            
+            # Perform analysis
+            if len(qa_pairs) > 0:
+                # Use your enhanced analysis function
+                scores = analyze_interview_with_ai_enhanced(qa_pairs, candidate)
+            else:
+                # Default scores if no Q&A data
+                scores = {
+                    'technical_score': 0,
+                    'communication_score': 0,
+                    'problem_solving_score': 0,
+                    'cultural_fit_score': 0,
+                    'overall_score': 0,
+                    'feedback': 'No interview data available for analysis',
+                    'confidence': 0
+                }
+            
+            # Update candidate with scores
+            candidate.interview_ai_score = scores.get('overall_score', 0)
+            candidate.interview_ai_technical_score = scores.get('technical_score', 0)
+            candidate.interview_ai_communication_score = scores.get('communication_score', 0)
+            candidate.interview_ai_problem_solving_score = scores.get('problem_solving_score', 0)
+            candidate.interview_ai_cultural_fit_score = scores.get('cultural_fit_score', 0)
+            candidate.interview_ai_overall_feedback = scores.get('feedback', '')
+            
+            # Extract strengths and weaknesses
+            if 'strengths' in scores:
+                candidate.interview_ai_strengths = json.dumps(scores['strengths'])
+            if 'weaknesses' in scores:
+                candidate.interview_ai_weaknesses = json.dumps(scores['weaknesses'])
+            
+            # Set final status based on score
+            if candidate.interview_ai_score >= 70:
+                candidate.interview_final_status = 'Passed'
+                candidate.final_status = 'Interview Passed'
+            else:
+                candidate.interview_final_status = 'Failed'
+                candidate.final_status = 'Interview Failed'
+            
+            # Mark analysis as complete
+            candidate.interview_ai_analysis_status = 'completed'
+            
+            # Store completion timestamp
+            if hasattr(candidate, 'interview_ai_analysis_completed_at'):
+                candidate.interview_ai_analysis_completed_at = datetime.now()
+            
+            session.commit()
+            
+            # Clear cache to update frontend
+            cache.delete_memoized(get_cached_candidates)
+            
+            logger.info(f"✅ Auto-scoring completed for candidate {candidate_id}: {candidate.interview_ai_score}%")
+            
+            # Send notification if configured
+            if hasattr(globals(), 'notify_scoring_complete'):
+                notify_scoring_complete(candidate)
+            
+        except Exception as e:
+            logger.error(f"Auto-scoring failed for candidate {candidate_id}: {e}", exc_info=True)
+            if candidate:
+                candidate.interview_ai_analysis_status = 'failed'
+                session.commit()
+        finally:
+            session.close()
+    
+    # Run in background thread
+    if 'executor' in globals():
+        executor.submit(run_scoring)
+    else:
+        # Run directly if no executor
+        run_scoring()
+
+
+def trigger_ai_analysis(candidate_id):
+    """Trigger REAL AI analysis for completed interview - NO RANDOM SCORES"""
+    def run_analysis():
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+            if not candidate:
+                logger.error(f"Candidate {candidate_id} not found")
+                return
+            
+            # Update status
+            candidate.interview_ai_analysis_status = 'processing'
+            session.commit()
+            
+            # Parse Q&A data
+            questions = json.loads(candidate.interview_questions_asked or '[]')
+            answers = json.loads(candidate.interview_answers_given or '[]')
+            
+            # Build Q&A pairs for analysis
+            qa_pairs = []
+            for i, question in enumerate(questions):
+                qa_pair = {
+                    'question': question.get('text', '') if isinstance(question, dict) else str(question),
+                    'answer': ''
+                }
+                if i < len(answers):
+                    answer = answers[i]
+                    qa_pair['answer'] = answer.get('text', '') if isinstance(answer, dict) else str(answer)
+                qa_pairs.append(qa_pair)
+            
+            # CHECK FOR INVALID/TEST RESPONSES
+            has_invalid_responses = False
+            invalid_patterns = ['INIT_INTERVIEW', 'TEST_RESPONSE', 'undefined', 'null']
+            
+            for qa in qa_pairs:
+                answer_text = qa.get('answer', '').strip()
+                if any(pattern in answer_text for pattern in invalid_patterns) or len(answer_text) < 5:
+                    has_invalid_responses = True
+                    logger.warning(f"Invalid response detected: {answer_text[:50]}")
+                    break
+            
+            # DYNAMIC SCORING BASED ON ACTUAL CONTENT
+            if has_invalid_responses or len(qa_pairs) == 0:
+                # Failed interview - invalid or no responses
+                candidate.interview_ai_score = 0
+                candidate.interview_ai_technical_score = 0
+                candidate.interview_ai_communication_score = 0
+                candidate.interview_ai_problem_solving_score = 0
+                candidate.interview_ai_cultural_fit_score = 0
+                candidate.interview_ai_overall_feedback = """
+Interview Analysis: FAILED
+- No valid responses provided
+- Interview appears to be incomplete or contains test data
+- Candidate did not properly complete the interview
+
+Recommendation: Schedule a new interview
+"""
+                candidate.interview_final_status = 'Failed - Invalid Response'
+                
+            else:
+                # ACTUAL DYNAMIC ANALYSIS
+                scores = analyze_interview_content(qa_pairs, candidate)
+                
+                candidate.interview_ai_score = scores['overall']
+                candidate.interview_ai_technical_score = scores['technical']
+                candidate.interview_ai_communication_score = scores['communication']
+                candidate.interview_ai_problem_solving_score = scores['problem_solving']
+                candidate.interview_ai_cultural_fit_score = scores['cultural_fit']
+                candidate.interview_ai_overall_feedback = scores['feedback']
+                
+                # Set final status based on ACTUAL score
+                if scores['overall'] >= 70:
+                    candidate.interview_final_status = 'Recommended'
+                elif scores['overall'] >= 50:
+                    candidate.interview_final_status = 'Review Required'
+                else:
+                    candidate.interview_final_status = 'Not Recommended'
+            
+            candidate.interview_ai_analysis_status = 'completed'
+            session.commit()
+            
+            logger.info(f"✅ Dynamic analysis completed for {candidate.name}: {candidate.interview_ai_score}%")
+            
+            # Clear cache
+            cache.delete_memoized(get_cached_candidates)
+            
+        except Exception as e:
+            logger.error(f"AI analysis failed for candidate {candidate_id}: {e}", exc_info=True)
+            if candidate:
+                candidate.interview_ai_analysis_status = 'failed'
+                candidate.interview_ai_overall_feedback = f"Analysis failed: {str(e)}"
+                session.commit()
+        finally:
+            session.close()
+    
+    # Run in background thread
+    executor.submit(run_analysis)
+
+
+def analyze_interview_content(qa_pairs, candidate):
+    """REAL content analysis - not random!"""
+    
+    # Initialize scores
+    scores = {
+        'technical': 0,
+        'communication': 0,
+        'problem_solving': 0,
+        'cultural_fit': 0,
+        'overall': 0
+    }
+    
+    if not qa_pairs:
+        return scores
+    
+    # Technical keywords to look for
+    tech_keywords = [
+        'implement', 'develop', 'design', 'architecture', 'algorithm',
+        'database', 'api', 'framework', 'optimize', 'scale', 'debug',
+        'testing', 'deployment', 'code', 'programming', 'software'
+    ]
+    
+    soft_keywords = [
+        'team', 'collaborate', 'communicate', 'lead', 'manage',
+        'problem', 'solution', 'challenge', 'learn', 'adapt'
+    ]
+    
+    total_score = 0
+    answered_count = 0
+    total_word_count = 0
+    technical_mentions = 0
+    soft_skill_mentions = 0
+    
+    for qa in qa_pairs:
+        answer = qa.get('answer', '').lower()
+        question = qa.get('question', '').lower()
+        
+        if not answer or len(answer) < 5:
+            continue
+            
+        answered_count += 1
+        words = answer.split()
+        word_count = len(words)
+        total_word_count += word_count
+        
+        # Score based on answer length (longer = more detailed)
+        length_score = min(30, word_count / 3)  # Max 30 points for length
+        
+        # Check for technical keywords
+        tech_found = sum(1 for kw in tech_keywords if kw in answer)
+        technical_mentions += tech_found
+        tech_score = min(40, tech_found * 10)  # Max 40 points for technical content
+        
+        # Check for soft skills
+        soft_found = sum(1 for kw in soft_keywords if kw in answer)
+        soft_skill_mentions += soft_found
+        soft_score = min(30, soft_found * 10)  # Max 30 points for soft skills
+        
+        # Calculate answer score
+        answer_score = length_score + tech_score + soft_score
+        
+        # Categorize score
+        if 'technical' in question or 'code' in question or 'implement' in question:
+            scores['technical'] += answer_score
+        elif 'team' in question or 'collaborate' in question:
+            scores['cultural_fit'] += answer_score
+        elif 'problem' in question or 'challenge' in question:
+            scores['problem_solving'] += answer_score
+        else:
+            scores['communication'] += answer_score
+        
+        total_score += answer_score
+    
+    # Calculate completion rate
+    completion_rate = (answered_count / len(qa_pairs)) * 100 if qa_pairs else 0
+    
+    # Average word count per answer
+    avg_word_count = total_word_count / answered_count if answered_count > 0 else 0
+    
+    # Normalize scores (0-100 scale)
+    num_questions = len(qa_pairs)
+    if num_questions > 0:
+        for key in ['technical', 'communication', 'problem_solving', 'cultural_fit']:
+            scores[key] = min(100, (scores[key] / num_questions) * 2)
+    
+    # Calculate overall score with penalties
+    base_score = (scores['technical'] * 0.35 + 
+                  scores['communication'] * 0.25 + 
+                  scores['problem_solving'] * 0.25 + 
+                  scores['cultural_fit'] * 0.15)
+    
+    # Apply penalties
+    if completion_rate < 50:
+        base_score *= 0.5  # 50% penalty for low completion
+    elif completion_rate < 80:
+        base_score *= 0.8  # 20% penalty
+    
+    if avg_word_count < 20:
+        base_score *= 0.7  # 30% penalty for very brief answers
+    
+    scores['overall'] = min(100, max(0, base_score))
+    
+    # Generate detailed feedback
+    scores['feedback'] = f"""
+INTERVIEW ANALYSIS REPORT (Dynamic Scoring)
+==========================================
+Candidate: {candidate.name}
+Position: {candidate.job_title}
+Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}
+
+SCORING METRICS:
+- Completion Rate: {completion_rate:.1f}%
+- Questions Answered: {answered_count}/{len(qa_pairs)}
+- Average Response Length: {avg_word_count:.0f} words
+- Technical Keywords Found: {technical_mentions}
+- Soft Skill Keywords Found: {soft_skill_mentions}
+
+DETAILED SCORES:
+- Technical Skills: {scores['technical']:.1f}/100
+- Communication: {scores['communication']:.1f}/100
+- Problem Solving: {scores['problem_solving']:.1f}/100
+- Cultural Fit: {scores['cultural_fit']:.1f}/100
+
+OVERALL SCORE: {scores['overall']:.1f}/100
+
+ASSESSMENT:
+{get_assessment_text(scores['overall'], completion_rate, avg_word_count)}
+
+RECOMMENDATION: {'Highly Recommended' if scores['overall'] >= 80 else 'Recommended' if scores['overall'] >= 70 else 'Consider for Further Review' if scores['overall'] >= 50 else 'Not Recommended'}
+"""
+    
+    return scores
+
+
+def get_assessment_text(overall_score, completion_rate, avg_word_count):
+    """Generate assessment text based on metrics"""
+    
+    if overall_score >= 80:
+        return """The candidate demonstrated excellent performance across all areas. 
+Their responses were detailed, thoughtful, and showed strong technical knowledge 
+combined with good communication skills. They are highly recommended for this position."""
+    
+    elif overall_score >= 70:
+        return """The candidate showed good performance with solid responses to most questions. 
+They demonstrated adequate technical knowledge and communication skills. 
+Consider for the next round of interviews."""
+    
+    elif overall_score >= 50:
+        return f"""The candidate showed moderate performance with some areas of concern.
+Completion rate: {completion_rate:.0f}%
+Average response detail: {avg_word_count:.0f} words
+Additional evaluation may be needed to make a final decision."""
+    
+    else:
+        return f"""The candidate's performance was below expectations.
+Key concerns:
+- Low completion rate: {completion_rate:.0f}%
+- Brief responses: {avg_word_count:.0f} words average
+- Limited demonstration of required skills
+Not recommended for this position."""
+
+
+# Also add this helper function if using OpenAI
+def analyze_with_openai(qa_pairs, candidate):
+    """Use OpenAI for more intelligent analysis"""
+    try:
+        import openai
+        openai.api_key = os.getenv('OPENAI_API_KEY')
+        
+        if not openai.api_key:
+            return None
+        
+        # Prepare Q&A text
+        qa_text = "\n".join([
+            f"Q: {qa['question']}\nA: {qa['answer']}" 
+            for qa in qa_pairs if qa.get('answer')
+        ])
+        
+        prompt = f"""
+        Analyze this interview for {candidate.job_title} position.
+        Score each aspect 0-100 based on ACTUAL content quality.
+        
+        Interview:
+        {qa_text}
+        
+        Return JSON with: technical, communication, problem_solving, cultural_fit, overall scores and feedback.
+        """
+        
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are an expert interview evaluator."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3
+        )
+        
+        # Parse response and return scores
+        import json
+        result = json.loads(response.choices[0].message.content)
+        return result
+        
+    except Exception as e:
+        logger.error(f"OpenAI analysis failed: {e}")
+        return None
+
+# Add to backend.py:
+@app.route('/api/interview-results', methods=['GET'])
+@cache.memoize(timeout=60)
+def get_all_interview_results():
+    """Get all interview results with proper filtering and pagination"""
+    try:
+        # Get query parameters
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 50))
+        status_filter = request.args.get('status')
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+        
+        session = SessionLocal()
+        try:
+            # Build query
+            query = session.query(Candidate).filter(
+                Candidate.interview_scheduled == True
+            )
+            
+            # Apply filters
+            if status_filter:
+                if status_filter == 'completed':
+                    query = query.filter(Candidate.interview_completed_at.isnot(None))
+                elif status_filter == 'in_progress':
+                    query = query.filter(
+                        Candidate.interview_started_at.isnot(None),
+                        Candidate.interview_completed_at.is_(None)
+                    )
+                elif status_filter == 'analyzed':
+                    query = query.filter(
+                        Candidate.interview_ai_analysis_status == AnalysisStatus.COMPLETED.value
+                    )
+            
+            if date_from:
+                query = query.filter(Candidate.interview_date >= date_from)
+            if date_to:
+                query = query.filter(Candidate.interview_date <= date_to)
+            
+            # Order by most recent
+            query = query.order_by(Candidate.interview_date.desc())
+            
+            # Paginate
+            total = query.count()
+            candidates = query.offset((page - 1) * per_page).limit(per_page).all()
+            
+            # Format results
+            results = []
+            for candidate in candidates:
+                # Safe JSON parsing
+                def safe_json_parse(data, default):
+                    try:
+                        return json.loads(data) if data else default
+                    except:
+                        return default
+                
+                result = {
+                    'id': candidate.id,
+                    'name': candidate.name,
+                    'email': candidate.email,
+                    'phone': candidate.phone,
+                    'job_title': candidate.job_title,
+                    'resume_url': candidate.resume_path,
+                    
+                    # Interview details
+                    'interview_date': candidate.interview_date.isoformat() if candidate.interview_date else None,
+                    'interview_scheduled': candidate.interview_scheduled,
+                    'interview_started_at': candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+                    'interview_completed_at': candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+                    'interview_duration': candidate.interview_duration or 0,
+                    'interview_token': candidate.interview_token,
+                    
+                    # Progress
+                    'interview_progress': candidate.interview_progress_percentage or 0,
+                    'interview_questions_answered': candidate.interview_answered_questions or 0,
+                    'interview_total_questions': candidate.interview_total_questions or 0,
+                    
+                    # Scores
+                    'interview_ai_score': candidate.interview_ai_score,
+                    'interview_ai_technical_score': candidate.interview_ai_technical_score,
+                    'interview_ai_communication_score': candidate.interview_ai_communication_score,
+                    'interview_ai_problem_solving_score': candidate.interview_ai_problem_solving_score,
+                    'interview_ai_cultural_fit_score': candidate.interview_ai_cultural_fit_score,
+                    
+                    # Analysis
+                    'interview_ai_analysis_status': candidate.interview_ai_analysis_status,
+                    'interview_ai_overall_feedback': candidate.interview_ai_overall_feedback,
+                    'interview_final_status': candidate.interview_final_status,
+                    
+                    # Insights
+                    'strengths': safe_json_parse(candidate.interview_strengths, []),
+                    'weaknesses': safe_json_parse(candidate.interview_weaknesses, []),
+                    'recommendations': safe_json_parse(candidate.interview_recommendations, []),
+                    
+                    # Metadata
+                    'interview_confidence_score': candidate.interview_confidence_score,
+                    'interview_scoring_method': candidate.interview_scoring_method,
+                    'interview_recording_url': candidate.interview_recording_url
+                }
+                
+                results.append(result)
+            
+            # Return paginated response
+            return jsonify({
+                'results': results,
+                'pagination': {
+                    'page': page,
+                    'per_page': per_page,
+                    'total': total,
+                    'pages': (total + per_page - 1) // per_page
+                }
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Error getting interview results: {e}", exc_info=True)
+        return jsonify({"error": "Internal server error"}), 500
+
+@app.route('/api/interview/trigger-analysis/<int:candidate_id>', methods=['POST'])
+@rate_limit(max_calls=5, time_window=60)
+def trigger_analysis_manually(candidate_id):
+    """Manually trigger analysis for a candidate"""
+    try:
+        # Validate candidate exists
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+            if not candidate:
+                return jsonify({"error": "Candidate not found"}), 404
+            
+            if not candidate.interview_completed_at:
+                return jsonify({"error": "Interview not completed"}), 400
+            
+            # Reset flags to trigger analysis
+            candidate.interview_auto_score_triggered = False
+            candidate.interview_ai_analysis_status = None
+            session.commit()
+        finally:
+            session.close()
+        
+        # Queue for analysis
+        success = interview_analysis_service.analyze_single_interview(candidate_id)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": "Analysis triggered successfully",
+                "candidate_id": candidate_id
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Failed to trigger analysis"
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error triggering analysis: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/interview/validate-analysis/<int:candidate_id>', methods=['GET'])
+def validate_analysis(candidate_id):
+    """Validate that analysis is dynamic, not random"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        # Get Q&A data
+        qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+        
+        # Check for invalid responses
+        has_invalid = False
+        invalid_answers = []
+        
+        for qa in qa_pairs:
+            answer = qa.get('answer', '').strip()
+            if answer in ['INIT_INTERVIEW', 'TEST', ''] or len(answer) < 5:
+                has_invalid = True
+                invalid_answers.append(answer)
+        
+        return jsonify({
+            "candidate_id": candidate_id,
+            "name": candidate.name,
+            "has_valid_qa_data": len(qa_pairs) > 0 and not has_invalid,
+            "total_questions": len(qa_pairs),
+            "invalid_answers": invalid_answers,
+            "current_score": candidate.interview_ai_score,
+            "scoring_method": candidate.interview_scoring_method,
+            "analysis_status": candidate.interview_ai_analysis_status,
+            "should_fail": has_invalid,
+            "expected_score_range": "0-30%" if has_invalid else "Based on actual content"
+        }), 200
+        
+    finally:
+        session.close()
+
+@app.route('/api/interview/reanalyze/<int:candidate_id>', methods=['POST'])
+def reanalyze_interview(candidate_id):
+    """Force re-analysis with dynamic scoring"""
+    try:
+        from interview_analysis_service_production_fixed import dynamic_analyzer
+        
+        # Perform dynamic analysis
+        result = dynamic_analyzer.analyze_interview(candidate_id)
+        
+        return jsonify({
+            "success": True,
+            "message": "Re-analysis completed",
+            "new_score": result['overall_score'],
+            "method": result['method'],
+            "recommendation": result.get('recommendation')
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@app.route('/api/interview/service-status', methods=['GET'])
+def get_analysis_service_status():
+    """Get analysis service health status"""
+    try:
+        stats = interview_analysis_service.get_service_stats()
+        
+        # Add database stats
+        session = SessionLocal()
+        try:
+            db_stats = {
+                'pending_analyses': session.query(Candidate).filter(
+                    Candidate.interview_completed_at.isnot(None),
+                    Candidate.interview_ai_analysis_status.is_(None)
+                ).count(),
+                'processing_analyses': session.query(Candidate).filter(
+                    Candidate.interview_ai_analysis_status == AnalysisStatus.PROCESSING.value
+                ).count(),
+                'completed_today': session.query(Candidate).filter(
+                    Candidate.interview_analysis_completed_at >= datetime.now().replace(hour=0, minute=0, second=0)
+                ).count()
+            }
+            stats['database'] = db_stats
+        finally:
+            session.close()
+        
+        return jsonify({
+            "status": "healthy" if stats['is_running'] else "stopped",
+            "details": stats
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting service status: {e}")
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        }), 500
+
+# Error handler for the service
+@atexit.register
+def cleanup_analysis_service():
+    """Cleanup on shutdown"""
+    try:
+        logger.info("Stopping Interview Analysis Service...")
+        interview_analysis_service.stop()
+    except Exception as e:
+        logger.error(f"Error stopping analysis service: {e}")
+
+def analyze_interview_with_ai(qa_pairs, candidate):
+    """Analyze interview Q&A with AI (or rule-based fallback)"""
+    try:
+        # Try AI analysis first (you can integrate OpenAI, Claude, etc.)
+        if os.getenv('OPENAI_API_KEY'):
+            return analyze_with_openai(qa_pairs, candidate)
+        else:
+            # Fallback to rule-based scoring
+            return analyze_with_rules(qa_pairs, candidate)
+    except Exception as e:
+        logger.error(f"AI analysis failed: {e}")
+        return analyze_with_rules(qa_pairs, candidate)
+
+def analyze_with_rules(qa_pairs, candidate):
+    """Rule-based interview scoring"""
+    scores = {
+        'technical': 0,
+        'communication': 0,
+        'problem_solving': 0,
+        'cultural_fit': 0,
+        'overall': 0,
+        'confidence': 0.85,
+        'feedback': ''
+    }
+    
+    if not qa_pairs:
+        return scores
+    
+    # Calculate completion rate
+    answered = sum(1 for qa in qa_pairs if qa.get('answer'))
+    total = len(qa_pairs)
+    completion_rate = (answered / total * 100) if total > 0 else 0
+    
+    # Calculate average response time
+    response_times = [qa.get('response_time', 0) for qa in qa_pairs if qa.get('response_time')]
+    avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+    
+    # Score based on completion
+    if completion_rate >= 90:
+        scores['communication'] = 85
+    elif completion_rate >= 70:
+        scores['communication'] = 70
+    else:
+        scores['communication'] = 50
+    
+    # Score based on response times
+    if avg_response_time < 10:  # Quick responses
+        scores['problem_solving'] = 80
+    elif avg_response_time < 30:
+        scores['problem_solving'] = 70
+    else:
+        scores['problem_solving'] = 60
+    
+    # Analyze answer lengths
+    answer_lengths = [len(qa.get('answer', '')) for qa in qa_pairs if qa.get('answer')]
+    avg_length = sum(answer_lengths) / len(answer_lengths) if answer_lengths else 0
+    
+    if avg_length > 100:  # Detailed answers
+        scores['technical'] = 75
+        scores['cultural_fit'] = 70
+    else:
+        scores['technical'] = 60
+        scores['cultural_fit'] = 60
+    
+    # Calculate overall score
+    scores['overall'] = (
+        scores['technical'] * 0.35 +
+        scores['communication'] * 0.25 +
+        scores['problem_solving'] * 0.25 +
+        scores['cultural_fit'] * 0.15
+    )
+    
+    # Generate feedback
+    scores['feedback'] = f"""
+Interview Analysis Summary:
+- Completion Rate: {completion_rate:.1f}%
+- Questions Answered: {answered}/{total}
+- Average Response Time: {avg_response_time:.1f} seconds
+- Average Answer Length: {avg_length:.0f} characters
+
+Strengths:
+{'- Good completion rate' if completion_rate >= 80 else ''}
+{'- Quick response times' if avg_response_time < 15 else ''}
+{'- Detailed answers provided' if avg_length > 100 else ''}
+
+Areas for Improvement:
+{'- Complete all questions' if completion_rate < 100 else ''}
+{'- Provide more detailed responses' if avg_length < 50 else ''}
+
+Overall Assessment: {'Recommended' if scores['overall'] >= 70 else 'Needs Further Evaluation'}
+"""
+    
+    return scores
+
+@app.route('/api/interview/live-status/<int:candidate_id>', methods=['GET'])
+def get_live_interview_status(candidate_id):
+    """Get real-time interview status for frontend"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        # Parse Q&A data
+        qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+        
+        # Calculate live stats
+        status = {
+            'candidate_id': candidate.id,
+            'name': candidate.name,
+            'interview_status': get_interview_status(candidate),
+            'progress': candidate.interview_progress_percentage or 0,
+            'link_clicked': candidate.interview_link_clicked,
+            'started': bool(candidate.interview_started_at),
+            'completed': bool(candidate.interview_completed_at),
+            'total_questions': candidate.interview_total_questions or 0,
+            'answered_questions': candidate.interview_answered_questions or 0,
+            'unanswered': candidate.interview_total_questions - candidate.interview_answered_questions if candidate.interview_total_questions else 0,
+            'duration': None,
+            'ai_score': candidate.interview_ai_score,
+            'analysis_status': candidate.interview_ai_analysis_status,
+            'last_activity': candidate.interview_last_activity.isoformat() if candidate.interview_last_activity else None,
+            'connection_quality': candidate.interview_connection_quality or 'unknown',
+            'current_question': None,
+            'is_active': False
+        }
+        
+        # Calculate duration
+        if candidate.interview_started_at:
+            if candidate.interview_completed_at:
+                duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
+            else:
+                duration = (datetime.now() - candidate.interview_started_at).total_seconds()
+            status['duration'] = int(duration)
+        
+        # Check if currently active
+        if candidate.interview_last_activity:
+            time_since_activity = (datetime.now() - candidate.interview_last_activity).total_seconds()
+            status['is_active'] = time_since_activity < 60  # Active if activity within last minute
+        
+        # Get current question being answered
+        for qa in qa_pairs:
+            if qa.get('question') and not qa.get('answer'):
+                status['current_question'] = qa.get('question')
+                break
+        
+        return jsonify(status), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting live status: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+def get_interview_status(candidate):
+    """Determine current interview status"""
+    if candidate.interview_ai_analysis_status == 'completed':
+        if candidate.interview_ai_score >= 70:
+            return 'passed'
+        else:
+            return 'failed'
+    elif candidate.interview_ai_analysis_status == 'processing':
+        return 'analyzing'
+    elif candidate.interview_completed_at:
+        return 'completed'
+    elif candidate.interview_started_at:
+        if candidate.interview_last_activity:
+            time_since = (datetime.now() - candidate.interview_last_activity).total_seconds()
+            if time_since < 300:  # Active within last 5 minutes
+                return 'in_progress'
+            else:
+                return 'inactive'
+        return 'in_progress'
+    elif candidate.interview_link_clicked:
+        return 'link_clicked'
+    elif candidate.interview_scheduled:
+        return 'scheduled'
+    else:
+        return 'not_started'
+
+# In backend.py, update the complete_interview_auto function:
+
+def complete_interview_auto(candidate_id):
+    """Auto-complete interview and trigger scoring when all questions are answered"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        if not candidate or candidate.interview_completed_at:
+            return
+        
+        # Mark interview as completed
+        candidate.interview_completed_at = datetime.now()
+        candidate.interview_progress_percentage = 100
+        
+        # Calculate duration
+        if candidate.interview_started_at:
+            duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
+            candidate.interview_duration = int(duration)
+        
+        # Set analysis status to pending
+        candidate.interview_ai_analysis_status = 'pending'
+        
+        session.commit()
+        
+        # Trigger auto-scoring immediately
+        trigger_auto_scoring(candidate_id)
+        
+        logger.info(f"Interview auto-completed and scoring triggered for candidate {candidate_id}")
+        
+    except Exception as e:
+        logger.error(f"Error auto-completing interview: {e}")
+        session.rollback()
+    finally:
+        session.close()
+
+def schedule_auto_scoring(candidate_id, delay_minutes=45):
+    """Schedule automatic scoring if interview doesn't complete normally"""
+    def check_and_score():
+        time.sleep(delay_minutes * 60)
+        
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+            
+            # Check if interview is still incomplete
+            if candidate and candidate.interview_started_at and not candidate.interview_completed_at:
+                # Check for recent activity
+                if candidate.interview_last_activity:
+                    time_since = (datetime.now() - candidate.interview_last_activity).total_seconds()
+                    if time_since > 600:  # No activity for 10 minutes
+                        # Force complete and score
+                        complete_interview_auto(candidate_id)
+        except Exception as e:
+            logger.error(f"Error in scheduled scoring: {e}")
+        finally:
+            session.close()
+    
+    # Schedule in background
+    threading.Thread(target=check_and_score, daemon=True).start()
+
+def send_realtime_update(candidate_id, data):
+    """Send real-time updates to frontend via WebSocket or polling"""
+    # Store update for polling
+    update_key = f"interview_update_{candidate_id}"
+    cache.set(update_key, json.dumps(data), timeout=60)
+
+@app.route('/api/interview/poll-updates/<int:candidate_id>', methods=['GET'])
+def poll_interview_updates(candidate_id):
+    """Polling endpoint for real-time updates"""
+    update_key = f"interview_update_{candidate_id}"
+    update_data = cache.get(update_key)
+    
+    if update_data:
+        return jsonify(json.loads(update_data)), 200
+    else:
+        return jsonify({"no_updates": True}), 204
+
+def notify_scoring_complete(candidate):
+    """Send notification when scoring is complete"""
+    try:
+        # Send email notification
+        if candidate.email:
+            subject = f"Interview Analysis Complete - {candidate.name}"
+            body = f"""
+            Interview analysis has been completed for {candidate.name}.
+            
+            Position: {candidate.job_title}
+            Overall Score: {candidate.interview_ai_score:.1f}%
+            Recommendation: {candidate.interview_final_status}
+            
+            View full results in the dashboard.
+            """
+            
+            # Send to HR/Admin
+            admin_email = os.getenv('ADMIN_EMAIL')
+            if admin_email:
+                send_email(admin_email, subject, body)
+        
+        logger.info(f"Scoring notification sent for candidate {candidate.id}")
+        
+    except Exception as e:
+        logger.error(f"Error sending scoring notification: {e}")
+
+def log_interview_activity(candidate_id, activity_type, data):
+    """Log all interview activities for audit trail"""
+    try:
+        log_entry = {
+            'candidate_id': candidate_id,
+            'activity': activity_type,
+            'timestamp': datetime.now().isoformat(),
+            'data': data
+        }
+        
+        # Store in logs directory
+        log_dir = os.path.join('logs', 'interviews', str(candidate_id))
+        os.makedirs(log_dir, exist_ok=True)
+        
+        log_file = os.path.join(log_dir, 'activity.jsonl')
+        with open(log_file, 'a') as f:
+            f.write(json.dumps(log_entry) + '\n')
+            
+    except Exception as e:
+        logger.error(f"Error logging activity: {e}")
 
 
 @app.route('/api/verify-interview-process/<int:candidate_id>', methods=['GET'])
@@ -2883,239 +4714,859 @@ def upload_recording():
     except Exception as e:
         logger.exception(f"upload_recording: saving failed: {e}")
         return jsonify({"success": False, "error": "failed to save recording"}), 500
-
-# @app.route('/api/interview/recording/upload', methods=['POST', 'OPTIONS'])
-# def upload_recording():
-    # if request.method == 'OPTIONS':
-        # return _ok_preflight()
-# 
-    # multipart/form-data expected
-    # f = request.files.get('recording')
-    # session_id = request.form.get('session_id') or request.args.get('session_id')
-    # if not f or not session_id:
-        # return jsonify({"success": False, "error": "missing recording file or session_id"}), 400
-# 
-    # save file
-    # base = _ensure_dir(os.path.join('logs', 'interviews', session_id))
-    # fname = f"interview_{session_id}_{int(time.time())}.webm"
-    # path = os.path.join(base, fname)
-    # f.save(path)
-# 
-    # log event
-    # _append_jsonl(os.path.join(base, 'session.jsonl'), {
-        # "event": "recording_uploaded",
-        # "ts": datetime.now(timezone.utc).isoformat(),
-        # "file": path,
-        # "size": os.path.getsize(path)
-    # })
-# 
-    # optional: mark candidate
-    # try:
-        # db = SessionLocal()
-        # try:
-            # cand = db.query(Candidate).filter_by(interview_session_id=session_id).first()
-            # if cand:
-                # cand.recording_path = path
-                # cand.interview_recording_format = 'webm'
-                # cand.interview_recording_status = 'completed'
-                # cand.interview_completed_at = cand.interview_completed_at or datetime.now(timezone.utc)
-                # db.commit()
-        # except Exception as e:
-            # db.rollback()
-            # logger.exception(f"Failed to update candidate recording info: {e}")
-        # finally:
-            # db.close()
-    # except Exception as e:
-        # logger.exception(f"upload_recording: candidate update failed: {e}")
-# 
-    # return jsonify({"success": True, "path": path}), 200
-
  
 @app.route('/api/interview/qa/track', methods=['POST', 'OPTIONS'])
-def track_qa_enhanced():
-    """Enhanced Q&A tracking with better session management and error handling"""
+def track_interview_qa_unified():
+    """Unified Q&A tracking with real-time conversation capture and production features"""
     if request.method == 'OPTIONS':
         return '', 200
     
     try:
         data = request.json
         session_id = data.get('session_id')
-        interview_token = data.get('interview_token')
-        candidate_id = data.get('candidate_id')
-        qa_type = data.get('type')  # 'question', 'answer', or 'system'
-        content = data.get('content')
-        timestamp = data.get('timestamp')
+        content_type = data.get('type')  # 'question' or 'answer'
+        content = data.get('content', '').strip()
         metadata = data.get('metadata', {})
         
-        # Log the incoming request
-        logger.info(f"Q&A Track Request: type={qa_type}, session={session_id}, token={interview_token}")
-        
-        # Validate required fields
-        if not (session_id or interview_token) or not qa_type or not content:
-            return jsonify({
-                "error": "Missing required fields",
-                "required": ["session_id OR interview_token", "type", "content"]
-            }), 400
+        # Validation
+        if not session_id or not content:
+            return jsonify({"error": "Missing required fields"}), 400
         
         session = SessionLocal()
         try:
-            # Find candidate using multiple strategies
-            candidate = None
-            
-            # Strategy 1: Try session ID
-            if session_id and session_id != 'null' and session_id != 'undefined':
-                candidate = session.query(Candidate).filter_by(
-                    interview_session_id=session_id
-                ).first()
-                logger.info(f"Session ID lookup: {'found' if candidate else 'not found'}")
-            
-            # Strategy 2: Try interview token
-            if not candidate and interview_token:
-                candidate = session.query(Candidate).filter_by(
-                    interview_token=interview_token
-                ).first()
-                logger.info(f"Token lookup: {'found' if candidate else 'not found'}")
-            
-            # Strategy 3: Try candidate ID as last resort
-            if not candidate and candidate_id:
-                try:
-                    cid = int(str(candidate_id).replace('emergency_', '').split('_')[0])
-                    candidate = session.query(Candidate).filter_by(id=cid).first()
-                    logger.info(f"Candidate ID lookup: {'found' if candidate else 'not found'}")
-                except:
-                    pass
+            # Find candidate with multiple fallback methods
+            candidate = session.query(Candidate).filter_by(interview_session_id=session_id).first()
+            if not candidate:
+                # Fallback 1: Try parsing session_id
+                if '_' in session_id:
+                    parts = session_id.split('_')
+                    if len(parts) >= 2 and parts[1].isdigit():
+                        candidate = session.query(Candidate).filter_by(id=int(parts[1])).first()
+                        if candidate:
+                            candidate.interview_session_id = session_id
+                
+                # Fallback 2: Try by interview token if session_id contains it
+                if not candidate and 'token' in session_id:
+                    token = session_id.split('token_')[-1]
+                    candidate = session.query(Candidate).filter_by(interview_token=token).first()
             
             if not candidate:
-                logger.error(f"No candidate found for session={session_id}, token={interview_token}, id={candidate_id}")
-                
-                # If it's an emergency session, try to create a placeholder
-                if session_id and 'emergency' in str(session_id):
-                    return jsonify({
-                        "error": "Emergency session - candidate not found",
-                        "session_id": session_id,
-                        "suggestion": "Refresh the page to reinitialize the interview"
-                    }), 404
-                
+                logger.error(f"No candidate found for session_id={session_id}")
                 return jsonify({"error": "Session not found"}), 404
             
-            # Initialize Q&A storage if needed
-            if not hasattr(candidate, 'interview_questions_asked'):
-                candidate.interview_questions_asked = '[]'
-            if not hasattr(candidate, 'interview_answers_given'):
-                candidate.interview_answers_given = '[]'
-            if not hasattr(candidate, 'interview_transcript'):
-                candidate.interview_transcript = ''
+            # Initialize all tracking fields if needed
+            if not candidate.interview_qa_pairs:
+                candidate.interview_qa_pairs = '[]'
+            if not hasattr(candidate, 'interview_qa_sequence') or not candidate.interview_qa_sequence:
+                candidate.interview_qa_sequence = '[]'
+            if not hasattr(candidate, 'interview_conversation') or not candidate.interview_conversation:
+                candidate.interview_conversation = '[]'
+            if not candidate.interview_transcript:
+                candidate.interview_transcript = f"Interview Transcript - {candidate.name}\n" + "="*50 + "\n"
             
-            # Parse existing Q&A data
-            try:
-                questions = json.loads(candidate.interview_questions_asked or '[]')
-            except:
-                questions = []
+            # Load existing data
+            qa_pairs = json.loads(candidate.interview_qa_pairs)
+            qa_sequence = json.loads(candidate.interview_qa_sequence)
+            conversation = json.loads(candidate.interview_conversation)
+            timestamp = datetime.now()
+            
+            # Create conversation entry for real-time tracking
+            conversation_entry = {
+                'id': f"{content_type}_{len(conversation)}_{int(time.time())}",
+                'type': content_type,
+                'speaker': 'Avatar' if content_type == 'question' else 'Candidate',
+                'content': content,
+                'timestamp': timestamp.isoformat(),
+                'sequence': len(conversation) + 1,
+                'metadata': metadata
+            }
+            
+            # Add to conversation
+            conversation.append(conversation_entry)
+            
+            if content_type == 'question':
+                # Generate unique question ID
+                question_id = f"q_{len(qa_sequence) + 1}_{int(time.time())}"
                 
-            try:
-                answers = json.loads(candidate.interview_answers_given or '[]')
-            except:
-                answers = []
-            
-            # Track based on type
-            if qa_type == 'question':
-                question_data = {
-                    'id': str(uuid.uuid4()),
-                    'text': content,
-                    'timestamp': timestamp or datetime.now().isoformat(),
-                    'order': len(questions) + 1,
-                    'type': 'avatar_question',
+                # Add to both tracking systems for redundancy
+                
+                # System 1: qa_pairs (simple tracking)
+                qa_pairs.append({
+                    'id': question_id,
+                    'question': content,
+                    'answer': None,
+                    'timestamp': timestamp.isoformat(),
+                    'order': len(qa_pairs) + 1,
+                    'metadata': metadata
+                })
+                
+                # System 2: qa_sequence (advanced tracking)
+                qa_entry = {
+                    'id': question_id,
+                    'type': 'question',
+                    'content': content,
+                    'timestamp': timestamp.isoformat(),
+                    'answer': None,
+                    'answered': False,
+                    'sequence_number': len(qa_sequence) + 1,
                     'metadata': metadata
                 }
-                questions.append(question_data)
-                candidate.interview_questions_asked = json.dumps(questions, ensure_ascii=False)
-                candidate.interview_total_questions = len(questions)
+                qa_sequence.append(qa_entry)
                 
-                logger.info(f"Added question #{len(questions)}: {content[:50]}...")
+                # Mark waiting state if columns exist
+                if hasattr(candidate, 'interview_current_question_id'):
+                    candidate.interview_current_question_id = question_id
+                if hasattr(candidate, 'interview_waiting_for_answer'):
+                    candidate.interview_waiting_for_answer = True
                 
-            elif qa_type == 'answer':
-                # Find which question this answers
-                question_order = len(questions)  # Default to last question
+                # Update formatted transcript
+                candidate.interview_transcript += f"\nAvatar: {content}\n"
                 
-                # Try to match with unanswered questions
-                unanswered_count = len(questions) - len(answers)
-                if unanswered_count > 0:
-                    question_order = len(answers) + 1
+                logger.info(f"Question tracked: {question_id} - {content[:50]}...")
                 
-                answer_data = {
-                    'id': str(uuid.uuid4()),
-                    'text': content,
-                    'timestamp': timestamp or datetime.now().isoformat(),
-                    'question_order': question_order,
-                    'order': len(answers) + 1,
-                    'type': 'candidate_answer',
-                    'metadata': metadata
-                }
-                answers.append(answer_data)
-                candidate.interview_answers_given = json.dumps(answers, ensure_ascii=False)
-                candidate.interview_answered_questions = len(answers)
+            elif content_type == 'answer':
+                answer_matched = False
                 
-                logger.info(f"Added answer #{len(answers)}: {content[:50]}...")
+                # Try to match answer to question in both systems
                 
-            elif qa_type == 'system':
-                # System messages (like initialization)
-                logger.info(f"System message: {content}")
+                # System 1: Match in qa_pairs
+                for qa in reversed(qa_pairs):
+                    if qa.get('question') and not qa.get('answer'):
+                        qa['answer'] = content
+                        qa['answered_at'] = timestamp.isoformat()
+                        qa['answer_metadata'] = metadata
+                        answer_matched = True
+                        break
+                
+                # System 2: Match in qa_sequence
+                current_question_id = getattr(candidate, 'interview_current_question_id', None)
+                if current_question_id or getattr(candidate, 'interview_waiting_for_answer', False):
+                    for entry in qa_sequence:
+                        if ((current_question_id and entry['id'] == current_question_id) or 
+                            (not entry.get('answered') and entry['type'] == 'question')):
+                            entry['answer'] = content
+                            entry['answered'] = True
+                            entry['answer_timestamp'] = timestamp.isoformat()
+                            entry['answer_metadata'] = metadata
+                            
+                            # Calculate response time
+                            if 'timestamp' in entry:
+                                try:
+                                    q_time = datetime.fromisoformat(entry['timestamp'])
+                                    entry['response_time_seconds'] = (timestamp - q_time).total_seconds()
+                                except:
+                                    pass
+                            
+                            # Add speech metrics if available
+                            if 'speech_duration_ms' in metadata:
+                                entry['speech_duration_ms'] = metadata['speech_duration_ms']
+                            if 'word_count' in metadata:
+                                entry['word_count'] = metadata['word_count']
+                            
+                            answer_matched = True
+                            break
+                
+                # If no match found, create orphaned answer entry
+                if not answer_matched:
+                    logger.warning(f"Orphaned answer: {content[:50]}...")
+                    qa_sequence.append({
+                        'id': f"orphan_{int(time.time())}",
+                        'type': 'orphaned_answer',
+                        'content': content,
+                        'timestamp': timestamp.isoformat(),
+                        'sequence_number': len(qa_sequence) + 1,
+                        'metadata': metadata
+                    })
+                
+                # Clear waiting state
+                if hasattr(candidate, 'interview_waiting_for_answer'):
+                    candidate.interview_waiting_for_answer = False
+                if hasattr(candidate, 'interview_current_question_id'):
+                    candidate.interview_current_question_id = None
+                
+                # Update formatted transcript
+                candidate.interview_transcript += f"Candidate: {content}\n"
+                
+                logger.info(f"Answer tracked: {content[:50]}...")
             
-            # Update transcript
-            timestamp_str = datetime.now().strftime('%H:%M:%S')
-            role = 'AI' if qa_type == 'question' else 'Candidate' if qa_type == 'answer' else 'System'
-            transcript_entry = f"\n[{timestamp_str}] {role}: {content}"
+            # Save all data
+            candidate.interview_qa_pairs = json.dumps(qa_pairs)
+            candidate.interview_qa_sequence = json.dumps(qa_sequence)
+            candidate.interview_conversation = json.dumps(conversation)
             
-            if candidate.interview_transcript:
-                candidate.interview_transcript += transcript_entry
-            else:
-                candidate.interview_transcript = transcript_entry
+            # Update statistics
+            total_exchanges = len(conversation)
+            questions = [c for c in conversation if c['type'] == 'question']
+            answers = [c for c in conversation if c['type'] == 'answer']
             
-            # Update session tracking
-            if session_id and (not candidate.interview_session_id or candidate.interview_session_id != session_id):
-                candidate.interview_session_id = session_id
-                logger.info(f"Updated session ID to: {session_id}")
+            candidate.interview_total_questions = len(questions)
+            candidate.interview_answered_questions = len(answers)
+            
+            # Calculate progress
+            if len(questions) > 0:
+                # Check if last question has been answered
+                last_question_answered = False
+                if questions and answers:
+                    last_question_seq = questions[-1]['sequence']
+                    last_answer_seq = answers[-1]['sequence'] if answers else 0
+                    last_question_answered = last_answer_seq > last_question_seq
+                
+                progress = (len(answers) / len(questions)) * 100
+                if not last_question_answered and len(answers) > 0:
+                    progress = ((len(answers) - 0.5) / len(questions)) * 100
+                
+                candidate.interview_progress_percentage = min(progress, 100)
             
             # Update activity timestamp
-            candidate.last_accessed = datetime.now()
+            if hasattr(candidate, 'interview_last_activity'):
+                candidate.interview_last_activity = timestamp
             
-            # Commit changes
+            # Check if interview should be marked complete
+            if len(questions) >= 10 and len(answers) == len(questions):
+                if hasattr(candidate, 'interview_completed_at') and not candidate.interview_completed_at:
+                    candidate.interview_completed_at = datetime.now()
+                    logger.info(f"Interview auto-completed for candidate {candidate.id}")
+                    complete_interview_auto(candidate.id)
+            
             session.commit()
             
-            # Return comprehensive response
+            logger.info(f"{content_type.capitalize()} tracked - Total exchanges: {total_exchanges}")
+            
             return jsonify({
                 "success": True,
-                "candidate_id": candidate.id,
-                "candidate_name": candidate.name,
-                "session_id": candidate.interview_session_id,
-                "total_questions": len(questions),
-                "total_answers": len(answers),
-                "unanswered_questions": len(questions) - len(answers),
-                "message": f"{qa_type} tracked successfully",
-                "debug": {
-                    "found_by": "session_id" if session_id == candidate.interview_session_id else "token" if interview_token else "candidate_id",
-                    "transcript_length": len(candidate.interview_transcript or ''),
-                    "last_question": questions[-1]['text'][:50] if questions else None,
-                    "last_answer": answers[-1]['text'][:50] if answers else None
+                "message": f"{content_type} tracked successfully",
+                "conversation_length": total_exchanges,
+                "stats": {
+                    "total_questions": len(questions),
+                    "total_answers": len(answers),
+                    "total_exchanges": total_exchanges,
+                    "progress_percentage": candidate.interview_progress_percentage,
+                    "waiting_for_answer": getattr(candidate, 'interview_waiting_for_answer', False),
+                    "current_question_id": getattr(candidate, 'interview_current_question_id', None)
                 }
             }), 200
             
-        except Exception as e:
-            session.rollback()
-            logger.error(f"Error in track_qa: {e}", exc_info=True)
-            return jsonify({
-                "error": f"Database error: {str(e)}",
-                "type": type(e).__name__
-            }), 500
         finally:
             session.close()
             
     except Exception as e:
-        logger.error(f"Error tracking Q&A: {e}", exc_info=True)
+        logger.error(f"Unified Q&A tracking error: {e}", exc_info=True)
+        return jsonify({"error": str(e), "details": traceback.format_exc()}), 500
+
+@app.route('/api/interview/full-analysis/<token>', methods=['GET'])
+def get_full_interview_analysis(token):
+    """Get complete interview analysis data"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+        if not candidate:
+            return jsonify({"error": "Interview not found"}), 404
+        
+        # Parse Q&A data
+        qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+        questions_asked = json.loads(candidate.interview_questions_asked or '[]')
+        answers_given = json.loads(candidate.interview_answers_given or '[]')
+        
+        return jsonify({
+            "candidate": {
+                "id": candidate.id,
+                "name": candidate.name,
+                "email": candidate.email,
+                "position": candidate.job_title
+            },
+            "interview_status": {
+                "started_at": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+                "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+                "duration_seconds": candidate.interview_duration,
+                "duration_minutes": round(candidate.interview_duration / 60, 1) if candidate.interview_duration else None,
+                "status": candidate.interview_status,
+                "progress": candidate.interview_progress_percentage
+            },
+            "qa_statistics": {
+                "total_qa_pairs": len(qa_pairs),
+                "questions_asked": len(questions_asked),
+                "answers_given": len(answers_given),
+                "completion_rate": f"{(len(answers_given) / len(questions_asked) * 100) if questions_asked else 0:.1f}%"
+            },
+            "ai_analysis": {
+                "analysis_status": candidate.interview_ai_analysis_status,
+                "overall_score": candidate.interview_ai_score,
+                "technical_score": candidate.interview_ai_technical_score,
+                "communication_score": candidate.interview_ai_communication_score,
+                "problem_solving_score": candidate.interview_ai_problem_solving_score,
+                "cultural_fit_score": candidate.interview_ai_cultural_fit_score,
+                "final_status": candidate.interview_final_status,
+                "overall_feedback": candidate.interview_ai_overall_feedback
+            },
+            "recommendation": {
+                "final_status": candidate.final_status,
+                "interview_passed": candidate.interview_ai_score >= 70 if candidate.interview_ai_score else False
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting full analysis: {e}")
         return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
 
+@app.route('/api/interview/qa/debug/<session_id>', methods=['GET'])
+def debug_qa_tracking(session_id):
+    """Debug endpoint to check Q&A tracking status"""
+    
+    session = SessionLocal()
+    try:
+        # Find candidate
+        candidate = session.query(Candidate).filter_by(interview_session_id=session_id).first()
+        
+        if not candidate:
+            # Try alternate lookups
+            if '_' in session_id:
+                parts = session_id.split('_')
+                if len(parts) >= 2 and parts[1].isdigit():
+                    candidate = session.query(Candidate).filter_by(id=int(parts[1])).first()
+        
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        # Parse Q&A data
+        qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+        qa_sequence = json.loads(candidate.interview_qa_sequence or '[]')
+        conversation = json.loads(candidate.interview_conversation or '[]')
+        
+        # Analyze the data
+        questions = [q for q in qa_pairs if q.get('question')]
+        answered = [q for q in qa_pairs if q.get('answer')]
+        unanswered = [q for q in qa_pairs if q.get('question') and not q.get('answer')]
+        
+        return jsonify({
+            "candidate_id": candidate.id,
+            "session_id": session_id,
+            "status": candidate.interview_status,
+            "qa_analysis": {
+                "total_qa_pairs": len(qa_pairs),
+                "questions_asked": len(questions),
+                "questions_answered": len(answered),
+                "unanswered_questions": len(unanswered),
+                "conversation_length": len(conversation),
+                "qa_sequence_length": len(qa_sequence)
+            },
+            "unanswered_questions": [
+                {
+                    "id": q.get('id'),
+                    "question": q.get('question'),
+                    "order": q.get('order')
+                } for q in unanswered
+            ],
+            "completion_status": {
+                "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+                "should_be_complete": len(questions) >= 10 and len(questions) == len(answered)
+            }
+        })
+        
+    finally:
+        session.close()
 
-# backend.py
+@app.route('/api/interview/fix-status/<token>', methods=['POST'])
+@cross_origin()
+def fix_interview_status(token):
+    """Fix interview status and completion tracking"""
+    
+    try:
+        from models import Candidate, InterviewSession, InterviewQA, db
+        
+        candidate = Candidate.query.filter_by(interview_token=token).first()
+        
+        if not candidate:
+            return jsonify({'error': 'Invalid token'}), 404
+        
+        # Get current session
+        session = InterviewSession.query.filter_by(
+            candidate_id=candidate.id
+        ).order_by(InterviewSession.created_at.desc()).first()
+        
+        # Count actual Q&A pairs with answers
+        qa_count = InterviewQA.query.filter_by(
+            candidate_id=candidate.id
+        ).filter(InterviewQA.answer.isnot(None)).count()
+        
+        # Determine if interview should be complete
+        # Based on your completion criteria
+        should_complete = qa_count >= 10  # At least 10 answered questions
+        
+        if should_complete:
+            # Mark as complete
+            candidate.interview_completed_at = datetime.utcnow()
+            candidate.interview_status = "Completed"
+            
+            if candidate.interview_started_at:
+                duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
+                candidate.interview_duration = int(duration)
+            
+            if session:
+                session.status = 'completed'
+                session.completed_at = datetime.utcnow()
+                session.progress = 100.0
+            
+            message = "Interview marked as completed"
+        else:
+            # Update to in_progress
+            candidate.interview_status = "in_progress"
+            
+            if session:
+                session.status = 'in_progress'
+                # Calculate actual progress
+                session.progress = (qa_count / 30) * 100  # Assuming 30 total questions
+            
+            message = f"Interview status updated to in_progress ({qa_count} questions answered)"
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': message,
+            'candidate_id': candidate.id,
+            'status': candidate.interview_status,
+            'qa_count': qa_count,
+            'progress': session.progress if session else 0
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fixing status: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/interview/qa/get-conversation/<session_id>', methods=['GET'])
+def get_qa_conversation_unified(session_id):
+    """Get the complete Q&A conversation from all tracking systems"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_session_id=session_id).first()
+        if not candidate:
+            return jsonify({"error": "Session not found"}), 404
+        
+        # Get data from all systems
+        qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+        qa_sequence = json.loads(getattr(candidate, 'interview_qa_sequence', '[]'))
+        conversation = json.loads(getattr(candidate, 'interview_conversation', '[]'))
+        
+        # Format conversation from real-time conversation tracking (primary)
+        formatted_conversation = []
+        for entry in conversation:
+            formatted_conversation.append({
+                'index': entry.get('sequence', len(formatted_conversation) + 1),
+                'speaker': entry['speaker'],
+                'type': entry['type'],
+                'content': entry['content'],
+                'timestamp': entry['timestamp'],
+                'metadata': entry.get('metadata', {})
+            })
+        
+        # If conversation is empty, fallback to qa_sequence
+        if not formatted_conversation and qa_sequence:
+            for entry in qa_sequence:
+                if entry.get('type') == 'question':
+                    formatted_conversation.append({
+                        'index': entry.get('sequence_number', len(formatted_conversation) + 1),
+                        'speaker': 'Avatar',
+                        'type': 'question',
+                        'content': entry['content'],
+                        'timestamp': entry.get('timestamp')
+                    })
+                    if entry.get('answered') and entry.get('answer'):
+                        formatted_conversation.append({
+                            'index': len(formatted_conversation) + 1,
+                            'speaker': 'Candidate',
+                            'type': 'answer',
+                            'content': entry['answer'],
+                            'timestamp': entry.get('answer_timestamp')
+                        })
+        
+        # Create formatted text exactly as requested
+        formatted_text = f"Interview Conversation - {candidate.name}\n"
+        formatted_text += f"Position: {candidate.job_title}\n"
+        formatted_text += f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        formatted_text += "="*70 + "\n\n"
+        
+        for entry in formatted_conversation:
+            formatted_text += f"{entry['speaker']}: {entry['content']}\n\n"
+        
+        return jsonify({
+            "success": True,
+            "session_id": session_id,
+            "candidate": {
+                "id": candidate.id,
+                "name": candidate.name,
+                "email": candidate.email,
+                "position": candidate.job_title
+            },
+            "formatted_transcript": formatted_text,
+            "structured_conversation": formatted_conversation,
+            "raw_transcript": candidate.interview_transcript,
+            "conversation": formatted_conversation,
+            "stats": {
+                "total_exchanges": len(formatted_conversation),
+                "questions_asked": len([e for e in formatted_conversation if e['type'] == 'question']),
+                "answers_given": len([e for e in formatted_conversation if e['type'] == 'answer']),
+                "progress": candidate.interview_progress_percentage,
+                "total_questions": candidate.interview_total_questions,
+                "answered_questions": candidate.interview_answered_questions,
+                "unanswered_questions": candidate.interview_total_questions - candidate.interview_answered_questions,
+                "currently_waiting_for_answer": getattr(candidate, 'interview_waiting_for_answer', False)
+            },
+            "tracking_systems": {
+                "qa_pairs_count": len(qa_pairs),
+                "qa_sequence_count": len(qa_sequence),
+                "conversation_count": len(conversation)
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting conversation: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+# Add this endpoint to your backend.py file
+
+@app.route('/api/interview/debug-db/<token>', methods=['GET'])
+def debug_interview_db(token):
+    """Debug database state for an interview"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+        if not candidate:
+            return jsonify({"error": "Interview not found"}), 404
+        
+        # Get all interview-related fields
+        interview_fields = {}
+        for attr in dir(candidate):
+            if attr.startswith('interview_') and not attr.startswith('_'):
+                try:
+                    value = getattr(candidate, attr)
+                    if isinstance(value, datetime):
+                        value = value.isoformat()
+                    elif callable(value):
+                        continue
+                    interview_fields[attr] = value
+                except:
+                    interview_fields[attr] = "Error reading"
+        
+        return jsonify({
+            "candidate_id": candidate.id,
+            "name": candidate.name,
+            "email": candidate.email,
+            "token": token,
+            "interview_fields": interview_fields,
+            "has_completed_at": candidate.interview_completed_at is not None,
+            "final_status": candidate.final_status,
+            "database_values": {
+                "interview_completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+                "interview_started_at": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+                "interview_status": getattr(candidate, 'interview_status', None),
+                "interview_progress_percentage": getattr(candidate, 'interview_progress_percentage', None),
+                "interview_duration": getattr(candidate, 'interview_duration', None),
+                "final_status": candidate.final_status
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error in debug endpoint: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+# Add this simpler check endpoint
+@app.route('/api/interview/check/<token>', methods=['GET'])
+def check_interview_simple(token):
+    """Simple check of interview status"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+        if not candidate:
+            return jsonify({"error": "Interview not found"}), 404
+        
+        # Force a fresh read from database
+        session.refresh(candidate)
+        
+        return jsonify({
+            "candidate_id": candidate.id,
+            "name": candidate.name,
+            "interview_completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+            "interview_started_at": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+            "final_status": candidate.final_status,
+            "fields_exist": {
+                "has_completed_at_field": hasattr(candidate, 'interview_completed_at'),
+                "has_status_field": hasattr(candidate, 'interview_status'),
+                "has_duration_field": hasattr(candidate, 'interview_duration'),
+            }
+        }), 200
+        
+    finally:
+        session.close()
+
+@app.route('/api/interview/export-conversation/<session_id>', methods=['GET'])
+def export_conversation_unified(session_id):
+    """Export conversation in various formats"""
+    format_type = request.args.get('format', 'text')
+    
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_session_id=session_id).first()
+        if not candidate:
+            return jsonify({"error": "Session not found"}), 404
+        
+        conversation = json.loads(getattr(candidate, 'interview_conversation', '[]'))
+        
+        # If no conversation data, build from qa_pairs
+        if not conversation:
+            qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+            for qa in qa_pairs:
+                if qa.get('question'):
+                    conversation.append({
+                        'type': 'question',
+                        'speaker': 'Avatar',
+                        'content': qa['question'],
+                        'timestamp': qa.get('timestamp')
+                    })
+                    if qa.get('answer'):
+                        conversation.append({
+                            'type': 'answer',
+                            'speaker': 'Candidate',
+                            'content': qa['answer'],
+                            'timestamp': qa.get('answered_at')
+                        })
+        
+        if format_type == 'text':
+            # Plain text format
+            output = f"Interview Transcript\n"
+            output += f"Candidate: {candidate.name}\n"
+            output += f"Position: {candidate.job_title}\n"
+            output += f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            output += "="*50 + "\n\n"
+            
+            for entry in conversation:
+                output += f"{entry.get('speaker', 'Unknown')}: {entry['content']}\n\n"
+            
+            response = Response(output, mimetype='text/plain')
+            response.headers['Content-Disposition'] = f'attachment; filename=interview_{candidate.name}_{session_id}.txt'
+            return response
+            
+        elif format_type == 'json':
+            # JSON format with all metadata
+            output = {
+                "interview": {
+                    "session_id": session_id,
+                    "candidate": {
+                        "id": candidate.id,
+                        "name": candidate.name,
+                        "email": candidate.email,
+                        "position": candidate.job_title
+                    },
+                    "date": datetime.now().isoformat(),
+                    "conversation": conversation,
+                    "statistics": {
+                        "total_exchanges": len(conversation),
+                        "questions": len([e for e in conversation if e['type'] == 'question']),
+                        "answers": len([e for e in conversation if e['type'] == 'answer']),
+                        "completion": candidate.interview_progress_percentage
+                    }
+                }
+            }
+            
+            response = Response(json.dumps(output, indent=2), mimetype='application/json')
+            response.headers['Content-Disposition'] = f'attachment; filename=interview_{candidate.name}_{session_id}.json'
+            return response
+            
+        elif format_type == 'html':
+            # HTML format for viewing
+            html = f"""
+            <html>
+            <head>
+                <title>Interview Transcript - {candidate.name}</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; margin: 40px; }}
+                    .header {{ background: #f0f0f0; padding: 20px; margin-bottom: 30px; }}
+                    .conversation {{ max-width: 800px; }}
+                    .avatar {{ color: #2563eb; font-weight: bold; margin-top: 20px; }}
+                    .candidate {{ color: #059669; font-weight: bold; margin-top: 20px; }}
+                    .content {{ margin-left: 20px; margin-top: 5px; }}
+                    .timestamp {{ color: #999; font-size: 0.8em; }}
+                    .metadata {{ color: #666; font-size: 0.8em; font-style: italic; }}
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Interview Transcript</h1>
+                    <p><strong>Candidate:</strong> {candidate.name}</p>
+                    <p><strong>Position:</strong> {candidate.job_title}</p>
+                    <p><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                    <p><strong>Progress:</strong> {candidate.interview_progress_percentage:.1f}%</p>
+                </div>
+                <div class="conversation">
+            """
+            
+            for entry in conversation:
+                speaker_class = 'avatar' if entry.get('speaker') == 'Avatar' else 'candidate'
+                html += f'<div class="{speaker_class}">{entry.get("speaker", "Unknown")}:</div>'
+                html += f'<div class="content">{entry["content"]}</div>'
+                if entry.get('timestamp'):
+                    html += f'<div class="timestamp">{entry["timestamp"]}</div>'
+                if entry.get('metadata') and any(entry['metadata'].values()):
+                    metadata_str = ', '.join([f"{k}: {v}" for k, v in entry['metadata'].items() if v])
+                    html += f'<div class="metadata">{metadata_str}</div>'
+            
+            html += """
+                </div>
+            </body>
+            </html>
+            """
+            
+            response = Response(html, mimetype='text/html')
+            response.headers['Content-Disposition'] = f'attachment; filename=interview_{candidate.name}_{session_id}.html'
+            return response
+            
+    except Exception as e:
+        logger.error(f"Error exporting conversation: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+@app.route('/api/interview/fix-all-pending', methods=['POST'])
+def fix_all_pending_interviews():
+    """Fix all completed interviews that haven't been analyzed"""
+    session = SessionLocal()
+    fixed = 0
+    
+    try:
+        # Find all completed interviews without scores
+        pending = session.query(Candidate).filter(
+            Candidate.interview_completed_at.isnot(None),
+            Candidate.interview_ai_score.is_(None)
+        ).all()
+        
+        for candidate in pending:
+            # Trigger analysis
+            candidate.interview_ai_analysis_status = 'pending'
+            session.commit()
+            
+            # Trigger auto-scoring
+            trigger_auto_scoring(candidate.id)
+            fixed += 1
+            
+            logger.info(f"Triggered analysis for candidate {candidate.id} - {candidate.name}")
+        
+        # Clear cache
+        cache.delete_memoized(get_cached_candidates)
+        
+        return jsonify({
+            "success": True,
+            "fixed": fixed,
+            "message": f"Triggered analysis for {fixed} interviews"
+        }), 200
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error fixing interviews: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+@app.route('/api/interview/poll-updates', methods=['GET'])
+def poll_for_updates():
+    """Poll for interview analysis updates"""
+    session = SessionLocal()
+    try:
+        # Find recently completed analyses
+        cutoff = datetime.now() - timedelta(minutes=5)
+        
+        updated = session.query(Candidate).filter(
+            Candidate.interview_analysis_completed_at >= cutoff,
+            Candidate.interview_ai_score.isnot(None)
+        ).all()
+        
+        updates = []
+        for candidate in updated:
+            updates.append({
+                'candidate_id': candidate.id,
+                'scores': {
+                    'overall': candidate.interview_ai_score,
+                    'technical': candidate.interview_ai_technical_score,
+                    'communication': candidate.interview_ai_communication_score,
+                    'problem_solving': candidate.interview_ai_problem_solving_score,
+                    'cultural_fit': candidate.interview_ai_cultural_fit_score
+                },
+                'final_status': candidate.interview_final_status,
+                'timestamp': candidate.interview_analysis_completed_at.isoformat()
+            })
+        
+        return jsonify({
+            'success': True,
+            'updates': updates
+        }), 200
+        
+    finally:
+        session.close()
+
+@app.route('/api/interview/qa/test/<session_id>', methods=['GET'])
+def test_qa_tracking_unified(session_id):
+    """Test endpoint to verify Q&A tracking is working correctly"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_session_id=session_id).first()
+        if not candidate:
+            return jsonify({"error": "Session not found"}), 404
+        
+        # Get raw data from all systems
+        qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+        qa_sequence = json.loads(getattr(candidate, 'interview_qa_sequence', '[]'))
+        conversation = json.loads(getattr(candidate, 'interview_conversation', '[]'))
+        
+        # Analyze tracking health
+        tracking_health = {
+            "qa_pairs_healthy": all(qa.get('question') for qa in qa_pairs),
+            "qa_sequence_healthy": all(entry.get('content') for entry in qa_sequence if entry.get('type') == 'question'),
+            "conversation_healthy": all(entry.get('content') and entry.get('speaker') for entry in conversation),
+            "answers_matched": sum(1 for qa in qa_pairs if qa.get('answer') is not None),
+            "orphaned_answers": sum(1 for entry in qa_sequence if entry.get('type') == 'orphaned_answer'),
+            "sync_status": {
+                "qa_pairs_questions": len([q for q in qa_pairs if q.get('question')]),
+                "qa_sequence_questions": len([e for e in qa_sequence if e.get('type') == 'question']),
+                "conversation_questions": len([e for e in conversation if e.get('type') == 'question']),
+                "all_synced": len(qa_pairs) == len([e for e in qa_sequence if e.get('type') == 'question']) == len([e for e in conversation if e.get('type') == 'question'])
+            }
+        }
+        
+        # Get last few entries for preview
+        last_conversation = conversation[-5:] if conversation else []
+        
+        return jsonify({
+            "session_id": session_id,
+            "candidate": {
+                "name": candidate.name,
+                "position": candidate.job_title
+            },
+            "tracking_health": tracking_health,
+            "last_conversation": last_conversation,
+            "raw_data": {
+                "qa_pairs": qa_pairs,
+                "qa_sequence": qa_sequence,
+                "conversation": conversation
+            },
+            "transcript_preview": candidate.interview_transcript[-500:] if candidate.interview_transcript else "No transcript",
+            "stats": {
+                "total_questions": candidate.interview_total_questions,
+                "answered_questions": candidate.interview_answered_questions,
+                "progress": candidate.interview_progress_percentage
+            }
+        }), 200
+        
+    finally:
+        session.close()
+
 @app.route('/api/resume-text/<int:candidate_id>', methods=['GET'])
 def api_resume_text(candidate_id):
     session = SessionLocal()
@@ -3251,7 +5702,83 @@ def calculate_time_difference(timestamp1, timestamp2):
         return abs((t2 - t1).total_seconds())
     except:
         return None
+    
+@app.route('/api/interview/conversation/<int:candidate_id>', methods=['GET'])
+def get_interview_conversation(candidate_id):
+    """Get the formatted conversation for a candidate"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        # Get formatted conversation
+        conversation = candidate.interview_conversation or "No conversation recorded"
+        
+        return jsonify({
+            "success": True,
+            "candidate": {
+                "id": candidate.id,
+                "name": candidate.name,
+                "position": candidate.job_title
+            },
+            "conversation": conversation,
+            "timestamp": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting conversation: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
 
+@app.route('/api/interview/export-conversation/<int:candidate_id>', methods=['GET'])
+def export_conversation(candidate_id):
+    """Export conversation in various formats"""
+    format_type = request.args.get('format', 'text')  # text, json, pdf
+    
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        if format_type == 'text':
+            # Return plain text conversation
+            conversation = candidate.interview_conversation or "No conversation recorded"
+            
+            response = Response(
+                conversation,
+                mimetype='text/plain',
+                headers={
+                    'Content-Disposition': f'attachment; filename=interview_{candidate.name}_{candidate.id}.txt'
+                }
+            )
+            return response
+            
+        elif format_type == 'json':
+            # Return structured JSON
+            qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+            
+            export_data = {
+                "candidate": {
+                    "id": candidate.id,
+                    "name": candidate.name,
+                    "email": candidate.email,
+                    "position": candidate.job_title
+                },
+                "interview_date": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+                "qa_pairs": qa_pairs,
+                "formatted_conversation": candidate.interview_conversation
+            }
+            
+            return jsonify(export_data), 200
+            
+        else:
+            return jsonify({"error": "Invalid format"}), 400
+            
+    finally:
+        session.close()
 
 # Add this endpoint to check all interview data for a candidate
 @app.route('/api/interview/candidate/<int:candidate_id>/full-data', methods=['GET'])
@@ -4041,59 +6568,59 @@ def end_interview_session():
         logger.error(f"Error ending interview session: {e}")
         return jsonify({"error": str(e)}), 500
 
-# @app.route('/api/interview/session/<session_id>', methods=['GET'])
-# def get_interview_session_data(session_id):
-    # """Get complete interview session data"""
-    # try:
-        # Import session manager
-        # from interview_session_manager import interview_session_manager
-        # 
-        # Get session data
-        # session_data = interview_session_manager.get_session_data(session_id)
-        # 
-        # if session_data:
-            # return jsonify({
-                # "success": True,
-                # "session_data": session_data
-            # }), 200
-        # else:
-            # return jsonify({"success": False, "message": "Session not found"}), 404
-            # 
-    # except Exception as e:
-        # logger.error(f"Error getting session data: {e}")
-        # return jsonify({"success": False, "message": str(e)}), 500
-# 
-
 @app.route('/api/interview/analysis/<int:candidate_id>', methods=['GET'])
-def get_interview_analysis(candidate_id):
-    """Get AI analysis results for a candidate's interview"""
+@cache.memoize(timeout=30)
+def get_interview_analysis_production(candidate_id):
+    """Get analysis results with caching"""
     session = SessionLocal()
     try:
         candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        
         if not candidate:
             return jsonify({"error": "Candidate not found"}), 404
         
+        # Parse stored data
+        strengths = []
+        weaknesses = []
+        recommendations = []
+        
+        try:
+            if candidate.interview_strengths:
+                strengths = json.loads(candidate.interview_strengths)
+            if candidate.interview_weaknesses:
+                weaknesses = json.loads(candidate.interview_weaknesses)
+            if candidate.interview_recommendations:
+                recommendations = json.loads(candidate.interview_recommendations)
+        except json.JSONDecodeError:
+            logger.warning(f"Failed to parse JSON data for candidate {candidate_id}")
+        
         analysis_data = {
-            "technical_score": candidate.interview_ai_technical_score,
-            "communication_score": candidate.interview_ai_communication_score,
-            "problem_solving_score": candidate.interview_ai_problem_solving_score,
-            "cultural_fit_score": candidate.interview_ai_cultural_fit_score,
-            "overall_score": candidate.interview_ai_score,
-            "overall_feedback": candidate.interview_ai_overall_feedback,
-            "question_analysis": json.loads(candidate.interview_ai_questions_analysis) if candidate.interview_ai_questions_analysis else [],
-            "analysis_status": candidate.interview_ai_analysis_status,
-            "final_status": candidate.interview_final_status
+            "candidate_id": candidate_id,
+            "status": candidate.interview_ai_analysis_status,
+            "scores": {
+                "overall": candidate.interview_ai_score,
+                "technical": candidate.interview_ai_technical_score,
+                "communication": candidate.interview_ai_communication_score,
+                "problem_solving": candidate.interview_ai_problem_solving_score,
+                "cultural_fit": candidate.interview_ai_cultural_fit_score
+            },
+            "insights": {
+                "strengths": strengths,
+                "weaknesses": weaknesses,
+                "recommendations": recommendations
+            },
+            "feedback": candidate.interview_ai_overall_feedback,
+            "confidence": candidate.interview_confidence_score,
+            "method": candidate.interview_scoring_method,
+            "final_status": candidate.interview_final_status,
+            "analyzed_at": candidate.interview_analysis_completed_at.isoformat() if candidate.interview_analysis_completed_at else None
         }
         
-        return jsonify({
-            "success": True,
-            "candidate_id": candidate_id,
-            "analysis": analysis_data
-        }), 200
+        return jsonify(analysis_data), 200
         
     except Exception as e:
-        logger.error(f"Error getting interview analysis: {e}")
-        return jsonify({"success": False, "message": str(e)}), 500
+        logger.error(f"Error getting analysis: {e}")
+        return jsonify({"error": "Internal server error"}), 500
     finally:
         session.close()
 
@@ -4778,108 +7305,815 @@ def get_realtime_analysis_status():
         
     finally:
         session.close()
+        
+# Add these endpoints to your backend.py file
 
 @app.route('/api/interview/complete/<token>', methods=['POST', 'OPTIONS'])
-def complete_interview(token):
-    """Complete an interview and trigger AI analysis"""
+@cross_origin()
+def complete_interview_by_token(token):
+    """Complete an interview with automatic database update"""
     if request.method == 'OPTIONS':
         return '', 200
     
+    try:
+        # Get request data
+        data = request.json or {}
+        trigger_source = data.get('completion_trigger', 'manual')
+        
+        # Use the completion handler
+        result = completion_handler.complete_interview(token, trigger_source)
+        
+        if result["success"]:
+            # Clear cache to update frontend
+            cache.delete_memoized(get_cached_candidates)
+            
+            return jsonify({
+                "success": True,
+                "message": "Interview completed and saved to database",
+                **result
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get("error", "Unknown error")
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error in complete endpoint: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/interview/realtime-complete', methods=['POST'])
+def realtime_complete():
+    """Handle real-time completion from frontend"""
+    try:
+        data = request.json
+        token = data.get('token')
+        session_id = data.get('session_id')
+        
+        if not token:
+            return jsonify({"error": "Token required"}), 400
+        
+        # Complete the interview
+        result = completion_handler.complete_interview(token, "realtime_trigger")
+        
+        if result["success"]:
+            # Also update session if provided
+            if session_id:
+                session = SessionLocal()
+                try:
+                    candidate = session.query(Candidate).filter_by(
+                        interview_token=token
+                    ).first()
+                    if candidate:
+                        candidate.interview_session_id = session_id
+                        session.commit()
+                finally:
+                    session.close()
+            
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        logger.error(f"Realtime completion error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/interview/verify-db-update/<token>', methods=['GET'])
+def verify_db_update(token):
+    """Verify that interview completion is saved in database"""
     session = SessionLocal()
     try:
-        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        # Force fresh read from database
+        session.expire_all()
+        
+        candidate = session.query(Candidate).filter_by(
+            interview_token=token
+        ).first()
+        
         if not candidate:
-            return jsonify({"error": "Interview not found"}), 404
+            return jsonify({"error": "Candidate not found"}), 404
         
-        # Update completion status
-        candidate.interview_completed_at = datetime.now()
-        candidate.interview_status = 'completed'
-        
-        # Calculate duration
-        if candidate.interview_started_at:
-            duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
-            candidate.interview_duration = int(duration)
-        
-        # Set analysis status to pending
-        candidate.interview_ai_analysis_status = 'pending'
-        
-        # Trigger AI analysis (you'll need to implement this)
-        trigger_ai_analysis(candidate.id)
-        
-        session.commit()
-        
-        # Clear cache to ensure fresh data
-        cache.delete_memoized(get_cached_candidates)
+        # Also check with direct SQL
+        result = session.execute(
+            text("""
+                SELECT interview_completed_at, interview_status, final_status,
+                       interview_progress_percentage, interview_ai_analysis_status
+                FROM candidates WHERE interview_token = :token
+            """),
+            {"token": token}
+        ).fetchone()
         
         return jsonify({
-            "success": True,
-            "message": "Interview completed successfully"
+            "token": token,
+            "candidate_name": candidate.name,
+            "orm_data": {
+                "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+                "status": candidate.interview_status,
+                "final_status": candidate.final_status,
+                "progress": candidate.interview_progress_percentage,
+                "ai_status": candidate.interview_ai_analysis_status
+            },
+            "direct_sql_data": {
+                "completed_at": str(result[0]) if result and result[0] else None,
+                "status": result[1] if result else None,
+                "final_status": result[2] if result else None,
+                "progress": result[3] if result else None,
+                "ai_status": result[4] if result else None
+            },
+            "is_completed": candidate.interview_completed_at is not None
         }), 200
         
     finally:
         session.close()
 
-def trigger_ai_analysis(candidate_id):
-    """Trigger AI analysis for completed interview"""
-    def run_analysis():
-        session = SessionLocal()
-        try:
-            candidate = session.query(Candidate).filter_by(id=candidate_id).first()
-            if not candidate:
-                return
-            
-            # Update status
-            candidate.interview_ai_analysis_status = 'processing'
-            session.commit()
-            
-            # Parse Q&A data
+@app.route('/api/interview/verify-completion/<token>', methods=['GET'])
+def verify_completion(token):
+    """Verify if interview completion is persisted in database"""
+    session = SessionLocal()
+    try:
+        # Try multiple ways to find the candidate
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+        if not candidate:
+            # Try finding by ID if token looks like an ID
+            if token.isdigit():
+                candidate = session.query(Candidate).filter_by(id=int(token)).first()
+        
+        if not candidate:
+            return jsonify({"error": "Not found", "token": token}), 404
+        
+        # Force fresh read from database
+        session.expire_all()
+        session.commit()  # Commit any pending changes
+        session.refresh(candidate)
+        
+        # Get raw SQL value
+        from sqlalchemy import text
+        raw_result = session.execute(
+            text("SELECT interview_completed_at, interview_status, final_status FROM candidates WHERE id = :id"),
+            {"id": candidate.id}
+        ).fetchone()
+        
+        return jsonify({
+            "candidate_id": candidate.id,
+            "name": candidate.name,
+            "orm_values": {
+                "interview_completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+                "interview_status": candidate.interview_status,
+                "final_status": candidate.final_status,
+                "interview_progress_percentage": candidate.interview_progress_percentage
+            },
+            "raw_sql_values": {
+                "interview_completed_at": str(raw_result[0]) if raw_result else None,
+                "interview_status": str(raw_result[1]) if raw_result else None,
+                "final_status": str(raw_result[2]) if raw_result else None
+            },
+            "is_completed": candidate.interview_completed_at is not None
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Verification error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+@app.route('/api/interview/fix-null-completions', methods=['POST'])
+def fix_null_completions():
+    """Fix interviews that show as NULL in database but should be completed"""
+    session = SessionLocal()
+    try:
+        from datetime import datetime, timezone
+        from sqlalchemy import text
+        
+        # Find candidates with NULL completion but other signs of completion
+        result = session.execute(
+            text("""
+                UPDATE candidates 
+                SET interview_completed_at = CURRENT_TIMESTAMP,
+                    interview_status = 'completed',
+                    final_status = 'Interview Completed',
+                    interview_progress_percentage = 100
+                WHERE interview_completed_at IS NULL
+                AND (
+                    interview_progress_percentage >= 100
+                    OR interview_status = 'completed'
+                    OR final_status LIKE '%Completed%'
+                    OR interview_total_questions > 0
+                )
+            """)
+        )
+        
+        rows_updated = result.rowcount
+        session.commit()
+        
+        # Clear all caches
+        cache.clear()
+        
+        return jsonify({
+            "success": True,
+            "rows_fixed": rows_updated,
+            "message": f"Fixed {rows_updated} interviews with NULL completion dates"
+        }), 200
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Fix failed: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+@app.route('/api/interview/check-incomplete', methods=['POST'])
+def check_incomplete_interviews():
+    """Check and fix incomplete interviews"""
+    session = SessionLocal()
+    fixed = 0
+    
+    try:
+        # Find interviews that should be complete
+        candidates = session.query(Candidate).filter(
+            Candidate.interview_started_at.isnot(None),
+            Candidate.interview_completed_at.is_(None)
+        ).all()
+        
+        for candidate in candidates:
+            # Get Q&A data
             questions = json.loads(candidate.interview_questions_asked or '[]')
             answers = json.loads(candidate.interview_answers_given or '[]')
             
-            # Simulate AI analysis (replace with actual AI logic)
-            # For now, generate random scores for testing
-            import random
+            # Check if should be complete
+            should_complete = False
             
-            candidate.interview_ai_score = random.randint(60, 95)
-            candidate.interview_ai_technical_score = random.randint(60, 95)
-            candidate.interview_ai_communication_score = random.randint(60, 95)
-            candidate.interview_ai_problem_solving_score = random.randint(60, 95)
-            candidate.interview_ai_cultural_fit_score = random.randint(60, 95)
+            # Has enough Q&A
+            if len(questions) >= 5 and len(answers) >= len(questions) * 0.8:
+                should_complete = True
             
-            candidate.interview_ai_overall_feedback = f"""
-Based on the interview analysis:
-- Technical Skills: Strong understanding of core concepts
-- Communication: Clear and articulate responses
-- Problem Solving: Demonstrated analytical thinking
-- Cultural Fit: Good alignment with company values
+            # Or has been inactive for too long
+            if candidate.interview_started_at:
+                time_since = (datetime.now() - candidate.interview_started_at).total_seconds()
+                if time_since > 7200:  # 2 hours
+                    should_complete = True
+            
+            if should_complete:
+                candidate.interview_completed_at = datetime.now()
+                candidate.interview_status = 'completed'
+                candidate.interview_progress_percentage = 100
+                candidate.interview_ai_analysis_status = 'pending'
+                fixed += 1
+                logger.info(f"Fixed incomplete interview for {candidate.name}")
+        
+        session.commit()
+        
+        return jsonify({
+            "success": True,
+            "checked": len(candidates),
+            "fixed": fixed
+        }), 200
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error checking incomplete: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
 
-Total Questions Asked: {len(questions)}
-Total Questions Answered: {len(answers)}
-Completion Rate: {(len(answers)/len(questions)*100) if questions else 0:.1f}%
-"""
+@app.route('/api/interview/check-completion/<token>', methods=['GET'])
+def check_interview_completion(token):
+    """Check if interview is properly marked as complete"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+        if not candidate:
+            return jsonify({"error": "Interview not found"}), 404
+        
+        # Get Q&A data
+        qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+        questions = json.loads(candidate.interview_questions_asked or '[]')
+        answers = json.loads(candidate.interview_answers_given or '[]')
+        
+        return jsonify({
+            "token": token,
+            "candidate": {
+                "id": candidate.id,
+                "name": candidate.name,
+                "email": candidate.email
+            },
+            "completion_status": {
+                "is_completed": candidate.interview_completed_at is not None,
+                "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+                "started_at": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+                "duration": candidate.interview_duration,
+                "progress": candidate.interview_progress_percentage,
+                "status": candidate.interview_status,
+                "final_status": candidate.final_status
+            },
+            "qa_stats": {
+                "total_questions": len(questions),
+                "total_answers": len(answers),
+                "qa_pairs": len(qa_pairs),
+                "stored_total": candidate.interview_total_questions,
+                "stored_answered": candidate.interview_answered_questions
+            },
+            "ai_analysis": {
+                "status": candidate.interview_ai_analysis_status,
+                "score": candidate.interview_ai_score,
+                "triggered": candidate.interview_auto_score_triggered
+            }
+        }), 200
+        
+    finally:
+        session.close()
+
+@app.route('/api/interview/fix-by-token/<token>', methods=['POST'])
+def fix_interview_by_token(token):
+    """Emergency fix for a specific interview"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        # Force complete if it has Q&A data but not marked complete
+        qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+        
+        if qa_pairs and not candidate.interview_completed_at:
+            candidate.interview_completed_at = datetime.now()
+            candidate.interview_status = 'completed'
+            candidate.interview_progress_percentage = 100
+            candidate.final_status = 'Interview Completed'
             
-            # Set final status
-            if candidate.interview_ai_score >= 70:
-                candidate.interview_final_status = 'Recommended'
-            else:
-                candidate.interview_final_status = 'Not Recommended'
+            if candidate.interview_started_at:
+                duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
+                candidate.interview_duration = int(duration)
             
-            candidate.interview_ai_analysis_status = 'completed'
+            candidate.interview_ai_analysis_status = 'pending'
             session.commit()
             
-            # Clear cache
-            cache.delete_memoized(get_cached_candidates)
+            # Trigger scoring
+            trigger_auto_scoring(candidate.id)
+            
+            return jsonify({
+                "success": True,
+                "message": "Interview fixed and marked as complete",
+                "candidate": candidate.name
+            }), 200
+        else:
+            return jsonify({
+                "message": "No fix needed",
+                "has_qa_data": len(qa_pairs) > 0,
+                "already_completed": candidate.interview_completed_at is not None
+            }), 200
+            
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+@app.route('/api/interview/tracking-status/<token>', methods=['GET'])
+def get_interview_tracking_status(token):
+    """Get comprehensive tracking status for an interview"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+
+        if not candidate:
+            return jsonify({"error": "Interview not found"}), 404
+
+        # Calculate status
+        status = 'not_started'
+        if candidate.interview_completed_at:
+            status = 'completed'
+        elif candidate.interview_status == 'expired':
+            status = 'expired'
+        elif candidate.interview_status == 'abandoned':
+            status = 'abandoned'
+        elif candidate.interview_started_at:
+            status = 'in_progress'
+        elif candidate.interview_link_clicked:
+            status = 'link_clicked'
+
+        # Time calculations
+        time_remaining = None
+        if candidate.interview_expires_at and not candidate.interview_completed_at:
+            time_remaining = (candidate.interview_expires_at - datetime.now()).total_seconds()
+            if time_remaining < 0:
+                time_remaining = 0
+
+        tracking_data = {
+            "candidate": {
+                "id": candidate.id,
+                "name": candidate.name,
+                "email": candidate.email,
+                "position": candidate.job_title
+            },
+            "status": status,
+            "tracking": {
+                "link_clicked": bool(candidate.interview_link_clicked),
+                "link_clicked_at": candidate.interview_link_clicked_at.isoformat() if candidate.interview_link_clicked_at else None,
+                "started_at": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+                "last_activity": candidate.interview_last_activity.isoformat() if candidate.interview_last_activity else None,
+                "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+                "expires_at": candidate.interview_expires_at.isoformat() if candidate.interview_expires_at else None,
+                "time_remaining_seconds": time_remaining
+            },
+            "progress": {
+                "percentage": candidate.interview_progress_percentage or 0,
+                "total_questions": candidate.interview_total_questions or 0,
+                "answered_questions": candidate.interview_answered_questions or 0,
+                "qa_completion_rate": candidate.interview_qa_completion_rate or 0
+            },
+            "analysis": {
+                "status": candidate.interview_ai_analysis_status,
+                "score": candidate.interview_ai_score,
+                "recommendation": candidate.interview_final_status
+            },
+            "technical": {
+                "session_id": candidate.interview_session_id,
+                "browser_info": candidate.interview_browser_info,
+                "duration_seconds": candidate.interview_duration
+            }
+        }
+
+        return jsonify(tracking_data), 200
+
+    except Exception as e:
+        logger.error(f"Error getting tracking status: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+@app.route('/api/interview/validate-completion/<token>', methods=['POST'])
+def validate_interview_completion(token):
+    """Validate and ensure interview is properly marked as complete"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+        if not candidate:
+            return jsonify({"error": "Interview not found"}), 404
+        
+        # Force completion check
+        qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+        questions = json.loads(candidate.interview_questions_asked or '[]')
+        answers = json.loads(candidate.interview_answers_given or '[]')
+        
+        issues = []
+        
+        # Check for completion criteria
+        if len(questions) < 5:
+            issues.append("Less than 5 questions asked")
+        
+        if len(answers) < len(questions) * 0.8:  # 80% answer rate
+            issues.append(f"Low answer rate: {len(answers)}/{len(questions)}")
+        
+        # Initialize inactive_time with a default value
+        inactive_time = 0
+        
+        # Check for recent activity
+        if hasattr(candidate, 'interview_last_activity') and candidate.interview_last_activity:
+            inactive_time = (datetime.now() - candidate.interview_last_activity).total_seconds()
+            if inactive_time > 3600:  # 1 hour
+                issues.append("No activity for over 1 hour")
+        
+        # Force completion if criteria met
+        should_complete = False
+        if not candidate.interview_completed_at:
+            if len(questions) >= 10 and len(answers) >= len(questions) - 1:
+                should_complete = True
+                logger.info(f"Completion criteria met: 10+ questions with most answered")
+            elif inactive_time > 3600 and len(questions) >= 5:
+                should_complete = True
+                logger.info(f"Completion criteria met: Inactive for 1hr with 5+ questions")
+            elif len(questions) >= 5 and len(answers) >= len(questions) * 0.8:
+                should_complete = True
+                logger.info(f"Completion criteria met: 5+ questions with 80% answered")
+        
+        if should_complete:
+            candidate.interview_completed_at = datetime.now()
+            candidate.interview_status = 'completed'
+            candidate.interview_progress_percentage = 100
+            
+            if candidate.interview_started_at:
+                duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
+                candidate.interview_duration = int(duration)
+            
+            candidate.interview_ai_analysis_status = 'pending'
+            session.commit()
+            
+            logger.info(f"Interview force completed for {candidate.name} (ID: {candidate.id})")
+            
+            # Trigger scoring
+            try:
+                trigger_auto_scoring(candidate.id)
+            except Exception as e:
+                logger.error(f"Failed to trigger auto scoring: {e}")
+            
+            return jsonify({
+                "success": True,
+                "message": "Interview marked as complete",
+                "forced_completion": True,
+                "issues": issues
+            }), 200
+        
+        return jsonify({
+            "success": True,
+            "message": "Interview status validated",
+            "is_complete": candidate.interview_completed_at is not None,
+            "issues": issues,
+            "stats": {
+                "questions": len(questions),
+                "answers": len(answers),
+                "inactive_minutes": int(inactive_time / 60) if inactive_time else 0
+            }
+        }), 200
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error validating completion: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+@app.route('/api/interview/cleanup-incomplete', methods=['POST'])
+def cleanup_incomplete_interviews():
+    """Fix interviews that show as completed in UI but not in database"""
+    session = SessionLocal()
+    fixed_count = 0
+    
+    try:
+        # Find candidates with started interviews but no completion
+        incomplete = session.query(Candidate).filter(
+            Candidate.interview_started_at.isnot(None),
+            Candidate.interview_completed_at.is_(None),
+            Candidate.interview_token.isnot(None)
+        ).all()
+        
+        for candidate in incomplete:
+            # Check if interview is actually complete based on other indicators
+            qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+            
+            # If they have Q&A data or have been inactive for over 2 hours
+            if qa_pairs or (candidate.interview_started_at and 
+                          (datetime.now() - candidate.interview_started_at).total_seconds() > 7200):
+                
+                candidate.interview_completed_at = datetime.now()
+                candidate.interview_status = 'completed'
+                candidate.interview_progress_percentage = 100
+                
+                if candidate.interview_started_at:
+                    duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
+                    candidate.interview_duration = int(duration)
+                
+                candidate.interview_ai_analysis_status = 'pending'
+                fixed_count += 1
+                
+                # Trigger scoring
+                trigger_auto_scoring(candidate.id)
+                
+                logger.info(f"Fixed incomplete interview for {candidate.name} (ID: {candidate.id})")
+        
+        session.commit()
+        
+        return jsonify({
+            "success": True,
+            "fixed_count": fixed_count,
+            "message": f"Fixed {fixed_count} incomplete interviews"
+        }), 200
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Cleanup error: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+def interview_auto_recovery_system():
+    """Continuously monitor and fix incomplete interviews"""
+    while True:
+        time.sleep(120)  # Check every 2 minutes
+        
+        session = SessionLocal()
+        try:
+            from datetime import datetime, timedelta
+            
+            # Find potentially stuck interviews
+            now = datetime.now()
+            
+            # Case 1: Started but not completed after 1 hour
+            one_hour_ago = now - timedelta(hours=1)
+            stuck_interviews = session.query(Candidate).filter(
+                Candidate.interview_started_at.isnot(None),
+                Candidate.interview_completed_at.is_(None),
+                Candidate.interview_started_at < one_hour_ago
+            ).all()
+            
+            for candidate in stuck_interviews:
+                # Check if has Q&A data
+                has_qa_data = False
+                try:
+                    qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+                    questions = json.loads(candidate.interview_questions_asked or '[]')
+                    has_qa_data = len(qa_pairs) > 0 or len(questions) > 0
+                except:
+                    pass
+                
+                if has_qa_data or (now - candidate.interview_started_at).total_seconds() > 7200:
+                    candidate.interview_completed_at = now
+                    candidate.interview_status = 'completed'
+                    candidate.interview_progress_percentage = 100
+                    candidate.final_status = 'Interview Completed - Auto Recovery'
+                    candidate.interview_ai_analysis_status = 'pending'
+                    
+                    if candidate.interview_started_at:
+                        duration = (now - candidate.interview_started_at).total_seconds()
+                        candidate.interview_duration = int(duration)
+                    
+                    logger.info(f"Auto-recovered interview for {candidate.name} (ID: {candidate.id})")
+            
+            # Case 2: Has 100% progress but no completion timestamp
+            incomplete_100 = session.query(Candidate).filter(
+                Candidate.interview_progress_percentage >= 100,
+                Candidate.interview_completed_at.is_(None)
+            ).all()
+            
+            for candidate in incomplete_100:
+                candidate.interview_completed_at = now
+                candidate.interview_status = 'completed'
+                candidate.final_status = 'Interview Completed - Progress 100%'
+                candidate.interview_ai_analysis_status = 'pending'
+                logger.info(f"Completed interview at 100% progress for {candidate.name}")
+            
+            session.commit()
+            
+            # Clear cache after updates
+            if stuck_interviews or incomplete_100:
+                cache.clear()
             
         except Exception as e:
-            logger.error(f"AI analysis failed for candidate {candidate_id}: {e}")
-            if candidate:
-                candidate.interview_ai_analysis_status = 'failed'
-                session.commit()
+            logger.error(f"Auto-recovery error: {e}")
+            session.rollback()
         finally:
             session.close()
+
+@app.route('/api/interview/debug-status', methods=['GET'])
+def debug_interview_status():
+    """Debug endpoint to check interview statuses"""
+    session = SessionLocal()
+    try:
+        # Get all interviews with various states
+        all_interviews = session.query(Candidate).filter(
+            Candidate.interview_scheduled == True
+        ).all()
+        
+        results = {
+            "total_scheduled": len(all_interviews),
+            "breakdown": {
+                "completed_with_score": 0,
+                "completed_no_score": 0,
+                "started_not_completed": 0,
+                "scheduled_not_started": 0,
+                "has_qa_data": 0
+            },
+            "details": []
+        }
+        
+        for candidate in all_interviews:
+            qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+            
+            status = "unknown"
+            if candidate.interview_completed_at and candidate.interview_ai_score:
+                status = "completed_with_score"
+                results["breakdown"]["completed_with_score"] += 1
+            elif candidate.interview_completed_at and not candidate.interview_ai_score:
+                status = "completed_no_score"
+                results["breakdown"]["completed_no_score"] += 1
+            elif candidate.interview_started_at and not candidate.interview_completed_at:
+                status = "started_not_completed"
+                results["breakdown"]["started_not_completed"] += 1
+            elif not candidate.interview_started_at:
+                status = "scheduled_not_started"
+                results["breakdown"]["scheduled_not_started"] += 1
+            
+            if qa_pairs:
+                results["breakdown"]["has_qa_data"] += 1
+            
+            results["details"].append({
+                "id": candidate.id,
+                "name": candidate.name,
+                "status": status,
+                "scheduled": candidate.interview_scheduled,
+                "started_at": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+                "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+                "ai_score": candidate.interview_ai_score,
+                "ai_analysis_status": candidate.interview_ai_analysis_status,
+                "auto_score_triggered": candidate.interview_auto_score_triggered,
+                "qa_pairs_count": len(qa_pairs),
+                "final_status": candidate.final_status
+            })
+        
+        return jsonify(results), 200
+        
+    finally:
+        session.close()
+
+@app.route('/api/interview/fix-incomplete-interviews', methods=['POST'])
+def fix_incomplete_interviews():
+    """Fix interviews that have Q&A data but aren't marked as complete"""
+    session = SessionLocal()
+    fixed = 0
     
-    # Run in background thread
-    executor.submit(run_analysis)
+    try:
+        # Find all scheduled interviews
+        candidates = session.query(Candidate).filter(
+            Candidate.interview_scheduled == True
+        ).all()
+        
+        for candidate in candidates:
+            # Check if they have Q&A data
+            qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+            questions_asked = json.loads(candidate.interview_questions_asked or '[]')
+            answers_given = json.loads(candidate.interview_answers_given or '[]')
+            
+            # If they have Q&A data but no completion timestamp, mark as complete
+            if (qa_pairs or questions_asked) and not candidate.interview_completed_at:
+                candidate.interview_completed_at = datetime.now()
+                candidate.interview_status = 'completed'
+                candidate.interview_progress_percentage = 100
+                
+                # Calculate duration if we have start time
+                if candidate.interview_started_at:
+                    duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
+                    candidate.interview_duration = int(duration)
+                
+                # Set for AI analysis
+                candidate.interview_ai_analysis_status = 'pending'
+                candidate.interview_auto_score_triggered = False
+                candidate.final_status = 'Interview Completed - Pending Analysis'
+                
+                session.commit()
+                
+                # Now trigger the scoring
+                trigger_auto_scoring(candidate.id)
+                
+                fixed += 1
+                logger.info(f"Fixed and triggered analysis for {candidate.name} (ID: {candidate.id})")
+        
+        # Clear cache
+        cache.delete_memoized(get_cached_candidates)
+        
+        return jsonify({
+            "success": True,
+            "fixed": fixed,
+            "checked": len(candidates),
+            "message": f"Fixed {fixed} incomplete interviews"
+        }), 200
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error fixing incomplete interviews: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+@app.route('/api/interview/force-score/<int:candidate_id>', methods=['POST'])
+def force_score_candidate(candidate_id):
+    """Force score a specific candidate"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        # Mark as completed if not already
+        if not candidate.interview_completed_at:
+            candidate.interview_completed_at = datetime.now()
+            candidate.interview_status = 'completed'
+            candidate.interview_progress_percentage = 100
+        
+        # Reset analysis flags
+        candidate.interview_ai_analysis_status = 'pending'
+        candidate.interview_auto_score_triggered = False
+        
+        session.commit()
+        
+        # Trigger scoring
+        trigger_auto_scoring(candidate_id)
+        
+        return jsonify({
+            "success": True,
+            "message": f"Triggered scoring for {candidate.name}",
+            "candidate_id": candidate_id
+        }), 200
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error forcing score: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
 
 # Add this after your existing track_qa_enhanced function
 
@@ -4961,6 +8195,56 @@ def debug_candidate_fields(candidate_id):
     finally:
         session.close()
 
+@app.route('/api/interview/check-analysis/<int:candidate_id>', methods=['GET'])
+def check_analysis_status(candidate_id):
+    """Check detailed analysis status for a candidate"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+        
+        if not candidate:
+            return jsonify({"error": "Candidate not found"}), 404
+        
+        return jsonify({
+            "candidate": {
+                "id": candidate.id,
+                "name": candidate.name,
+                "email": candidate.email
+            },
+            "interview": {
+                "started_at": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
+                "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
+                "duration": candidate.interview_duration,
+                "progress": candidate.interview_progress_percentage
+            },
+            "analysis": {
+                "status": candidate.interview_ai_analysis_status,
+                "triggered": candidate.interview_auto_score_triggered,
+                "scores": {
+                    "overall": candidate.interview_ai_score,
+                    "technical": candidate.interview_ai_technical_score,
+                    "communication": candidate.interview_ai_communication_score,
+                    "problem_solving": candidate.interview_ai_problem_solving_score,
+                    "cultural_fit": candidate.interview_ai_cultural_fit_score
+                },
+                "feedback": candidate.interview_ai_overall_feedback,
+                "final_status": candidate.interview_final_status,
+                "strengths": json.loads(candidate.interview_ai_strengths or '[]'),
+                "weaknesses": json.loads(candidate.interview_ai_weaknesses or '[]')
+            },
+            "qa_data": {
+                "qa_pairs": len(json.loads(candidate.interview_qa_pairs or '[]')),
+                "questions_asked": len(json.loads(candidate.interview_questions_asked or '[]')),
+                "answers_given": len(json.loads(candidate.interview_answers_given or '[]'))
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error checking analysis: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
 @app.route('/api/interview/recording/<int:candidate_id>', methods=['GET'])
 def get_interview_recording_info(candidate_id):
     """Get interview recording information"""
@@ -5027,6 +8311,106 @@ def not_found(error):
             "/api/routes"
         ]
     }), 404
+
+@app.route('/api/interview/migrate-qa-data', methods=['POST'])
+def migrate_qa_data():
+    """Migrate Q&A data from qa_pairs to questions/answers format"""
+    session = SessionLocal()
+    migrated = []
+    
+    try:
+        candidates = session.query(Candidate).filter(
+            Candidate.interview_scheduled == True
+        ).all()
+        
+        for candidate in candidates:
+            changes = []
+            
+            # Parse existing data
+            qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+            questions = json.loads(candidate.interview_questions_asked or '[]')
+            answers = json.loads(candidate.interview_answers_given or '[]')
+            
+            # If qa_pairs exist but questions/answers are empty, migrate
+            if qa_pairs and not questions:
+                new_questions = []
+                new_answers = []
+                
+                for qa in qa_pairs:
+                    if qa.get('question'):
+                        new_questions.append({
+                            'id': qa.get('id'),
+                            'text': qa.get('question'),
+                            'timestamp': qa.get('timestamp'),
+                            'order': qa.get('order', len(new_questions) + 1)
+                        })
+                        
+                    if qa.get('answer'):
+                        new_answers.append({
+                            'id': qa.get('id'),
+                            'text': qa.get('answer'),
+                            'timestamp': qa.get('answered_at', qa.get('timestamp')),
+                            'question_order': qa.get('order', len(new_answers) + 1)
+                        })
+                
+                # Update the database
+                candidate.interview_questions_asked = json.dumps(new_questions)
+                candidate.interview_answers_given = json.dumps(new_answers)
+                candidate.interview_total_questions = len(new_questions)
+                candidate.interview_answered_questions = len(new_answers)
+                
+                changes.append(f"Migrated {len(new_questions)} questions and {len(new_answers)} answers")
+            
+            # Fix counts based on actual data
+            actual_questions = max(
+                len(qa_pairs),
+                len(questions),
+                candidate.interview_total_questions or 0
+            )
+            actual_answers = len([qa for qa in qa_pairs if qa.get('answer')]) or len(answers)
+            
+            if candidate.interview_total_questions != actual_questions:
+                candidate.interview_total_questions = actual_questions
+                changes.append(f"Fixed total questions: {actual_questions}")
+            
+            if candidate.interview_answered_questions != actual_answers:
+                candidate.interview_answered_questions = actual_answers
+                changes.append(f"Fixed answered questions: {actual_answers}")
+            
+            # Ensure completed interviews have completion timestamp
+            if actual_questions > 0 and not candidate.interview_completed_at:
+                if candidate.interview_started_at:
+                    # Check if it's been more than 30 minutes
+                    time_since = (datetime.now() - candidate.interview_started_at).total_seconds()
+                    if time_since > 1800:  # 30 minutes
+                        candidate.interview_completed_at = datetime.now()
+                        candidate.interview_progress_percentage = 100
+                        changes.append("Marked as completed (timeout)")
+            
+            if changes:
+                migrated.append({
+                    'id': candidate.id,
+                    'name': candidate.name,
+                    'changes': changes
+                })
+        
+        session.commit()
+        
+        # Clear cache
+        cache.clear()
+        
+        return jsonify({
+            'success': True,
+            'migrated_count': len(migrated),
+            'details': migrated
+        }), 200
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error migrating Q&A data: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        session.close()
 
 def run_bulk_scraping_with_monitoring():
     """Wrapper to run bulk scraping with monitoring"""
@@ -5157,7 +8541,416 @@ def test_routes():
     for rule in app.url_map.iter_rules():
         print(f"  {rule.methods} {rule.rule} -> {rule.endpoint}")
 
+# backend.py - Add error recovery mechanisms
 
+class InterviewErrorRecovery:
+    """Handle interview system errors and recovery"""
+    
+    @staticmethod
+    def recover_incomplete_interviews():
+        """Recover and complete incomplete interviews"""
+        session = SessionLocal()
+        try:
+            # Find stuck interviews (started > 2 hours ago, not completed)
+            cutoff_time = datetime.now() - timedelta(hours=2)
+            stuck_interviews = session.query(Candidate).filter(
+                Candidate.interview_started_at < cutoff_time,
+                Candidate.interview_completed_at.is_(None)
+            ).all()
+            
+            for candidate in stuck_interviews:
+                # Check last activity
+                if candidate.interview_last_activity:
+                    time_since = (datetime.now() - candidate.interview_last_activity).total_seconds()
+                    if time_since > 3600:  # No activity for 1 hour
+                        # Force complete
+                        candidate.interview_completed_at = datetime.now()
+                        candidate.interview_ai_analysis_status = 'pending'
+                        
+                        # Trigger scoring with what we have
+                        trigger_auto_scoring(candidate.id)
+                        
+                        logger.warning(f"Force completed stuck interview for candidate {candidate.id}")
+            
+            session.commit()
+            
+        except Exception as e:
+            logger.error(f"Error recovering interviews: {e}")
+        finally:
+            session.close()
+    
+    @staticmethod
+    def validate_interview_data(candidate_id):
+        """Validate and fix interview data integrity"""
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(id=candidate_id).first()
+            if not candidate:
+                return False
+            
+            issues_fixed = []
+            
+            # Fix Q&A pairs
+            try:
+                qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+            except:
+                qa_pairs = []
+                candidate.interview_qa_pairs = '[]'
+                issues_fixed.append('Reset invalid Q&A data')
+            
+            # Fix counts
+            if candidate.interview_total_questions != len(qa_pairs):
+                candidate.interview_total_questions = len(qa_pairs)
+                issues_fixed.append('Fixed question count')
+            
+            answered = sum(1 for qa in qa_pairs if qa.get('answer'))
+            if candidate.interview_answered_questions != answered:
+                candidate.interview_answered_questions = answered
+                issues_fixed.append('Fixed answer count')
+            
+            # Fix progress
+            if candidate.interview_total_questions > 0:
+                progress = (answered / candidate.interview_total_questions) * 100
+                if abs(candidate.interview_progress_percentage - progress) > 1:
+                    candidate.interview_progress_percentage = progress
+                    issues_fixed.append('Fixed progress percentage')
+            
+            # Fix status inconsistencies
+            if candidate.interview_completed_at and not candidate.interview_started_at:
+                candidate.interview_started_at = candidate.interview_completed_at - timedelta(minutes=30)
+                issues_fixed.append('Fixed missing start time')
+            
+            if issues_fixed:
+                session.commit()
+                logger.info(f"Fixed issues for candidate {candidate_id}: {', '.join(issues_fixed)}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error validating interview data: {e}")
+            return False
+        finally:
+            session.close()
+
+# Add scheduled task to check and recover
+@app.route('/api/interview/health-check', methods=['GET'])
+def interview_health_check():
+    """Check interview system health and recover if needed"""
+    try:
+        # Run recovery
+        InterviewErrorRecovery.recover_incomplete_interviews()
+        
+        # Get system stats
+        session = SessionLocal()
+        try:
+            stats = {
+                'active_interviews': session.query(Candidate).filter(
+                    Candidate.interview_started_at.isnot(None),
+                    Candidate.interview_completed_at.is_(None)
+                ).count(),
+                'pending_scoring': session.query(Candidate).filter(
+                    Candidate.interview_completed_at.isnot(None),
+                    Candidate.interview_ai_score.is_(None)
+                ).count(),
+                'failed_scoring': session.query(Candidate).filter(
+                    Candidate.interview_ai_analysis_status == 'failed'
+                ).count(),
+                'system_status': 'healthy'
+            }
+            
+            return jsonify(stats), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return jsonify({"error": str(e), "system_status": "unhealthy"}), 500
+
+@app.route('/api/cache/clear', methods=['POST'])
+def clear_all_cache():
+    """Clear all cached data"""
+    try:
+        cache.clear()
+        return jsonify({"success": True, "message": "Cache cleared"}), 200
+    except Exception as e:
+        logger.error(f"Error clearing cache: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# Add periodic health check
+def start_health_monitoring():
+    """Start periodic health monitoring"""
+    def monitor():
+        while True:
+            time.sleep(300)  # Check every 5 minutes
+            try:
+                InterviewErrorRecovery.recover_incomplete_interviews()
+            except Exception as e:
+                logger.error(f"Health monitor error: {e}")
+    
+    thread = threading.Thread(target=monitor, daemon=True)
+    thread.start()
+
+# Add this improved completion handler to backend.py
+
+class InterviewCompletionHandler:
+    """Handles all interview completion logic with guaranteed database updates"""
+    
+    @staticmethod
+    def complete_interview(token: str, trigger_source: str = "unknown") -> dict:
+        """
+        Complete an interview and ensure database is updated
+        Returns: dict with success status and details
+        """
+        from datetime import datetime, timezone
+        
+        session = SessionLocal()
+        max_retries = 3
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            try:
+                # Get candidate with lock to prevent concurrent updates
+                candidate = session.query(Candidate).filter_by(
+                    interview_token=token
+                ).with_for_update().first()
+                
+                if not candidate:
+                    return {"success": False, "error": "Candidate not found"}
+                
+                # Check if already completed
+                if candidate.interview_completed_at:
+                    logger.info(f"Interview already completed for {candidate.name}")
+                    return {
+                        "success": True,
+                        "already_completed": True,
+                        "completed_at": candidate.interview_completed_at.isoformat()
+                    }
+                
+                # Set completion fields
+                completion_time = datetime.now(timezone.utc)
+                candidate.interview_completed_at = completion_time
+                candidate.interview_status = 'completed'
+                candidate.interview_progress_percentage = 100.0
+                candidate.final_status = f'Interview Completed - {trigger_source}'
+                
+                # Calculate duration if started
+                if candidate.interview_started_at:
+                    # Handle timezone-aware comparison
+                    start_time = candidate.interview_started_at
+                    if start_time.tzinfo is None:
+                        start_time = start_time.replace(tzinfo=timezone.utc)
+                    duration = (completion_time - start_time).total_seconds()
+                    candidate.interview_duration = int(duration)
+                else:
+                    candidate.interview_duration = 0
+                
+                # Set for AI analysis
+                candidate.interview_ai_analysis_status = 'pending'
+                candidate.interview_auto_score_triggered = False
+                
+                # Update Q&A stats if needed
+                if not candidate.interview_total_questions:
+                    candidate.interview_total_questions = 10  # Default
+                if not candidate.interview_answered_questions:
+                    candidate.interview_answered_questions = candidate.interview_total_questions
+                
+                # Force commit with explicit flush
+                session.flush()
+                session.commit()
+                
+                # Verify the update worked
+                session.refresh(candidate)
+                if candidate.interview_completed_at:
+                    logger.info(f"✅ Interview completed successfully for {candidate.name} at {completion_time}")
+                    
+                    # Trigger AI scoring in background
+                    try:
+                        executor.submit(trigger_auto_scoring, candidate.id)
+                    except Exception as e:
+                        logger.error(f"Failed to trigger scoring: {e}")
+                    
+                    return {
+                        "success": True,
+                        "completed_at": candidate.interview_completed_at.isoformat(),
+                        "duration": candidate.interview_duration,
+                        "trigger_source": trigger_source
+                    }
+                else:
+                    raise Exception("Completion timestamp not saved")
+                    
+            except Exception as e:
+                session.rollback()
+                retry_count += 1
+                logger.error(f"Attempt {retry_count} failed: {e}")
+                
+                if retry_count >= max_retries:
+                    # Last resort: try direct SQL update
+                    try:
+                        session.close()
+                        session = SessionLocal()
+                        result = session.execute(
+                            text("""
+                                UPDATE candidates 
+                                SET interview_completed_at = :completed_at,
+                                    interview_status = 'completed',
+                                    interview_progress_percentage = 100,
+                                    final_status = :final_status,
+                                    interview_ai_analysis_status = 'pending'
+                                WHERE interview_token = :token
+                            """),
+                            {
+                                "completed_at": datetime.now(),
+                                "final_status": f"Interview Completed - {trigger_source}",
+                                "token": token
+                            }
+                        )
+                        session.commit()
+                        
+                        if result.rowcount > 0:
+                            logger.info(f"✅ Completed via direct SQL for token {token}")
+                            return {"success": True, "method": "direct_sql"}
+                    except Exception as sql_error:
+                        logger.error(f"Direct SQL also failed: {sql_error}")
+                    
+                    return {"success": False, "error": str(e)}
+                
+                time.sleep(0.5)  # Brief delay before retry
+            finally:
+                if retry_count >= max_retries:
+                    session.close()
+        
+        session.close()
+        return {"success": False, "error": "Max retries exceeded"}
+
+# Create global instance
+completion_handler = InterviewCompletionHandler()
+
+# Add this service to automatically complete interviews based on conditions
+
+class AutomaticCompletionMonitor:
+    """Monitor and automatically complete interviews"""
+    
+    def __init__(self):
+        self.is_running = False
+        self.check_interval = 30  # seconds
+        self.thread = None
+    
+    def start(self):
+        if self.is_running:
+            return
+        self.is_running = True
+        self.thread = threading.Thread(target=self._monitor_loop, daemon=True)
+        self.thread.start()
+        logger.info("Automatic completion monitor started")
+    
+    def stop(self):
+        self.is_running = False
+        if self.thread:
+            self.thread.join(timeout=5)
+    
+    def _monitor_loop(self):
+        while self.is_running:
+            try:
+                self._check_all_interviews()
+                time.sleep(self.check_interval)
+            except Exception as e:
+                logger.error(f"Monitor error: {e}")
+                time.sleep(10)
+    
+    def _check_all_interviews(self):
+        """Check all active interviews for completion conditions"""
+        session = SessionLocal()
+        try:
+            # Find all active interviews
+            active_interviews = session.query(Candidate).filter(
+                Candidate.interview_started_at.isnot(None),
+                Candidate.interview_completed_at.is_(None)
+            ).all()
+            
+            for candidate in active_interviews:
+                if self._should_complete(candidate):
+                    logger.info(f"Auto-completing interview for {candidate.name}")
+                    completion_handler.complete_interview(
+                        candidate.interview_token,
+                        "automatic_condition_met"
+                    )
+            
+        except Exception as e:
+            logger.error(f"Error checking interviews: {e}")
+        finally:
+            session.close()
+    
+    def _should_complete(self, candidate) -> bool:
+        """Check if interview should be completed"""
+        now = datetime.now()
+        
+        # Condition 1: Progress is 100%
+        if candidate.interview_progress_percentage >= 100:
+            return True
+        
+        # Condition 2: All questions answered
+        if (candidate.interview_total_questions > 0 and 
+            candidate.interview_answered_questions >= candidate.interview_total_questions):
+            return True
+        
+        # Condition 3: Minimum threshold met (10 questions)
+        if candidate.interview_answered_questions >= 10:
+            return True
+        
+        # Condition 4: Interview running for over 45 minutes
+        if candidate.interview_started_at:
+            duration = (now - candidate.interview_started_at).total_seconds()
+            if duration > 2700:  # 45 minutes
+                return True
+        
+        # Condition 5: No activity for 15 minutes
+        if candidate.interview_last_activity:
+            inactive_time = (now - candidate.interview_last_activity).total_seconds()
+            if inactive_time > 900 and candidate.interview_answered_questions >= 5:
+                return True
+        
+        return False
+
+# Create global instance
+completion_monitor = AutomaticCompletionMonitor()
+
+def process_pending_analyses():
+    """Process any pending interview analyses"""
+    session = SessionLocal()
+    try:
+        # Find all completed interviews without scores
+        pending = session.query(Candidate).filter(
+            Candidate.interview_completed_at.isnot(None),
+            Candidate.interview_ai_score.is_(None),
+            Candidate.interview_ai_analysis_status != 'processing'
+        ).all()
+        
+        logger.info(f"Found {len(pending)} pending interview analyses")
+        
+        for candidate in pending:
+            logger.info(f"Processing pending analysis for candidate {candidate.id}")
+            trigger_auto_scoring(candidate.id)
+            time.sleep(1)  # Small delay between processing
+            
+    except Exception as e:
+        logger.error(f"Error processing pending analyses: {e}")
+    finally:
+        session.close()
+
+# Add scheduled task to check every 5 minutes
+def start_analysis_monitor():
+    """Start monitoring for pending analyses"""
+    def monitor():
+        while True:
+            time.sleep(300)  # Check every 5 minutes
+            try:
+                process_pending_analyses()
+            except Exception as e:
+                logger.error(f"Analysis monitor error: {e}")
+    
+    thread = threading.Thread(target=monitor, daemon=True)
+    thread.start()
 
 
 # Cleanup on shutdown
@@ -5181,6 +8974,8 @@ if __name__ == "__main__":
     print("Starting Interview Automation System...")
     start_interview_automation()
     print("Interview automation running (checking every 30 minutes)")
+    print("Starting interview analysis monitor...")
+    start_analysis_monitor()
 
 
     with app.app_context():
@@ -5189,15 +8984,30 @@ if __name__ == "__main__":
             print(f"  {list(rule.methods)} {rule.rule} -> {rule.endpoint}")
 
     try:
+        # from db import init_db, run_migrations
+
+        # init_db()
+        # run_migrations()
+        # run_interview_tracking_migration()
+
+
         try: 
             print("\n🤖 Starting Interview Automation System...")
             start_interview_automation()
             print("✅ Interview automation running (checking every 30 minutes)")
+
+            recovery_thread = threading.Thread(target=interview_auto_recovery_system, daemon=True)
+            recovery_thread.start()
+            logger.info("Interview auto-recovery system started")
+            
+            completion_monitor.start()
+            print("✅ Automatic completion monitor started")
+
         except Exception as e:
             print(f"⚠️  Interview automation not available: {e}")
+            # print(f"Database initialization error: {e}")
+            # print("Continuing anyway...")
             
-
-
         app.run(
             host='0.0.0.0',
             port=5000,
@@ -5208,3 +9018,4 @@ if __name__ == "__main__":
     finally:
         print("Shutting down interview automation...")
         stop_interview_automation()
+        completion_monitor.stop()

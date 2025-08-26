@@ -1,0 +1,1 @@
+{"event": "session_started", "ts": "2025-08-25T06:16:17.278681+00:00", "session_id": "session_8_1756102576141", "interview_token": "77f8f6c9-4aa2-4e3e-b0f6-c0053c77f0e3", "candidate_id": 8, "recording_config": {"video_codec": "vp8", "audio_codec": "opus", "video_bitrate": "2000k", "audio_bitrate": "128k", "resolution": "1920x1080"}}
