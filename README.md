@@ -71,3 +71,4 @@ Frontend: React, TailwindCSS
 Tools: Email handling, Resume parsing, Job assessment logic
 "# HR-Automaticn"  "# HR-Automaticn" 
 "# Hr_Automation_V2" 
+"# Hr_Automation_V2" 
