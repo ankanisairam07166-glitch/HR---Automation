@@ -35,4 +35,11 @@ yarn-error.log*
 
 # Docker
 postgres_data/
-redis_data/
+redis_data/venv/
+.env
+*.key
+*.pem
+*.p12
+*.cer
+.DS_Store
+Thumbs.db
