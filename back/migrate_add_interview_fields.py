@@ -120,6 +120,7 @@ def migrate_database():
         ('interview_auto_score_triggered', 'BOOLEAN DEFAULT FALSE')
         ('interview_analysis_started_at', 'TIMESTAMP'),
         ('interview_analysis_completed_at', 'TIMESTAMP'),
+        
     ]
     
     # Add each column

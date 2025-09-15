@@ -31,7 +31,7 @@ class InterviewAutomationSystem:
         self.is_running = True
         self.thread = threading.Thread(target=self._run_loop, daemon=True)
         self.thread.start()
-        logger.info("🚀 Interview automation system started")
+        logger.info("Interview automation system started")
         
     def stop(self):
         """Stop the automation system"""
@@ -115,7 +115,7 @@ class InterviewAutomationSystem:
         # Step 4: Send email to candidate
         self._send_interview_email(candidate)
         
-        logger.info(f"✅ Interview setup complete for {candidate.name}")
+        logger.info(f"Interview setup complete for {candidate.name}")
         
     def _create_knowledge_base(self, candidate):
         """Create HeyGen knowledge base for the candidate"""

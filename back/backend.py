@@ -36,9 +36,9 @@ if 'executor' not in globals():
 # interview_analysis_service.cache = Cache(app, config=cache_config)
 
 # Start service on app startup
-print("🚀 Starting Production Interview Analysis Service...")
+print("Starting Production Interview Analysis Service...")
 interview_analysis_service.start()
-print("✅ Interview Analysis Service running")
+print("Interview Analysis Service running")
  
 # Import your existing modules
 try:
@@ -236,9 +236,9 @@ def log_request_info():
     """Log incoming requests for debugging"""
     request.request_id = str(uuid.uuid4())[:8]
     if request.endpoint and (request.endpoint.startswith('api_') or 'api' in request.path):
-        logger.info(f"🌐 [{request.request_id}] {request.method} {request.path} from {request.remote_addr}")
+        logger.info(f"ðŸŒ [{request.request_id}] {request.method} {request.path} from {request.remote_addr}")
         if request.method == 'OPTIONS':
-            logger.info(f"🔧 [{request.request_id}] CORS preflight for {request.path}")
+            logger.info(f"ðŸ”§ [{request.request_id}] CORS preflight for {request.path}")
 
 # Rate limiting decorator with better performance
 def rate_limit(max_calls=10, time_window=60):
@@ -537,7 +537,7 @@ def home():
         }
         
         return jsonify({
-            "message": "🚀 TalentFlow AI Backend API",
+            "message": "ðŸš€ TalentFlow AI Backend API",
             "tagline": "Intelligent Recruitment Automation Platform",
             "version": "2.1.0",
             "status": "operational",
@@ -567,19 +567,19 @@ def home():
             
             # Features Highlight
             "features": [
-                "🤖 AI-Powered Resume Screening",
-                "📝 Automated Assessment Creation", 
-                "📧 Smart Email Automation",
-                "📊 Real-time Analytics Dashboard",
-                "🎥 AI Avatar Interviews",
-                "⚡ Pipeline Automation"
+                "AI-Powered Resume Screening",
+                "Automated Assessment Creation", 
+                "Smart Email Automation",
+                "Real-time Analytics Dashboard",
+                "AI Avatar Interviews",
+                "Pipeline Automation"
             ]
         }), 200
         
     except Exception as e:
         logger.error(f"Error in enhanced home route: {e}")
         return jsonify({
-            "message": "🚀 TalentFlow AI Backend API",
+            "message": "TalentFlow AI Backend API",
             "version": "2.1.0",
             "status": "running",
             "error": "Partial system information available",
@@ -732,7 +732,7 @@ def full_recruitment_pipeline(job_id, job_title, job_desc):
             update_pipeline_status(job_id, 'running', 'Scraping resumes...', 20)
             logger.info(f"STEP 1: Scraping resumes for job_id={job_id}")
             asyncio.run(scrape_job(job_id))
-            logger.info("✅ Scraping completed successfully")
+            logger.info("Scraping completed successfully")
         except Exception as e:
             logger.error(f"Scraping failed: {str(e)}", exc_info=True)
             # Continue with next step even if scraping fails
@@ -742,7 +742,7 @@ def full_recruitment_pipeline(job_id, job_title, job_desc):
             update_pipeline_status(job_id, 'running', 'Creating programming assessment...', 40)
             logger.info(f"STEP 2: Creating assessment for '{job_title}' in Testlify")
             create_programming_assessment(job_title, job_desc)
-            logger.info("✅ Assessment created successfully")
+            logger.info("Assessment created successfully")
         except Exception as e:
             logger.error(f"Assessment creation failed: {str(e)}", exc_info=True)
         
@@ -753,7 +753,7 @@ def full_recruitment_pipeline(job_id, job_title, job_desc):
             logger.info(f"STEP 3: Extracting invite link for '{job_title}' from Testlify")
             invite_link = get_invite_link(job_title)
             if invite_link:
-                logger.info(f"✅ Got invite link: {invite_link}")
+                logger.info(f"Got invite link: {invite_link}")
         except Exception as e:
             logger.error(f"Invite link extraction failed: {str(e)}", exc_info=True)
         
@@ -771,7 +771,7 @@ def full_recruitment_pipeline(job_id, job_title, job_desc):
                 job_desc=job_desc, 
                 invite_link=invite_link
             )
-            logger.info("✅ AI screening completed successfully")
+            logger.info("AI screening completed successfully")
         except Exception as e:
             logger.error(f"AI screening failed: {str(e)}", exc_info=True)
             raise  # This is critical, so we raise
@@ -780,7 +780,7 @@ def full_recruitment_pipeline(job_id, job_title, job_desc):
         cache.delete_memoized(get_cached_candidates)
         cache.delete_memoized(get_cached_jobs)
         
-        logger.info("🚀 Recruitment pipeline finished successfully")
+        logger.info("Recruitment pipeline finished successfully")
             
     except Exception as e:
         logger.error(f"Fatal pipeline error: {e}", exc_info=True)
@@ -915,15 +915,6 @@ def api_send_reminder(candidate_id):
 def api_assessments():
     return jsonify([]), 200
 
-
-# COPY THIS EXACTLY AND PASTE IT IN YOUR backend.py
-# MAKE SURE IT'S NOT INDENTED INSIDE ANOTHER FUNCTION!
-
-# Updated backend.py - Replace the existing secure_interview_page route
-
-# Add these modifications to your backend.py
-
-# 1. Update the secure_interview_page function to handle reconnections
 @app.route('/secure-interview/<token>', methods=['GET'])
 def secure_interview_page(token):
     """Serve the interview page ONLY if interview is not completed"""
@@ -971,7 +962,7 @@ def secure_interview_page(token):
             </head>
             <body>
                 <div class="container">
-                    <div class="icon">✅</div>
+                    <div class="icon"></div>
                     <h1>Interview Already Completed</h1>
                     <div class="details">
                         <p><strong>Candidate:</strong> {candidate.name}</p>
@@ -1032,6 +1023,110 @@ def secure_interview_page(token):
     finally:
         session.close()
 
+# Add this debug endpoint to your backend.py
+@app.route('/api/debug/check-token/<token>', methods=['GET'])
+def debug_check_token(token):
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(interview_token=token).first()
+        
+        if candidate:
+            return jsonify({
+                "found": True,
+                "candidate_id": candidate.id,
+                "name": candidate.name,
+                "email": candidate.email,
+                "interview_scheduled": candidate.interview_scheduled,
+                "interview_token": candidate.interview_token
+            }), 200
+        else:
+            # Try to find similar tokens
+            similar = session.query(Candidate).filter(
+                Candidate.interview_token.like(f'%{token[:8]}%')
+            ).all()
+            
+            return jsonify({
+                "found": False,
+                "token_searched": token,
+                "similar_tokens": [
+                    {"id": c.id, "name": c.name, "token": c.interview_token}
+                    for c in similar
+                ]
+            }), 404
+    finally:
+        session.close()
+
+def create_error_page(token, error):
+    """Create enhanced error page with debugging info"""
+    
+    # Try to find if there are any scheduled interviews
+    session = SessionLocal()
+    try:
+        recent_interviews = session.query(Candidate).filter(
+            Candidate.interview_scheduled == True
+        ).order_by(Candidate.interview_date.desc()).limit(5).all()
+        
+        debug_info = {
+            "recent_interviews": [
+                {"id": c.id, "name": c.name, "token": c.interview_token[:8] + "..."}
+                for c in recent_interviews
+            ] if recent_interviews else []
+        }
+    finally:
+        session.close()
+    
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+  <title>Interview System Error</title>
+  <style>
+    body {{ 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      margin-top: 100px; 
+      background: #f8f9fa; 
+    }}
+    .container {{ 
+      max-width: 600px; 
+      margin: 0 auto; 
+      padding: 2rem; 
+      background: white; 
+      border-radius: 10px; 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+    }}
+    .debug-info {{
+      background: #f0f0f0;
+      padding: 1rem;
+      border-radius: 5px;
+      margin-top: 1rem;
+      text-align: left;
+      font-size: 0.9em;
+    }}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 style="color: #e74c3c;">🚫 Interview System Error</h1>
+    <p>There was an error loading the interview.</p>
+    <p><strong>Error:</strong> {error}</p>
+    <p><strong>Token:</strong> {token}</p>
+    
+    <div class="debug-info">
+      <strong>Debugging Steps:</strong>
+      <ol>
+        <li>Check if token exists: <code>GET /api/debug/check-token/{token}</code></li>
+        <li>Create test interview: <code>POST /api/create-test-interview</code></li>
+        <li>View recent interviews: <code>GET /api/candidates?interview_scheduled=true</code></li>
+      </ol>
+    </div>
+    
+    <p>The system has been notified. Please try again or contact support.</p>
+    <button onclick="window.location.reload()" style="padding:10px 20px; background:#007bff; color:#fff; border:none; border-radius:5px; cursor:pointer; margin-top:1rem;">
+      Retry
+    </button>
+  </div>
+</body>
+</html>"""
 
 # 2. Add a new endpoint to validate and refresh interview tokens
 @app.route('/api/interview/validate-token/<token>', methods=['GET', 'POST'])
@@ -1120,7 +1215,7 @@ def create_interview_landing_page(interview_data, token):
     if is_reconnection:
         reconnect_block = (
             "<div class=\"reconnect-info\">"
-            "<h3>🔄 Welcome Back!</h3>"
+            "<h3> Welcome Back!</h3>"
             "<p>You're reconnecting to your interview session.</p>"
             f"<p><strong>Questions asked:</strong> {prev.get('questionsAsked', 0)}</p>"
             f"<p><strong>Questions answered:</strong> {prev.get('questionsAnswered', 0)}</p>"
@@ -1130,7 +1225,7 @@ def create_interview_landing_page(interview_data, token):
     continue_or_start = "Continue" if is_reconnection else "Start"
     continue_lower = "continue" if is_reconnection else "start"
     progress_line = (
-        f"<p><strong>📊 Progress:</strong> {prev.get('questionsAnswered', 0)} questions completed</p>"
+        f"<p><strong> Progress:</strong> {prev.get('questionsAnswered', 0)} questions completed</p>"
         if is_reconnection else ""
     )
 
@@ -1183,20 +1278,20 @@ def create_interview_landing_page(interview_data, token):
 </head>
 <body>
   <div class="container">
-    <h1 class="header">🤖 AI Interview Portal</h1>
+    <h1 class="header">ðŸ¤– AI Interview Portal</h1>
 
     {reconnect_block}
 
     <div class="info-box">
-      <p><strong>👤 Candidate:</strong> {candidate_name}</p>
-      <p><strong>💼 Position:</strong> {position}</p>
-      <p><strong>🏢 Company:</strong> {company}</p>
-      <p class="success-badge">✅ Interview Link Active & Ready</p>
-      <p><strong>🔄 Session Type:</strong> {session_type_label}</p>
+      <p><strong> Candidate:</strong> {candidate_name}</p>
+      <p><strong> Position:</strong> {position}</p>
+      <p><strong> Company:</strong> {company}</p>
+      <p class="success-badge"> Interview Link Active & Ready</p>
+      <p><strong> Session Type:</strong> {session_type_label}</p>
     </div>
 
     <div class="instructions">
-      <h3>📋 Before {continue_or_start} Your Interview:</h3>
+      <h3> Before {continue_or_start} Your Interview:</h3>
       <ul>
         <li><strong>Internet:</strong> Ensure stable connection</li>
         <li><strong>Camera & Mic:</strong> Test and allow permissions</li>
@@ -1206,33 +1301,33 @@ def create_interview_landing_page(interview_data, token):
     </div>
 
     <div style="margin: 25px 0;">
-      <p><strong>⏱️ Duration:</strong> 30-45 minutes</p>
-      <p><strong>🎥 Format:</strong> AI-powered video interview</p>
+      <p><strong>â± Duration:</strong> 30-45 minutes</p>
+      <p><strong> Format:</strong> AI-powered video interview</p>
       {progress_line}
     </div>
 
-    <button onclick="startInterview()" class="start-btn">🚀 {continue_or_start} AI Interview</button>
+    <button onclick="startInterview()" class="start-btn"> {continue_or_start} AI Interview</button>
 
     <div class="debug-info">
-      <strong>🔧 System Status:</strong><br/>
+      <strong> System Status:</strong><br/>
       Token: {token}<br/>
       Knowledge Base: {knowledge_base_id}<br/>
       Candidate ID: {candidate_id}<br/>
-      Status: Ready ✅<br/>
+      Status: Ready <br/>
       Session Type: {session_type_label}<br/>
       Time: {now_str}
     </div>
 
     <div style="margin-top: 30px; font-size: 12px; color: #666;">
-      <p>💡 Need help? Contact our support team</p>
-      <p>🕐 Interview link valid for multiple sessions</p>
+      <p> Need help? Contact our support team</p>
+      <p> Interview link valid for multiple sessions</p>
     </div>
   </div>
 
   <script>
     const interviewData = {interview_json};
     function startInterview() {{
-      console.log('🚀 Starting interview with data:', interviewData);
+      console.log(' Starting interview with data:', interviewData);
       sessionStorage.setItem('interviewData', JSON.stringify(interviewData));
       fetch('/api/avatar/interview/{token}', {{
         method: 'POST',
@@ -1269,7 +1364,7 @@ def create_expired_interview_page(token):
 </head>
 <body>
   <div class="container">
-    <h1 style="color: #e74c3c;">⏰ Interview Link Expired</h1>
+    <h1 style="color: #e74c3c;"> Interview Link Expired</h1>
     <p>This interview link has expired. Please contact HR for a new interview link.</p>
     <p><strong>Token:</strong> {token}</p>
   </div>
@@ -1290,7 +1385,7 @@ def create_error_page(token, error):
 </head>
 <body>
   <div class="container">
-    <h1 style="color: #e74c3c;">🔥 Interview System Error</h1>
+    <h1 style="color: #e74c3c;"> Interview System Error</h1>
     <p>There was an error loading the interview.</p>
     <p><strong>Error:</strong> {error}</p>
     <p><strong>Token:</strong> {token}</p>
@@ -1772,7 +1867,7 @@ def create_knowledge_base_enhanced():
         if not candidate_name or not position:
             return jsonify({"error": "candidateName and position are required"}), 400
         
-        logger.info(f"🧠 Creating structured KB for: {candidate_name} - {position}")
+        logger.info(f" Creating structured KB for: {candidate_name} - {position}")
         
         # Get resume content
         resume_content = ""
@@ -1873,7 +1968,7 @@ def create_knowledge_base_enhanced():
                     )
                     if kb_id:
                         successful_endpoint = endpoint
-                        logger.info(f"✅ KB created successfully: {kb_id}")
+                        logger.info(f"KB created successfully: {kb_id}")
                         break
                 else:
                     logger.error(f"Endpoint {endpoint} failed: {resp.status_code} - {resp.text[:200]}")
@@ -1928,11 +2023,11 @@ def create_enhanced_kb_content(candidate_name, position, company, resume_content
     return (
         "INTERVIEW SYSTEM CONFIGURATION\n"
         "==============================\n"
-        f"🎯 MISSION: Conduct a professional, comprehensive interview for {candidate_name}\n"
-        f"📋 POSITION: {position}\n"
-        f"🏢 COMPANY: {company}\n"
-        "⏱️ DURATION: 30-45 minutes\n"
-        "🤖 MODE: AI-Powered Structured Interview\n\n"
+        f"MISSION: Conduct a professional, comprehensive interview for {candidate_name}\n"
+        f"POSITION: {position}\n"
+        f"COMPANY: {company}\n"
+        "â±DURATION: 30-45 minutes\n"
+        "MODE: AI-Powered Structured Interview\n\n"
         "CANDIDATE BACKGROUND\n"
         "====================\n"
         f"{resume_highlights}\n"
@@ -2239,8 +2334,8 @@ def streaming_new():
             'Accept': 'application/json'
         }
         
-        print(f"🔄 Forwarding request to HeyGen: {heygen_streaming_url}")
-        print(f"📦 Request data: {data}")
+        print(f"Forwarding request to HeyGen: {heygen_streaming_url}")
+        print(f"Request data: {data}")
         
         response = requests.post(
             heygen_streaming_url, 
@@ -2249,14 +2344,14 @@ def streaming_new():
             timeout=30
         )
         
-        print(f"📡 HeyGen response status: {response.status_code}")
+        print(f"HeyGen response status: {response.status_code}")
         
         if response.ok:
             response_data = response.json()
             return jsonify(response_data), response.status_code
         else:
             error_text = response.text
-            print(f"❌ HeyGen API error: {error_text}")
+            print(f"HeyGen API error: {error_text}")
             return jsonify({
                 "error": "HeyGen API error", 
                 "details": error_text,
@@ -2264,13 +2359,13 @@ def streaming_new():
             }), response.status_code
             
     except requests.exceptions.Timeout:
-        print("⏰ HeyGen API timeout")
+        print("HeyGen API timeout")
         return jsonify({"error": "Request timeout"}), 504
     except requests.exceptions.ConnectionError:
-        print("🔌 HeyGen API connection error")
+        print("HeyGen API connection error")
         return jsonify({"error": "Connection error"}), 503
     except Exception as e:
-        print(f"💥 Streaming proxy error: {e}")
+        print(f"Streaming proxy error: {e}")
         return jsonify({"error": "Avatar service unavailable", "details": str(e)}), 500
 
 @app.route('/api/get-access-token', methods=['POST', 'OPTIONS'])
@@ -2297,7 +2392,7 @@ def get_access_token():
         
         if not response.ok:
             error_text = response.text
-            print(f"❌ HeyGen token error: {error_text}")
+            print(f"HeyGen token error: {error_text}")
             return jsonify({"error": "Failed to get token", "details": error_text}), response.status_code
         
         data = response.json()
@@ -2305,13 +2400,13 @@ def get_access_token():
             return jsonify({"error": "No token in response"}), 500
         
         token = data['data']['token']
-        print(f"✅ Token obtained successfully")
+        print(f"Token obtained successfully")
         
         # Return as plain text
         return Response(token, mimetype='text/plain', status=200)
         
     except Exception as e:
-        print(f"❌ Token error: {e}")
+        print(f"Token error: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/debug/avatar', methods=['GET'])
@@ -2549,7 +2644,7 @@ def api_schedule_interview():
                 resume_content = extract_resume_content(candidate.resume_path)
                 if resume_content:
                     resume_extracted = True
-                    logger.info(f"✅ Resume extracted: {len(resume_content)} characters")
+                    logger.info(f"Resume extracted: {len(resume_content)} characters")
                 else:
                     logger.error("Resume extraction returned empty content")
             
@@ -2677,7 +2772,7 @@ Remember: This is a conversation, not an interrogation. Make {candidate.name} fe
                         kb_data = heygen_response.json()
                         knowledge_base_id = kb_data.get('data', {}).get('knowledge_base_id')
                         kb_creation_method = "heygen_api"
-                        logger.info(f"✅ HeyGen KB created successfully: {knowledge_base_id}")
+                        logger.info(f"HeyGen KB created successfully: {knowledge_base_id}")
                     else:
                         error_text = heygen_response.text
                         logger.error(f"HeyGen API error: {heygen_response.status_code} - {error_text}")
@@ -3248,82 +3343,6 @@ def get_interview_status(token):
     finally:
         session.close()
 
-
-# 2. COMPREHENSIVE TRACKING ENDPOINT (for detailed information)
-# @app.route('/api/interview/status/<token>', methods=['GET'])
-# def get_interview_tracking_status(token):
-#     """Get comprehensive tracking status for an interview - DETAILED"""
-#     session = SessionLocal()
-#     try:
-#         candidate = session.query(Candidate).filter_by(interview_token=token).first()
-        
-#         if not candidate:
-#             return jsonify({"error": "Interview not found"}), 404
-        
-#         # Calculate status
-#         status = 'not_started'
-#         if candidate.interview_completed_at:
-#             status = 'completed'
-#         elif candidate.interview_status == 'expired':
-#             status = 'expired'
-#         elif candidate.interview_status == 'abandoned':
-#             status = 'abandoned'
-#         elif candidate.interview_started_at:
-#             status = 'in_progress'
-#         elif candidate.interview_link_clicked:
-#             status = 'link_clicked'
-        
-#         # Time calculations
-#         time_remaining = None
-#         if candidate.interview_expires_at and not candidate.interview_completed_at:
-#             time_remaining = (candidate.interview_expires_at - datetime.now()).total_seconds()
-#             if time_remaining < 0:
-#                 time_remaining = 0
-        
-#         # Return comprehensive data
-#         tracking_data = {
-#             "candidate": {
-#                 "id": candidate.id,
-#                 "name": candidate.name,
-#                 "email": candidate.email,
-#                 "position": candidate.job_title
-#             },
-#             "status": status,
-#             "tracking": {
-#                 "link_clicked": bool(candidate.interview_link_clicked),
-#                 "link_clicked_at": candidate.interview_link_clicked_at.isoformat() if candidate.interview_link_clicked_at else None,
-#                 "started_at": candidate.interview_started_at.isoformat() if candidate.interview_started_at else None,
-#                 "last_activity": candidate.interview_last_activity.isoformat() if candidate.interview_last_activity else None,
-#                 "completed_at": candidate.interview_completed_at.isoformat() if candidate.interview_completed_at else None,
-#                 "expires_at": candidate.interview_expires_at.isoformat() if candidate.interview_expires_at else None,
-#                 "time_remaining_seconds": time_remaining
-#             },
-#             "progress": {
-#                 "percentage": candidate.interview_progress_percentage or 0,
-#                 "total_questions": candidate.interview_total_questions or 0,
-#                 "answered_questions": candidate.interview_answered_questions or 0,
-#                 "qa_completion_rate": getattr(candidate, 'interview_qa_completion_rate', 0) or 0
-#             },
-#             "analysis": {
-#                 "status": candidate.interview_ai_analysis_status,
-#                 "score": candidate.interview_ai_score,
-#                 "recommendation": candidate.interview_final_status
-#             },
-#             "technical": {
-#                 "session_id": candidate.interview_session_id,
-#                 "browser_info": candidate.interview_browser_info,
-#                 "duration_seconds": candidate.interview_duration
-#             }
-#         }
-        
-#         return jsonify(tracking_data), 200
-        
-#     except Exception as e:
-#         logger.error(f"Error getting tracking status: {e}")
-#         return jsonify({"error": str(e)}), 500
-#     finally:
-#         session.close()
-
 @app.route('/api/interview/dashboard', methods=['GET'])
 def interview_tracking_dashboard():
     """Get dashboard data for all interviews"""
@@ -3657,7 +3676,7 @@ def trigger_auto_scoring(candidate_id):
             # Clear cache to update frontend
             cache.delete_memoized(get_cached_candidates)
             
-            logger.info(f"✅ Auto-scoring completed for candidate {candidate_id}: {candidate.interview_ai_score}%")
+            logger.info(f"Auto-scoring completed for candidate {candidate_id}: {candidate.interview_ai_score}%")
             
             # Send notification if configured
             if hasattr(globals(), 'notify_scoring_complete'):
@@ -3760,7 +3779,7 @@ Recommendation: Schedule a new interview
             candidate.interview_ai_analysis_status = 'completed'
             session.commit()
             
-            logger.info(f"✅ Dynamic analysis completed for {candidate.name}: {candidate.interview_ai_score}%")
+            logger.info(f"Dynamic analysis completed for {candidate.name}: {candidate.interview_ai_score}%")
             
             # Clear cache
             cache.delete_memoized(get_cached_candidates)
@@ -4614,10 +4633,6 @@ def verify_interview_process(candidate_id):
     finally:
         session.close()
 
-# Add these endpoints to your backend.py
-
-# Add these endpoints to your backend.py
-
 @app.route('/api/interview/recording/start', methods=['POST', 'OPTIONS'])
 def start_recording():
     if request.method == 'OPTIONS':
@@ -4717,241 +4732,153 @@ def upload_recording():
  
 @app.route('/api/interview/qa/track', methods=['POST', 'OPTIONS'])
 def track_interview_qa_unified():
-    """Unified Q&A tracking with real-time conversation capture and production features"""
+    """Unified Q&A tracking with real-time conversation capture and fallback mechanisms"""
     if request.method == 'OPTIONS':
         return '', 200
     
     try:
+        # Get data from the incoming request
         data = request.json
         session_id = data.get('session_id')
         content_type = data.get('type')  # 'question' or 'answer'
         content = data.get('content', '').strip()
         metadata = data.get('metadata', {})
         
-        # Validation
+        # Validation: session_id and content are required
         if not session_id or not content:
             return jsonify({"error": "Missing required fields"}), 400
         
         session = SessionLocal()
         try:
-            # Find candidate with multiple fallback methods
+            # Try to find the candidate using the session_id
             candidate = session.query(Candidate).filter_by(interview_session_id=session_id).first()
+
             if not candidate:
-                # Fallback 1: Try parsing session_id
+                # Fallback 1: Try parsing session_id (split by '_')
                 if '_' in session_id:
                     parts = session_id.split('_')
                     if len(parts) >= 2 and parts[1].isdigit():
                         candidate = session.query(Candidate).filter_by(id=int(parts[1])).first()
                         if candidate:
+                            # Update the session_id for the candidate
                             candidate.interview_session_id = session_id
-                
+
                 # Fallback 2: Try by interview token if session_id contains it
                 if not candidate and 'token' in session_id:
-                    token = session_id.split('token_')[-1]
+                    token = session_id.split('token_')[-1]  # Assuming token is part of the session_id
                     candidate = session.query(Candidate).filter_by(interview_token=token).first()
             
+            # If no candidate is found, return error
             if not candidate:
                 logger.error(f"No candidate found for session_id={session_id}")
                 return jsonify({"error": "Session not found"}), 404
             
-            # Initialize all tracking fields if needed
-            if not candidate.interview_qa_pairs:
-                candidate.interview_qa_pairs = '[]'
-            if not hasattr(candidate, 'interview_qa_sequence') or not candidate.interview_qa_sequence:
-                candidate.interview_qa_sequence = '[]'
-            if not hasattr(candidate, 'interview_conversation') or not candidate.interview_conversation:
-                candidate.interview_conversation = '[]'
-            if not candidate.interview_transcript:
-                candidate.interview_transcript = f"Interview Transcript - {candidate.name}\n" + "="*50 + "\n"
-            
-            # Load existing data
-            qa_pairs = json.loads(candidate.interview_qa_pairs)
-            qa_sequence = json.loads(candidate.interview_qa_sequence)
-            conversation = json.loads(candidate.interview_conversation)
+            # Proceed to track the Q&A data for the candidate
+            # Initialize or retrieve current interview data
+            qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+            conversation = json.loads(candidate.interview_conversation or '[]')
+            transcript = candidate.interview_transcript or ""
             timestamp = datetime.now()
-            
-            # Create conversation entry for real-time tracking
-            conversation_entry = {
-                'id': f"{content_type}_{len(conversation)}_{int(time.time())}",
-                'type': content_type,
-                'speaker': 'Avatar' if content_type == 'question' else 'Candidate',
-                'content': content,
-                'timestamp': timestamp.isoformat(),
-                'sequence': len(conversation) + 1,
-                'metadata': metadata
-            }
-            
-            # Add to conversation
-            conversation.append(conversation_entry)
-            
+
             if content_type == 'question':
-                # Generate unique question ID
-                question_id = f"q_{len(qa_sequence) + 1}_{int(time.time())}"
-                
-                # Add to both tracking systems for redundancy
-                
-                # System 1: qa_pairs (simple tracking)
-                qa_pairs.append({
+                # This is a question from the knowledge base (KB)
+                question_id = f"q_{len(qa_pairs) + 1}_{int(time.time())}"
+
+                # Store the question data
+                qa_entry = {
                     'id': question_id,
                     'question': content,
                     'answer': None,
                     'timestamp': timestamp.isoformat(),
-                    'order': len(qa_pairs) + 1,
-                    'metadata': metadata
-                })
-                
-                # System 2: qa_sequence (advanced tracking)
-                qa_entry = {
-                    'id': question_id,
-                    'type': 'question',
-                    'content': content,
-                    'timestamp': timestamp.isoformat(),
-                    'answer': None,
-                    'answered': False,
-                    'sequence_number': len(qa_sequence) + 1,
+                    'source': 'knowledge_base',
+                    'is_transcribed': False,
                     'metadata': metadata
                 }
-                qa_sequence.append(qa_entry)
-                
-                # Mark waiting state if columns exist
-                if hasattr(candidate, 'interview_current_question_id'):
-                    candidate.interview_current_question_id = question_id
-                if hasattr(candidate, 'interview_waiting_for_answer'):
-                    candidate.interview_waiting_for_answer = True
-                
-                # Update formatted transcript
-                candidate.interview_transcript += f"\nAvatar: {content}\n"
-                
-                logger.info(f"Question tracked: {question_id} - {content[:50]}...")
-                
+                qa_pairs.append(qa_entry)
+
+                # Add the question to the conversation
+                conversation.append({
+                    'type': 'question',
+                    'speaker': 'Avatar',
+                    'content': content,
+                    'timestamp': timestamp.isoformat(),
+                    'source': 'knowledge_base'
+                })
+
+                # Update transcript
+                transcript += f"\n[{timestamp.strftime('%H:%M:%S')}] Avatar (KB): {content}\n"
+
+                # Update the candidate's total question count
+                candidate.interview_total_questions = len(qa_pairs)
+                logger.info(f"Stored KB question #{len(qa_pairs)}: {content[:50]}...")
+
             elif content_type == 'answer':
-                answer_matched = False
-                
-                # Try to match answer to question in both systems
-                
-                # System 1: Match in qa_pairs
+                # This is a transcribed answer from the candidate
+                # Find the most recent unanswered question
                 for qa in reversed(qa_pairs):
                     if qa.get('question') and not qa.get('answer'):
                         qa['answer'] = content
-                        qa['answered_at'] = timestamp.isoformat()
+                        qa['answer_timestamp'] = timestamp.isoformat()
+                        qa['answer_source'] = 'voice_transcription'
+                        qa['is_answer_transcribed'] = True
                         qa['answer_metadata'] = metadata
-                        answer_matched = True
                         break
-                
-                # System 2: Match in qa_sequence
-                current_question_id = getattr(candidate, 'interview_current_question_id', None)
-                if current_question_id or getattr(candidate, 'interview_waiting_for_answer', False):
-                    for entry in qa_sequence:
-                        if ((current_question_id and entry['id'] == current_question_id) or 
-                            (not entry.get('answered') and entry['type'] == 'question')):
-                            entry['answer'] = content
-                            entry['answered'] = True
-                            entry['answer_timestamp'] = timestamp.isoformat()
-                            entry['answer_metadata'] = metadata
-                            
-                            # Calculate response time
-                            if 'timestamp' in entry:
-                                try:
-                                    q_time = datetime.fromisoformat(entry['timestamp'])
-                                    entry['response_time_seconds'] = (timestamp - q_time).total_seconds()
-                                except:
-                                    pass
-                            
-                            # Add speech metrics if available
-                            if 'speech_duration_ms' in metadata:
-                                entry['speech_duration_ms'] = metadata['speech_duration_ms']
-                            if 'word_count' in metadata:
-                                entry['word_count'] = metadata['word_count']
-                            
-                            answer_matched = True
-                            break
-                
-                # If no match found, create orphaned answer entry
-                if not answer_matched:
-                    logger.warning(f"Orphaned answer: {content[:50]}...")
-                    qa_sequence.append({
-                        'id': f"orphan_{int(time.time())}",
-                        'type': 'orphaned_answer',
-                        'content': content,
-                        'timestamp': timestamp.isoformat(),
-                        'sequence_number': len(qa_sequence) + 1,
-                        'metadata': metadata
-                    })
-                
-                # Clear waiting state
-                if hasattr(candidate, 'interview_waiting_for_answer'):
-                    candidate.interview_waiting_for_answer = False
-                if hasattr(candidate, 'interview_current_question_id'):
-                    candidate.interview_current_question_id = None
-                
-                # Update formatted transcript
-                candidate.interview_transcript += f"Candidate: {content}\n"
-                
-                logger.info(f"Answer tracked: {content[:50]}...")
-            
-            # Save all data
+
+                # Add the answer to the conversation
+                conversation.append({
+                    'type': 'answer',
+                    'speaker': 'Candidate',
+                    'content': content,
+                    'timestamp': timestamp.isoformat(),
+                    'source': 'voice_transcription'
+                })
+
+                # Update transcript
+                transcript += f"[{timestamp.strftime('%H:%M:%S')}] Candidate (Voice): {content}\n"
+
+                # Update the answered question count
+                answered = sum(1 for qa in qa_pairs if qa.get('answer'))
+                candidate.interview_answered_questions = answered
+                logger.info(f"Stored transcribed answer: {content[:50]}...")
+
+            # Calculate interview progress
+            if candidate.interview_total_questions > 0:
+                progress = (candidate.interview_answered_questions / candidate.interview_total_questions) * 100
+                candidate.interview_progress_percentage = progress
+
+            # Save all updated data to the candidate record
             candidate.interview_qa_pairs = json.dumps(qa_pairs)
-            candidate.interview_qa_sequence = json.dumps(qa_sequence)
             candidate.interview_conversation = json.dumps(conversation)
-            
-            # Update statistics
-            total_exchanges = len(conversation)
-            questions = [c for c in conversation if c['type'] == 'question']
-            answers = [c for c in conversation if c['type'] == 'answer']
-            
-            candidate.interview_total_questions = len(questions)
-            candidate.interview_answered_questions = len(answers)
-            
-            # Calculate progress
-            if len(questions) > 0:
-                # Check if last question has been answered
-                last_question_answered = False
-                if questions and answers:
-                    last_question_seq = questions[-1]['sequence']
-                    last_answer_seq = answers[-1]['sequence'] if answers else 0
-                    last_question_answered = last_answer_seq > last_question_seq
-                
-                progress = (len(answers) / len(questions)) * 100
-                if not last_question_answered and len(answers) > 0:
-                    progress = ((len(answers) - 0.5) / len(questions)) * 100
-                
-                candidate.interview_progress_percentage = min(progress, 100)
-            
-            # Update activity timestamp
-            if hasattr(candidate, 'interview_last_activity'):
-                candidate.interview_last_activity = timestamp
-            
-            # Check if interview should be marked complete
-            if len(questions) >= 10 and len(answers) == len(questions):
-                if hasattr(candidate, 'interview_completed_at') and not candidate.interview_completed_at:
+            candidate.interview_transcript = transcript
+            candidate.interview_last_activity = timestamp
+
+            # Check for automatic interview completion if all questions are answered
+            if (candidate.interview_total_questions >= 10 and 
+                candidate.interview_answered_questions >= candidate.interview_total_questions):
+                if not candidate.interview_completed_at:
                     candidate.interview_completed_at = datetime.now()
-                    logger.info(f"Interview auto-completed for candidate {candidate.id}")
-                    complete_interview_auto(candidate.id)
-            
+                    candidate.interview_ai_analysis_status = 'pending'
+                    logger.info(f"Auto-completed interview for {candidate.name}")
+
+            # Commit the changes to the database
             session.commit()
-            
-            logger.info(f"{content_type.capitalize()} tracked - Total exchanges: {total_exchanges}")
-            
+
             return jsonify({
                 "success": True,
-                "message": f"{content_type} tracked successfully",
-                "conversation_length": total_exchanges,
                 "stats": {
-                    "total_questions": len(questions),
-                    "total_answers": len(answers),
-                    "total_exchanges": total_exchanges,
-                    "progress_percentage": candidate.interview_progress_percentage,
-                    "waiting_for_answer": getattr(candidate, 'interview_waiting_for_answer', False),
-                    "current_question_id": getattr(candidate, 'interview_current_question_id', None)
+                    "total_questions": candidate.interview_total_questions,
+                    "answered_questions": candidate.interview_answered_questions,
+                    "progress": candidate.interview_progress_percentage
                 }
             }), 200
             
         finally:
             session.close()
-            
+
     except Exception as e:
-        logger.error(f"Unified Q&A tracking error: {e}", exc_info=True)
-        return jsonify({"error": str(e), "details": traceback.format_exc()}), 500
+        logger.error(f"Q&A tracking error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/interview/full-analysis/<token>', methods=['GET'])
 def get_full_interview_analysis(token):
@@ -5846,16 +5773,7 @@ def upload_to_cloud_storage(local_path, filename):
             
             s3.upload_file(local_path, bucket, key)
             return f"https://{bucket}.s3.amazonaws.com/{key}"
-        
-        # Example for Google Cloud Storage
-        # if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
-        #     from google.cloud import storage
-        #     client = storage.Client()
-        #     bucket = client.bucket('interview-recordings')
-        #     blob = bucket.blob(f"interviews/{filename}")
-        #     blob.upload_from_filename(local_path)
-        #     return blob.public_url
-        
+       
         return None
         
     except Exception as e:
@@ -5927,11 +5845,6 @@ def get_interview_session_data(session_id):
         
     finally:
         session.close()
-
-
-
-# Interview Session Management Endpoints
-# Add these endpoints to your backend.py file
 
 def _ok_preflight():
     resp = jsonify({})
@@ -6940,7 +6853,7 @@ def fix_missing_knowledge_bases():
                 
                 if kb_id and not kb_id.startswith('kb_fallback'):
                     heygen_count += 1
-                    logger.info(f"✅ Created HeyGen KB for {candidate.name}: {kb_id}")
+                    logger.info(f"Created HeyGen KB for {candidate.name}: {kb_id}")
                 else:
                     # Use fallback if HeyGen failed
                     kb_id = f"kb_fallback_{candidate.id}_{int(time.time())}"
@@ -7257,7 +7170,7 @@ INSTRUCTIONS:
                 )
             
             if kb_id:
-                logger.info(f"✅ Successfully created HeyGen KB: {kb_id}")
+                logger.info(f"Successfully created HeyGen KB: {kb_id}")
                 return kb_id
             else:
                 logger.error(f"KB ID not found in response: {data}")
@@ -8533,11 +8446,11 @@ def rate_limit_exceeded(error):
 @app.before_request
 def log_request_info():
     """Log incoming requests"""
-    logger.info(f"🌐 {request.method} {request.path} from {request.remote_addr}")
+    logger.info(f"ðŸŒ {request.method} {request.path} from {request.remote_addr}")
 
 def test_routes():
     """Test if routes are properly registered"""
-    print("📋 Registered Routes:")
+    print("ðŸ“‹ Registered Routes:")
     for rule in app.url_map.iter_rules():
         print(f"  {rule.methods} {rule.rule} -> {rule.endpoint}")
 
@@ -8762,7 +8675,7 @@ class InterviewCompletionHandler:
                 # Verify the update worked
                 session.refresh(candidate)
                 if candidate.interview_completed_at:
-                    logger.info(f"✅ Interview completed successfully for {candidate.name} at {completion_time}")
+                    logger.info(f"Interview completed successfully for {candidate.name} at {completion_time}")
                     
                     # Trigger AI scoring in background
                     try:
@@ -8808,7 +8721,7 @@ class InterviewCompletionHandler:
                         session.commit()
                         
                         if result.rowcount > 0:
-                            logger.info(f"✅ Completed via direct SQL for token {token}")
+                            logger.info(f"Completed via direct SQL for token {token}")
                             return {"success": True, "method": "direct_sql"}
                     except Exception as sql_error:
                         logger.error(f"Direct SQL also failed: {sql_error}")
@@ -8984,29 +8897,21 @@ if __name__ == "__main__":
             print(f"  {list(rule.methods)} {rule.rule} -> {rule.endpoint}")
 
     try:
-        # from db import init_db, run_migrations
-
-        # init_db()
-        # run_migrations()
-        # run_interview_tracking_migration()
-
-
         try: 
-            print("\n🤖 Starting Interview Automation System...")
+            print("\n Starting Interview Automation System...")
             start_interview_automation()
-            print("✅ Interview automation running (checking every 30 minutes)")
+            print("Interview automation running (checking every 30 minutes)")
 
             recovery_thread = threading.Thread(target=interview_auto_recovery_system, daemon=True)
             recovery_thread.start()
             logger.info("Interview auto-recovery system started")
             
             completion_monitor.start()
-            print("✅ Automatic completion monitor started")
+            print("Automatic completion monitor started")
 
         except Exception as e:
-            print(f"⚠️  Interview automation not available: {e}")
-            # print(f"Database initialization error: {e}")
-            # print("Continuing anyway...")
+            print(f" Interview automation not available: {e}")
+           
             
         app.run(
             host='0.0.0.0',

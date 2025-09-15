@@ -102,7 +102,7 @@ async def safe_goto(page: Page, url: str, wait_until: str = "domcontentloaded", 
             if response:
                 status = response.status
                 if status >= 200 and status < 400:
-                    logger.info(f"✅ Successfully navigated to {url}")
+                    logger.info(f"Successfully navigated to {url}")
                     return True
                 else:
                     logger.warning(f"HTTP {status} when navigating to {url}")
@@ -136,7 +136,7 @@ async def safe_goto(page: Page, url: str, wait_until: str = "domcontentloaded", 
 async def auto_login(page: Page, domain: str) -> bool:
     """Automatic login with 2FA support - OPTIMIZED."""
     try:
-        logger.info("🔐 Starting automatic login...")
+        logger.info("Starting automatic login...")
         
         # Navigate to login page
         login_url = f"{domain}/login.php"
