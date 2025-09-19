@@ -1,0 +1,41 @@
+/* Copy all the styles from your HTML file's <style> section here */
+/* I'll include the key parts: */
+
+.login-container {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Include all your background, animation, and form styles from the HTML */
+/* ... (copy all styles from the HTML file) ... */
+
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.password-toggle:hover {
+  color: rgba(255, 255, 255, 0.8);
+}

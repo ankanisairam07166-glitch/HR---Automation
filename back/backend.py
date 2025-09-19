@@ -26,6 +26,8 @@ from email.mime.multipart import MIMEMultipart
 from interview_automation import start_interview_automation, stop_interview_automation
 from werkzeug.utils import secure_filename
 from interview_analysis_service_production import interview_analysis_service, AnalysisStatus
+from flask_mail import Mail
+from auth_routes import auth_bp
 # from flask_caching import Cache
 import atexit
 # from dynamic_analysis import analyzer
@@ -1001,7 +1003,7 @@ def secure_interview_page(token):
             'candidateEmail': candidate.email,
             'position': candidate.job_title,
             'company': company_name,
-            'knowledgeBaseId': getattr(candidate, 'knowledge_base_id', None),
+            # 'knowledgeBaseId': getattr(candidate, 'knowledge_base_id', None),
             'sessionId': getattr(candidate, 'interview_session_id', None),
             'status': 'active',
             'jobDescription': job_description,
@@ -2553,6 +2555,440 @@ def get_interview_stats():
     finally:
         session.close()
 
+@app.route('/api/interview/conversation/update', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def update_conversation_snapshot():
+    """Update conversation snapshot with complete data"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        conversation_data = data.get('conversation_data', [])
+        
+        if not session_id:
+            return jsonify({"error": "session_id required"}), 400
+        
+        session = SessionLocal()
+        try:
+            # Find candidate by session_id
+            candidate = session.query(Candidate).filter_by(
+                interview_session_id=session_id
+            ).first()
+            
+            if not candidate:
+                # Try alternate lookup
+                parts = session_id.split('_')
+                if len(parts) >= 2 and parts[1].isdigit():
+                    candidate = session.query(Candidate).filter_by(id=int(parts[1])).first()
+            
+            if not candidate:
+                return jsonify({"error": "Session not found"}), 404
+            
+            # Store structured conversation data
+            candidate.interview_conversation_structured = json.dumps(conversation_data)
+            
+            # Create formatted transcript
+            formatted_transcript = format_conversation_transcript(conversation_data, candidate.name)
+            candidate.interview_transcript = formatted_transcript
+            
+            # Update statistics
+            questions = [entry for entry in conversation_data if entry.get('type') == 'question']
+            answers = [entry for entry in conversation_data if entry.get('type') == 'answer']
+            
+            candidate.interview_total_questions = len(questions)
+            candidate.interview_answered_questions = len(answers)
+            
+            # Update progress
+            if len(questions) > 0:
+                progress = (len(answers) / len(questions)) * 100
+                candidate.interview_progress_percentage = min(progress, 100)
+            
+            # Update last activity
+            candidate.interview_last_activity = datetime.now()
+            
+            # Check for auto-completion
+            if len(answers) >= 10 or (len(questions) > 0 and len(answers) >= len(questions)):
+                if not candidate.interview_completed_at:
+                    candidate.interview_completed_at = datetime.now()
+                    candidate.interview_ai_analysis_status = 'pending'
+                    
+                    # Calculate duration
+                    if candidate.interview_started_at:
+                        duration = (candidate.interview_completed_at - candidate.interview_started_at).total_seconds()
+                        candidate.interview_duration = int(duration)
+                    
+                    logger.info(f"Auto-completed interview for {candidate.name} with {len(answers)} answers")
+                    
+                    # Trigger scoring
+                    executor.submit(trigger_auto_scoring, candidate.id)
+            
+            session.commit()
+            
+            return jsonify({
+                "success": True,
+                "questions": len(questions),
+                "answers": len(answers),
+                "progress": candidate.interview_progress_percentage,
+                "auto_completed": candidate.interview_completed_at is not None
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Conversation update error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/interview/conversation/get/<session_id>', methods=['GET'])
+def get_conversation_data(session_id):
+    """Get complete conversation data for a session"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(
+            interview_session_id=session_id
+        ).first()
+        
+        if not candidate:
+            return jsonify({"error": "Session not found"}), 404
+        
+        # Get structured conversation data
+        conversation_data = json.loads(candidate.interview_conversation_structured or '[]')
+        
+        return jsonify({
+            "success": True,
+            "session_id": session_id,
+            "candidate": {
+                "id": candidate.id,
+                "name": candidate.name,
+                "position": candidate.job_title
+            },
+            "conversation": conversation_data,
+            "statistics": {
+                "total_exchanges": len(conversation_data),
+                "questions": len([e for e in conversation_data if e.get('type') == 'question']),
+                "answers": len([e for e in conversation_data if e.get('type') == 'answer']),
+                "progress": candidate.interview_progress_percentage or 0,
+                "completed": candidate.interview_completed_at is not None
+            },
+            "formatted_transcript": candidate.interview_transcript
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting conversation: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+def format_conversation_transcript(conversation_data, candidate_name):
+    """Format conversation data into readable transcript"""
+    transcript = f"Interview Transcript - {candidate_name}\n"
+    transcript += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+    transcript += "=" * 70 + "\n\n"
+    
+    for entry in conversation_data:
+        try:
+            timestamp = datetime.fromisoformat(entry['timestamp'].replace('Z', '+00:00'))
+            time_str = timestamp.strftime('%H:%M:%S')
+            speaker = 'AI Interviewer' if entry['speaker'] == 'avatar' else 'Candidate'
+            content = entry['content'].strip()
+            
+            transcript += f"[{time_str}] {speaker}:\n{content}\n\n"
+            
+        except (KeyError, ValueError) as e:
+            logger.warning(f"Error formatting entry: {e}")
+            continue
+    
+    return transcript
+
+
+@app.route('/api/interview/qa/track-enhanced', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def track_qa_enhanced():
+    """Enhanced Q&A tracking with proper conversation structure"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        entry_type = data.get('type')  # 'question' or 'answer'
+        content = data.get('content', '').strip()
+        metadata = data.get('metadata', {})
+        
+        if not session_id or not content or not entry_type:
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(
+                interview_session_id=session_id
+            ).first()
+            
+            if not candidate:
+                return jsonify({"error": "Session not found"}), 404
+            
+            # Get existing conversation data
+            conversation_data = json.loads(candidate.interview_conversation_structured or '[]')
+            
+            # Create new entry
+            entry = {
+                'id': metadata.get('entry_id', f"{entry_type}_{int(time.time())}"),
+                'type': entry_type,
+                'speaker': 'avatar' if entry_type == 'question' else 'candidate',
+                'content': content,
+                'timestamp': metadata.get('timestamp', datetime.now().isoformat()),
+                'sequence': metadata.get('sequence', len(conversation_data) + 1),
+                'linked_question_id': metadata.get('linked_question_id'),
+                'word_count': metadata.get('word_count', len(content.split())),
+                'confidence': metadata.get('confidence', 1.0),
+                'is_complete': metadata.get('is_complete', True)
+            }
+            
+            # Add to conversation data
+            conversation_data.append(entry)
+            
+            # Update candidate record
+            candidate.interview_conversation_structured = json.dumps(conversation_data)
+            candidate.interview_last_activity = datetime.now()
+            
+            # Update counters
+            questions = [e for e in conversation_data if e.get('type') == 'question']
+            answers = [e for e in conversation_data if e.get('type') == 'answer']
+            
+            candidate.interview_total_questions = len(questions)
+            candidate.interview_answered_questions = len(answers)
+            
+            # Update progress
+            if len(questions) > 0:
+                progress = (len(answers) / len(questions)) * 100
+                candidate.interview_progress_percentage = min(progress, 100)
+            
+            # Update formatted transcript
+            candidate.interview_transcript = format_conversation_transcript(
+                conversation_data, candidate.name
+            )
+            
+            session.commit()
+            
+            logger.info(f"Enhanced Q&A tracking: {entry_type} for {candidate.name}")
+            
+            return jsonify({
+                "success": True,
+                "entry_id": entry['id'],
+                "total_questions": len(questions),
+                "answered_questions": len(answers),
+                "progress": candidate.interview_progress_percentage
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Enhanced Q&A tracking error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/interview/conversation/export/<session_id>', methods=['GET'])
+def export_conversation_enhanced(session_id):
+    """Export conversation with multiple format options"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(
+            interview_session_id=session_id
+        ).first()
+        
+        if not candidate:
+            return jsonify({"error": "Session not found"}), 404
+        
+        # Get format from query parameter
+        format_type = request.args.get('format', 'json')
+        
+        conversation_data = json.loads(candidate.interview_conversation_structured or '[]')
+        
+        if format_type == 'json':
+            export_data = {
+                "session_id": session_id,
+                "candidate": {
+                    "id": candidate.id,
+                    "name": candidate.name,
+                    "email": candidate.email,
+                    "position": candidate.job_title
+                },
+                "conversation": conversation_data,
+                "statistics": {
+                    "total_exchanges": len(conversation_data),
+                    "questions": len([e for e in conversation_data if e.get('type') == 'question']),
+                    "answers": len([e for e in conversation_data if e.get('type') == 'answer']),
+                    "duration": candidate.interview_duration,
+                    "progress": candidate.interview_progress_percentage
+                },
+                "exported_at": datetime.now().isoformat()
+            }
+            
+            return jsonify(export_data), 200
+        
+        elif format_type == 'text':
+            transcript = format_conversation_transcript(conversation_data, candidate.name)
+            
+            response = Response(
+                transcript,
+                mimetype='text/plain',
+                headers={
+                    'Content-Disposition': f'attachment; filename=interview_{candidate.name}_{session_id}.txt'
+                }
+            )
+            return response
+        
+        else:
+            return jsonify({"error": "Invalid format"}), 400
+            
+    except Exception as e:
+        logger.error(f"Export error: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/api/interview/conversation/validate/<session_id>', methods=['GET'])
+def validate_conversation_data(session_id):
+    """Validate conversation data integrity"""
+    session = SessionLocal()
+    try:
+        candidate = session.query(Candidate).filter_by(
+            interview_session_id=session_id
+        ).first()
+        
+        if not candidate:
+            return jsonify({"error": "Session not found"}), 404
+        
+        conversation_data = json.loads(candidate.interview_conversation_structured or '[]')
+        
+        # Validate data integrity
+        issues = []
+        questions = []
+        answers = []
+        
+        for entry in conversation_data:
+            if not entry.get('content') or len(entry['content'].strip()) < 5:
+                issues.append(f"Entry {entry.get('id', 'unknown')} has invalid content")
+            
+            if entry.get('type') == 'question':
+                questions.append(entry)
+            elif entry.get('type') == 'answer':
+                answers.append(entry)
+        
+        # Check for orphaned answers
+        orphaned_answers = [a for a in answers if not a.get('linked_question_id')]
+        if orphaned_answers:
+            issues.append(f"{len(orphaned_answers)} answers without linked questions")
+        
+        # Check sequence integrity
+        sequences = [entry.get('sequence', 0) for entry in conversation_data]
+        if len(set(sequences)) != len(sequences):
+            issues.append("Duplicate sequence numbers detected")
+        
+        validation_result = {
+            "is_valid": len(issues) == 0,
+            "issues": issues,
+            "statistics": {
+                "total_entries": len(conversation_data),
+                "questions": len(questions),
+                "answers": len(answers),
+                "orphaned_answers": len(orphaned_answers),
+                "expected_questions": candidate.interview_total_questions or 0,
+                "expected_answers": candidate.interview_answered_questions or 0
+            },
+            "data_integrity": {
+                "has_structured_data": len(conversation_data) > 0,
+                "has_transcript": bool(candidate.interview_transcript),
+                "counters_match": (
+                    len(questions) == (candidate.interview_total_questions or 0) and
+                    len(answers) == (candidate.interview_answered_questions or 0)
+                )
+            }
+        }
+        
+        return jsonify(validation_result), 200
+        
+    except Exception as e:
+        logger.error(f"Validation error: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+# Database migration function (run once to add new columns)
+def migrate_conversation_storage():
+    """Migrate existing interview data to new conversation storage format"""
+    from sqlalchemy import text
+    
+    session = SessionLocal()
+    try:
+        # Add new column if it doesn't exist
+        try:
+            session.execute(text("""
+                ALTER TABLE candidates 
+                ADD COLUMN interview_conversation_structured TEXT DEFAULT NULL
+            """))
+            session.commit()
+            print("✅ Added interview_conversation_structured column")
+        except Exception:
+            print("ℹ️  Column interview_conversation_structured already exists")
+        
+        # Migrate existing data
+        candidates = session.query(Candidate).filter(
+            Candidate.interview_scheduled == True,
+            Candidate.interview_conversation_structured.is_(None)
+        ).all()
+        
+        migrated = 0
+        for candidate in candidates:
+            try:
+                # Try to reconstruct conversation from existing data
+                qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+                conversation_data = []
+                
+                for i, qa in enumerate(qa_pairs):
+                    if qa.get('question'):
+                        conversation_data.append({
+                            'id': f'q_{i}_{int(time.time())}',
+                            'type': 'question',
+                            'speaker': 'avatar',
+                            'content': qa['question'],
+                            'timestamp': qa.get('timestamp', datetime.now().isoformat()),
+                            'sequence': len(conversation_data) + 1
+                        })
+                    
+                    if qa.get('answer'):
+                        conversation_data.append({
+                            'id': f'a_{i}_{int(time.time())}',
+                            'type': 'answer',
+                            'speaker': 'candidate',
+                            'content': qa['answer'],
+                            'timestamp': qa.get('answered_at', datetime.now().isoformat()),
+                            'sequence': len(conversation_data) + 1,
+                            'linked_question_id': f'q_{i}_{int(time.time())}'
+                        })
+                
+                if conversation_data:
+                    candidate.interview_conversation_structured = json.dumps(conversation_data)
+                    migrated += 1
+            
+            except Exception as e:
+                print(f"❌ Failed to migrate candidate {candidate.id}: {e}")
+        
+        session.commit()
+        print(f"✅ Migrated {migrated} candidates to new conversation storage")
+        
+    except Exception as e:
+        print(f"❌ Migration failed: {e}")
+        session.rollback()
+    finally:
+        session.close()
 
 @app.route('/api/interview-automation/toggle', methods=['POST', 'OPTIONS'])
 @rate_limit(max_calls=5, time_window=60)
@@ -8225,6 +8661,146 @@ def not_found(error):
         ]
     }), 404
 
+@app.route('/api/interview/speech/track', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def track_speech_segment():
+    """Track speech recognition segments with confidence scores"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        segment = data.get('segment', {})
+        
+        if not session_id:
+            return jsonify({"error": "session_id required"}), 400
+        
+        session = SessionLocal()
+        try:
+            # Find candidate
+            candidate = session.query(Candidate).filter_by(
+                interview_session_id=session_id
+            ).first()
+            
+            if not candidate:
+                # Try alternate lookup
+                parts = session_id.split('_')
+                if len(parts) >= 2 and parts[1].isdigit():
+                    candidate = session.query(Candidate).filter_by(id=int(parts[1])).first()
+            
+            if not candidate:
+                return jsonify({"error": "Session not found"}), 404
+            
+            # Parse existing speech data
+            speech_segments = json.loads(getattr(candidate, 'interview_speech_segments', '[]'))
+            
+            # Add new segment
+            segment_data = {
+                'id': f"seg_{len(speech_segments)}_{int(time.time())}",
+                'text': segment.get('text', ''),
+                'confidence': segment.get('confidence', 0),
+                'is_final': segment.get('is_final', False),
+                'timestamp': segment.get('timestamp', datetime.now().isoformat()),
+                'duration_ms': segment.get('duration', 0)
+            }
+            
+            speech_segments.append(segment_data)
+            
+            # Store segments
+            if hasattr(candidate, 'interview_speech_segments'):
+                candidate.interview_speech_segments = json.dumps(speech_segments)
+            
+            # Update transcript
+            if segment.get('is_final'):
+                transcript = candidate.interview_transcript or ""
+                transcript += f"\n[Candidate]: {segment.get('text', '')}\n"
+                candidate.interview_transcript = transcript
+            
+            # Update last activity
+            candidate.interview_last_activity = datetime.now()
+            
+            session.commit()
+            
+            return jsonify({
+                "success": True,
+                "segment_id": segment_data['id'],
+                "total_segments": len(speech_segments)
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Speech tracking error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/interview/speech/complete-utterance', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def track_complete_utterance():
+    """Track a complete utterance (full answer)"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        utterance = data.get('utterance', {})
+        
+        session = SessionLocal()
+        try:
+            candidate = session.query(Candidate).filter_by(
+                interview_session_id=session_id
+            ).first()
+            
+            if not candidate:
+                return jsonify({"error": "Session not found"}), 404
+            
+            # Find the current unanswered question
+            qa_pairs = json.loads(candidate.interview_qa_pairs or '[]')
+            
+            for qa in reversed(qa_pairs):
+                if qa.get('question') and not qa.get('answer'):
+                    # Found unanswered question - add answer
+                    qa['answer'] = utterance.get('text', '')
+                    qa['answer_confidence'] = utterance.get('confidence', 0)
+                    qa['answer_timestamp'] = utterance.get('timestamp')
+                    qa['answer_duration_ms'] = utterance.get('duration')
+                    break
+            
+            # Update database
+            candidate.interview_qa_pairs = json.dumps(qa_pairs)
+            
+            # Update answer count
+            answered = sum(1 for qa in qa_pairs if qa.get('answer'))
+            candidate.interview_answered_questions = answered
+            
+            # Update progress
+            if candidate.interview_total_questions > 0:
+                progress = (answered / candidate.interview_total_questions) * 100
+                candidate.interview_progress_percentage = progress
+            
+            session.commit()
+            
+            # Check for auto-completion
+            if answered >= 10 or (candidate.interview_total_questions > 0 and 
+                                  answered >= candidate.interview_total_questions):
+                # Trigger completion
+                executor.submit(check_and_complete_interview, candidate.id)
+            
+            return jsonify({
+                "success": True,
+                "answered_questions": answered,
+                "progress": candidate.interview_progress_percentage
+            }), 200
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logger.error(f"Utterance tracking error: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/interview/migrate-qa-data', methods=['POST'])
 def migrate_qa_data():
     """Migrate Q&A data from qa_pairs to questions/answers format"""
@@ -8865,6 +9441,15 @@ def start_analysis_monitor():
     thread = threading.Thread(target=monitor, daemon=True)
     thread.start()
 
+# Configure Flask-Mail
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', '587'))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+mail = Mail(app)
+app.register_blueprint(auth_bp)
 
 # Cleanup on shutdown
 import atexit
@@ -8889,6 +9474,10 @@ if __name__ == "__main__":
     print("Interview automation running (checking every 30 minutes)")
     print("Starting interview analysis monitor...")
     start_analysis_monitor()
+
+    print("Running conversation storage migration...")
+    migrate_conversation_storage()
+    print("Migration complete")
 
 
     with app.app_context():

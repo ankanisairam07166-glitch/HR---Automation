@@ -426,6 +426,23 @@ def run_migrations():
     except Exception as e:
         logger.error(f"Migration error: {e}")
 
+# Add this to your existing db.py
+
+class User(Base):
+    __tablename__ = 'users'
+    
+    id = Column(Integer, primary_key=True)
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    email = Column(String(200), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime)
+    password_reset_at = Column(DateTime)
+    
+    def __repr__(self):
+        return f"<User(id={self.id}, email='{self.email}')>"
 
 # Initialize database on import
 if __name__ == "__main__":
