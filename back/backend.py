@@ -621,57 +621,57 @@ def api_candidates():
         logger.error(f"Error in api_candidates: {e}", exc_info=True)
         return jsonify({"error": "Failed to fetch candidates", "message": str(e)}), 500
 
-@app.route('/api/run_full_pipeline', methods=['POST', 'OPTIONS'])
-@rate_limit(max_calls=5, time_window=300)
-def api_run_full_pipeline():
-    """Enhanced pipeline API with status tracking"""
-    if request.method == 'OPTIONS':
-        return '', 200
+# @app.route('/api/run_full_pipeline', methods=['POST', 'OPTIONS'])
+# @rate_limit(max_calls=5, time_window=300)
+# def api_run_full_pipeline():
+#     """Enhanced pipeline API with status tracking"""
+#     if request.method == 'OPTIONS':
+#         return '', 200
     
-    try:
-        data = request.json
-        job_id = data.get('job_id')
-        job_title = data.get('job_title')
-        job_desc = data.get('job_desc', "")
+#     try:
+#         data = request.json
+#         job_id = data.get('job_id')
+#         job_title = data.get('job_title')
+#         job_desc = data.get('job_desc', "")
         
-        logger.info(f"[{request.request_id}] Pipeline request: job_id={job_id}, job_title={job_title}")
+#         logger.info(f"[{request.request_id}] Pipeline request: job_id={job_id}, job_title={job_title}")
         
-        if not job_id or not job_title:
-            return jsonify({"success": False, "message": "job_id and job_title are required"}), 400
+#         if not job_id or not job_title:
+#             return jsonify({"success": False, "message": "job_id and job_title are required"}), 400
         
-        # Check if pipeline is already running for this job
-        current_status = get_pipeline_status(job_id)
-        if current_status and current_status.get('status') == 'running':
-            return jsonify({
-                "success": False,
-                "message": f"Pipeline already running for {job_title}",
-                "status": current_status
-            }), 409
+#         # Check if pipeline is already running for this job
+#         current_status = get_pipeline_status(job_id)
+#         if current_status and current_status.get('status') == 'running':
+#             return jsonify({
+#                 "success": False,
+#                 "message": f"Pipeline already running for {job_title}",
+#                 "status": current_status
+#             }), 409
         
-        # # Update status to starting
-        # update_pipeline_status(job_id, 'starting', f'Initializing pipeline for {job_title}', 0)
+#         # # Update status to starting
+#         # update_pipeline_status(job_id, 'starting', f'Initializing pipeline for {job_title}', 0)
         
-# Update status to starting
-        update_pipeline_status(job_id, 'starting', f'Initializing pipeline for {job_title}', 0)
+# # Update status to starting
+#         update_pipeline_status(job_id, 'starting', f'Initializing pipeline for {job_title}', 0)
         
-        # Start the pipeline in background thread
-        future = executor.submit(run_pipeline_with_monitoring, job_id, job_title, job_desc)
+#         # Start the pipeline in background thread
+#         future = executor.submit(run_pipeline_with_monitoring, job_id, job_title, job_desc)
         
-        # Store future for tracking
-        with pipeline_lock:
-            pipeline_status[str(job_id)]['future'] = future
+#         # Store future for tracking
+#         with pipeline_lock:
+#             pipeline_status[str(job_id)]['future'] = future
         
-        return jsonify({
-            "success": True, 
-            "message": f"Pipeline started for {job_title}",
-            "job_id": job_id,
-            "estimated_time": "5-10 minutes",
-            "status_endpoint": f"/api/pipeline_status/{job_id}"
-        }), 200
+#         return jsonify({
+#             "success": True, 
+#             "message": f"Pipeline started for {job_title}",
+#             "job_id": job_id,
+#             "estimated_time": "5-10 minutes",
+#             "status_endpoint": f"/api/pipeline_status/{job_id}"
+#         }), 200
         
-    except Exception as e:
-        logger.error(f"Error in run_full_pipeline: {e}", exc_info=True)
-        return jsonify({"success": False, "message": str(e)}), 500
+#     except Exception as e:
+#         logger.error(f"Error in run_full_pipeline: {e}", exc_info=True)
+#         return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/pipeline_status', methods=['GET', 'OPTIONS'])
 @app.route('/api/pipeline_status/<job_id>', methods=['GET', 'OPTIONS'])
@@ -700,23 +700,74 @@ def api_pipeline_status(job_id=None):
         logger.error(f"Error in pipeline_status: {e}", exc_info=True)
         return jsonify({"success": False, "message": str(e)}), 500
 
-def run_pipeline_with_monitoring(job_id, job_title, job_desc):
-    """Enhanced pipeline runner with detailed progress tracking"""
+# In backend.py, modify the pipeline endpoint
+@app.route('/api/run_full_pipeline', methods=['POST', 'OPTIONS'])
+@rate_limit(max_calls=5, time_window=300)
+def api_run_full_pipeline():
+    """Enhanced pipeline API with optional assessment creation"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.json
+        job_id = data.get('job_id')
+        job_title = data.get('job_title')
+        job_desc = data.get('job_desc', "")
+        create_assessment = data.get('create_assessment', False)  # New parameter
+        
+        logger.info(f"Pipeline request: job_id={job_id}, create_assessment={create_assessment}")
+        
+        if not job_id or not job_title:
+            return jsonify({"success": False, "message": "job_id and job_title are required"}), 400
+        
+        # Check if pipeline is already running
+        current_status = get_pipeline_status(job_id)
+        if current_status and current_status.get('status') == 'running':
+            return jsonify({
+                "success": False,
+                "message": f"Pipeline already running for {job_title}",
+                "status": current_status
+            }), 409
+        
+        # Update status
+        update_pipeline_status(job_id, 'starting', f'Initializing pipeline for {job_title}', 0)
+        
+        # Start pipeline with assessment flag
+        future = executor.submit(run_pipeline_with_monitoring, job_id, job_title, job_desc, create_assessment)
+        
+        with pipeline_lock:
+            pipeline_status[str(job_id)]['future'] = future
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Pipeline started for {job_title}",
+            "job_id": job_id,
+            "create_assessment": create_assessment,
+            "estimated_time": "3-5 minutes" if not create_assessment else "5-10 minutes"
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error in run_full_pipeline: {e}", exc_info=True)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+def run_pipeline_with_monitoring(job_id, job_title, job_desc, create_assessment=False):
+    """Enhanced pipeline runner with optional assessment"""
     start_time = time.time()
     
     try:
-        logger.info(f"Starting monitored pipeline for job_id={job_id}")
+        logger.info(f"Starting pipeline for job_id={job_id}, create_assessment={create_assessment}")
         update_pipeline_status(job_id, 'running', 'Pipeline started', 10)
         
-        # Clear relevant caches
+        # Clear caches
         cache.delete_memoized(get_cached_candidates)
         cache.delete_memoized(get_cached_jobs)
         
-        full_recruitment_pipeline(job_id, job_title, job_desc)
+        # Run modified pipeline
+        full_recruitment_pipeline(job_id, job_title, job_desc, create_assessment)
         
         duration = time.time() - start_time
-        update_pipeline_status(job_id, 'completed', f'Pipeline completed successfully in {duration:.1f}s', 100)
-        logger.info(f"Pipeline completed successfully in {duration:.2f} seconds")
+        update_pipeline_status(job_id, 'completed', f'Pipeline completed in {duration:.1f}s', 100)
+        logger.info(f"Pipeline completed in {duration:.2f} seconds")
         
     except Exception as e:
         duration = time.time() - start_time
@@ -724,49 +775,44 @@ def run_pipeline_with_monitoring(job_id, job_title, job_desc):
         update_pipeline_status(job_id, 'error', error_msg, None)
         logger.error(error_msg, exc_info=True)
 
-def full_recruitment_pipeline(job_id, job_title, job_desc):
-    """Enhanced recruitment pipeline with progress tracking"""
+def full_recruitment_pipeline(job_id, job_title, job_desc, create_assessment=False):
+    """Modified pipeline with optional assessment creation"""
     try:
-        logger.info(f"Starting full recruitment pipeline for job_id={job_id}, job_title={job_title}")
+        logger.info(f"Starting recruitment pipeline for job_id={job_id}")
         
-        # STEP 1: Scraping (20% progress)
+        # STEP 1: Scraping (40% progress if no assessment, 25% if assessment)
+        progress_step1 = 40 if not create_assessment else 25
         try:
-            update_pipeline_status(job_id, 'running', 'Scraping resumes...', 20)
+            update_pipeline_status(job_id, 'running', 'Scraping resumes...', progress_step1)
             logger.info(f"STEP 1: Scraping resumes for job_id={job_id}")
             asyncio.run(scrape_job(job_id))
             logger.info("Scraping completed successfully")
         except Exception as e:
             logger.error(f"Scraping failed: {str(e)}", exc_info=True)
-            # Continue with next step even if scraping fails
         
-        # STEP 2: Create assessment (40% progress)
-        try:
-            update_pipeline_status(job_id, 'running', 'Creating programming assessment...', 40)
-            logger.info(f"STEP 2: Creating assessment for '{job_title}' in Testlify")
-            create_programming_assessment(job_title, job_desc)
-            logger.info("Assessment created successfully")
-        except Exception as e:
-            logger.error(f"Assessment creation failed: {str(e)}", exc_info=True)
-        
-        # STEP 3: Get invite link (60% progress)
         invite_link = None
-        try:
-            update_pipeline_status(job_id, 'running', 'Extracting assessment invite link...', 60)
-            logger.info(f"STEP 3: Extracting invite link for '{job_title}' from Testlify")
-            invite_link = get_invite_link(job_title)
-            if invite_link:
-                logger.info(f"Got invite link: {invite_link}")
-        except Exception as e:
-            logger.error(f"Invite link extraction failed: {str(e)}", exc_info=True)
         
-        if not invite_link:
+        # STEP 2 & 3: Only if assessment creation is requested
+        if create_assessment:
+            # Create assessment (50% progress)
+            try:
+                update_pipeline_status(job_id, 'running', 'Creating assessment in Testlify...', 50)
+                logger.info(f"STEP 2: Creating assessment for '{job_title}'")
+                create_programming_assessment(job_title, job_desc)
+                logger.info("Assessment created successfully")
+            except Exception as e:
+                logger.error(f"Assessment creation failed: {str(e)}", exc_info=True)
+            
+            # Get invite link (70% progress) - REMOVED as requested
+            # We'll use a default or skip this step
             invite_link = f"https://candidate.testlify.com/assessment/{job_id}"
-            logger.warning(f"Using fallback invite link: {invite_link}")
+            update_pipeline_status(job_id, 'running', 'Assessment created', 70)
         
-        # STEP 4: Run AI screening (80% progress)
+        # STEP 4: Run AI screening (100% progress)
+        final_progress = 100
         try:
-            update_pipeline_status(job_id, 'running', 'Running AI-powered screening...', 80)
-            logger.info("STEP 4: Running AI-powered screening...")
+            update_pipeline_status(job_id, 'running', 'Running AI-powered screening...', final_progress - 10)
+            logger.info("Running AI-powered screening...")
             run_recruitment_with_invite_link(
                 job_id=job_id, 
                 job_title=job_title, 
@@ -776,9 +822,9 @@ def full_recruitment_pipeline(job_id, job_title, job_desc):
             logger.info("AI screening completed successfully")
         except Exception as e:
             logger.error(f"AI screening failed: {str(e)}", exc_info=True)
-            raise  # This is critical, so we raise
+            raise
         
-        # Final step: Clear caches
+        # Clear caches
         cache.delete_memoized(get_cached_candidates)
         cache.delete_memoized(get_cached_jobs)
         
